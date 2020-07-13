@@ -1,0 +1,3266 @@
+(*
+Copyright 2012-2015 Consortium of the BWare ANR Project (ANR-12-INSE-0010)
+	  	    <http://bware.lri.fr/>
+Copyright 2012-2015 Cedric (CPR Team)
+	  	    David DELAHAYE
+	  	    <david.delahaye@cnam.fr>
+Copyright 2012-2015 LRI (VALS team)
+	  	    Sylvain CONCHON
+	  	    <sylvain.conchon@lri.fr>
+Copyright 2012-2015 Inria (Gallium, Deducteam)
+	  	    Damien DOLIGEZ
+	  	    <damien.doligez@inria.fr>
+Copyright 2012-2015 Mitsubishi Electric R&D Centre Europe
+	  	    David MENTRE
+	  	    <d.mentre@fr.merce.mee.com>
+Copyright 2012-2015 ClearSy
+	  	    Thierry LECOMTE
+	  	    <thierry.lecomte@clearsy.com>
+Copyright 2012-2015 OCamlPro
+	  	    Fabrice LE FESSANT
+		    <fabrice.le_fessant@ocamlpro.com>
+
+This file is a free software.
+
+This software is governed by the CeCILL-B license under French law and 
+abiding by the rules of distribution of free software.  
+You can use, modify and/or redistribute the software under the terms of the 
+CeCILL-B license as circulated by CEA, CNRS and INRIA at the following URL 
+"http://www.cecill.info". 
+
+As a counterpart to the access to the source code and rights to copy,
+modify and redistribute granted by the license, users are provided only
+with a limited warranty and the software's author, the holder of the
+economic rights, and the successive licensors have only limited liability. 
+
+In this respect, the user's attention is drawn to the risks associated
+with loading, using, modifying and/or developing or reproducing the
+software by the user in light of its specific status of free software,
+that may mean that it is complicated to manipulate, and that also
+therefore means that it is reserved for developers and experienced
+professionals having in-depth computer knowledge. Users are therefore
+encouraged to load and test the software's suitability as regards their
+requirements in conditions enabling the security of their systems and/or 
+data to be ensured and, more generally, to use and operate it in the 
+same conditions as regards security. 
+
+The fact that you are presently reading this means that you have had
+knowledge of the CeCILL-B license and that you accept its terms.
+
+--------------------------------------------------------------------------------
+*)
+logic safe_comp_div: int, int -> int
+axiom safe_comp_div_def: forall x, y:int. x >= 0 and y > 0 -> safe_comp_div(x,y) = x / y
+logic safe_comp_mod: int, int -> int
+axiom safe_comp_mod_def: forall x, y:int. x >= 0 and y > 0 -> safe_comp_mod(x,y) = x % y
+logic match_bool : bool, 'a, 'a -> 'a
+
+axiom match_bool_True :
+  (forall z:'a. forall z1:'a. (match_bool(true, z, z1) = z))
+
+axiom match_bool_False :
+  (forall z:'a. forall z1:'a. (match_bool(false, z, z1) = z1))
+
+function andb(x: bool, y: bool) : bool = match_bool(x, y, false)
+
+function orb(x: bool, y: bool) : bool = match_bool(x, true, y)
+
+function xorb(x: bool, y: bool) : bool = match_bool(y, match_bool(x, false,
+  true), match_bool(x, true, false))
+
+function notb(x: bool) : bool = match_bool(x, false, true)
+
+function implb(x: bool, y: bool) : bool = match_bool(y, true, match_bool(x,
+  false, true))
+
+axiom CompatOrderMult :
+  (forall x:int. forall y:int. forall z:int. ((x <= y) -> ((0 <= z) ->
+  ((x * z) <= (y * z)))))
+
+logic abs : int -> int
+
+axiom abs_def6 : (forall x:int. ((0 <= x) -> (abs(x) = x)))
+
+axiom abs_def7 : (forall x:int. ((not (0 <= x)) -> (abs(x) = (-x))))
+
+axiom Abs_le9 : (forall x:int. forall y:int. ((abs(x) <= y) -> ((-y) <= x)))
+
+axiom Abs_le10 : (forall x:int. forall y:int. ((abs(x) <= y) -> (x <= y)))
+
+axiom Abs_le11 :
+  (forall x:int. forall y:int. ((((-y) <= x) and (x <= y)) -> (abs(x) <= y)))
+
+axiom Abs_pos : (forall x:int. (0 <= abs(x)))
+
+axiom Div_mod :
+  (forall x:int. forall y:int. ((not (y = 0)) ->
+  (x = ((y * safe_comp_div(x,y)) + safe_comp_mod(x,y)))))
+
+axiom Div_bound6 :
+  (forall x:int. forall y:int. (((0 <= x) and (0 <  y)) ->
+  (0 <= safe_comp_div(x,y))))
+
+axiom Div_bound7 :
+  (forall x:int. forall y:int. (((0 <= x) and (0 <  y)) ->
+  (safe_comp_div(x,y) <= x)))
+
+axiom Mod_bound6 :
+  (forall x:int. forall y:int. ((not (y = 0)) ->
+  ((-abs(y)) <  safe_comp_mod(x,y))))
+
+axiom Mod_bound7 :
+  (forall x:int. forall y:int. ((not (y = 0)) ->
+  (safe_comp_mod(x,y) <  abs(y))))
+
+axiom Div_sign_pos :
+  (forall x:int. forall y:int. (((0 <= x) and (0 <  y)) ->
+  (0 <= safe_comp_div(x,y))))
+
+axiom Div_sign_neg :
+  (forall x:int. forall y:int. (((x <= 0) and (0 <  y)) ->
+  (safe_comp_div(x,y) <= 0)))
+
+axiom Mod_sign_pos :
+  (forall x:int. forall y:int. (((0 <= x) and (not (y = 0))) ->
+  (0 <= safe_comp_mod(x,y))))
+
+axiom Mod_sign_neg :
+  (forall x:int. forall y:int. (((x <= 0) and (not (y = 0))) ->
+  (safe_comp_mod(x,y) <= 0)))
+
+axiom Rounds_toward_zero :
+  (forall x:int. forall y:int. ((not (y = 0)) ->
+  (abs((safe_comp_div(x,y) * y)) <= abs(x))))
+
+axiom Div_1 : (forall x:int. (safe_comp_div(x,1) = x))
+
+axiom Mod_1 : (forall x:int. (safe_comp_mod(x,1) = 0))
+
+axiom Div_inf :
+  (forall x:int. forall y:int. (((0 <= x) and (x <  y)) ->
+  (safe_comp_div(x,y) = 0)))
+
+axiom Mod_inf :
+  (forall x:int. forall y:int. (((0 <= x) and (x <  y)) ->
+  (safe_comp_mod(x,y) = x)))
+
+axiom Div_mult :
+  (forall x:int. forall y:int. forall z:int [safe_comp_div(((x * y) + z),x)].
+  (((0 <  x) and ((0 <= y) and (0 <= z))) ->
+  (safe_comp_div(((x * y) + z),x) = (y + safe_comp_div(z,x)))))
+
+axiom Mod_mult :
+  (forall x:int. forall y:int. forall z:int [safe_comp_mod(((x * y) + z),x)].
+  (((0 <  x) and ((0 <= y) and (0 <= z))) ->
+  (safe_comp_mod(((x * y) + z),x) = safe_comp_mod(z,x))))
+
+type 'a set
+
+logic mem : 'a, 'a set -> prop
+
+predicate infix_eqeq(s1: 'a set, s2: 'a set) =
+  (forall x:'a. (mem(x, s1) <-> mem(x, s2)))
+
+axiom extensionality :
+  (forall s1:'a set. forall s2:'a set. (infix_eqeq(s1, s2) -> (s1 = s2)))
+
+predicate subset(s1: 'a set, s2: 'a set) =
+  (forall x:'a. (mem(x, s1) -> mem(x, s2)))
+
+axiom subset_refl : (forall s:'a set. subset(s, s))
+
+axiom subset_trans :
+  (forall s1:'a set. forall s2:'a set. forall s3:'a set. (subset(s1, s2) ->
+  (subset(s2, s3) -> subset(s1, s3))))
+
+logic empty : 'a set
+
+predicate is_empty(s: 'a set) = (forall x:'a. (not mem(x, s)))
+
+axiom empty_def1 : is_empty((empty : 'a set))
+
+axiom mem_empty6 : (forall x:'a. (not mem(x, (empty : 'a set))))
+
+axiom mem_empty7 : true
+
+logic add : 'a, 'a set -> 'a set
+
+axiom add_def16 :
+  (forall x:'a. forall y:'a.
+  (forall s:'a set. (mem(x, add(y, s)) -> ((x = y) or mem(x, s)))))
+
+axiom add_def17 :
+  (forall x:'a. forall y:'a.
+  (forall s:'a set. (((x = y) or mem(x, s)) -> mem(x, add(y, s)))))
+
+logic remove : 'a, 'a set -> 'a set
+
+axiom remove_def19 :
+  (forall x:'a. forall y:'a. forall s:'a set. (mem(x, remove(y, s)) ->
+  (not (x = y))))
+
+axiom remove_def110 :
+  (forall x:'a. forall y:'a. forall s:'a set. (mem(x, remove(y, s)) -> mem(x,
+  s)))
+
+axiom remove_def111 :
+  (forall x:'a. forall y:'a. forall s:'a set. (((not (x = y)) and mem(x,
+  s)) -> mem(x, remove(y, s))))
+
+axiom add_remove :
+  (forall x:'a. forall s:'a set. (mem(x, s) -> (add(x, remove(x, s)) = s)))
+
+axiom remove_add :
+  (forall x:'a. forall s:'a set. (remove(x, add(x, s)) = remove(x, s)))
+
+axiom subset_remove : (forall x:'a. forall s:'a set. subset(remove(x, s), s))
+
+logic union : 'a set, 'a set -> 'a set
+
+axiom union_def16 :
+  (forall s1:'a set. forall s2:'a set. forall x:'a. (mem(x, union(s1, s2)) ->
+  (mem(x, s1) or mem(x, s2))))
+
+axiom union_def17 :
+  (forall s1:'a set. forall s2:'a set. forall x:'a. ((mem(x, s1) or mem(x,
+  s2)) -> mem(x, union(s1, s2))))
+
+logic inter : 'a set, 'a set -> 'a set
+
+axiom inter_def19 :
+  (forall s1:'a set. forall s2:'a set. forall x:'a. (mem(x, inter(s1, s2)) ->
+  mem(x, s1)))
+
+axiom inter_def110 :
+  (forall s1:'a set. forall s2:'a set. forall x:'a. (mem(x, inter(s1, s2)) ->
+  mem(x, s2)))
+
+axiom inter_def111 :
+  (forall s1:'a set. forall s2:'a set. forall x:'a. ((mem(x, s1) and mem(x,
+  s2)) -> mem(x, inter(s1, s2))))
+
+logic diff : 'a set, 'a set -> 'a set
+
+axiom diff_def19 :
+  (forall s1:'a set. forall s2:'a set. forall x:'a. (mem(x, diff(s1, s2)) ->
+  mem(x, s1)))
+
+axiom diff_def110 :
+  (forall s1:'a set. forall s2:'a set. forall x:'a. (mem(x, diff(s1, s2)) ->
+  (not mem(x, s2))))
+
+axiom diff_def111 :
+  (forall s1:'a set. forall s2:'a set. forall x:'a. ((mem(x, s1) and
+  (not mem(x, s2))) -> mem(x, diff(s1, s2))))
+
+axiom subset_diff :
+  (forall s1:'a set. forall s2:'a set. subset(diff(s1, s2), s1))
+
+logic choose : 'a set -> 'a
+
+axiom choose_def :
+  (forall s:'a set. ((not is_empty(s)) -> mem(choose(s), s)))
+
+logic all : 'a set
+
+axiom all_def : (forall x:'a. mem(x, (all : 'a set)))
+
+logic b_bool : bool set
+
+axiom mem_b_bool : (forall x:bool. mem(x, b_bool))
+
+logic integer : int set
+
+axiom mem_integer : (forall x:int. mem(x, integer))
+
+logic natural : int set
+
+axiom mem_natural6 : (forall x:int. (mem(x, natural) -> (0 <= x)))
+
+axiom mem_natural7 : (forall x:int. ((0 <= x) -> mem(x, natural)))
+
+logic natural1 : int set
+
+axiom mem_natural17 : (forall x:int. (mem(x, natural1) -> (0 <  x)))
+
+axiom mem_natural18 : (forall x:int. ((0 <  x) -> mem(x, natural1)))
+
+logic nat : int set
+
+axiom mem_nat9 : (forall x:int. (mem(x, nat) -> (0 <= x)))
+
+axiom mem_nat10 : (forall x:int. (mem(x, nat) -> (x <= 2147483647)))
+
+axiom mem_nat20 :
+  (forall x:int. (((0 <= x) and (x <= 2147483647)) -> mem(x, nat)))
+
+logic nat1 : int set
+
+axiom mem_nat110 : (forall x:int. (mem(x, nat1) -> (0 <  x)))
+
+axiom mem_nat111 : (forall x:int. (mem(x, nat1) -> (x <= 2147483647)))
+
+axiom mem_nat112 :
+  (forall x:int. (((0 <  x) and (x <= 2147483647)) -> mem(x, nat1)))
+
+logic bounded_int : int set
+
+axiom mem_bounded_int9 :
+  (forall x:int. (mem(x, bounded_int) -> ((-2147483647) <= x)))
+
+axiom mem_bounded_int10 :
+  (forall x:int. (mem(x, bounded_int) -> (x <= 2147483647)))
+
+axiom mem_bounded_int11 :
+  (forall x:int. ((((-2147483647) <= x) and (x <= 2147483647)) -> mem(x,
+  bounded_int)))
+
+logic mk : int, int -> int set
+
+axiom mem_interval9 :
+  (forall x:int. forall a:int. forall b:int [mem(x, mk(a, b))]. (mem(x, mk(a,
+  b)) -> (a <= x)))
+
+axiom mem_interval10 :
+  (forall x:int. forall a:int. forall b:int [mem(x, mk(a, b))]. (mem(x, mk(a,
+  b)) -> (x <= b)))
+
+axiom mem_interval11 :
+  (forall x:int. forall a:int. forall b:int [mem(x, mk(a, b))].
+  (((a <= x) and (x <= b)) -> mem(x, mk(a, b))))
+
+axiom interval_empty :
+  (forall a:int. forall b:int. ((b <  a) -> (mk(a, b) = (empty : int set))))
+
+axiom interval_add :
+  (forall a:int. forall b:int. ((a <= b) -> (mk(a, b) = add(b, mk(a,
+  (b - 1))))))
+
+logic power : 'a set -> 'a set set
+
+axiom mem_power6 :
+  (forall x:'a set. forall y:'a set [mem(x, power(y))]. (mem(x, power(y)) ->
+  subset(x, y)))
+
+axiom mem_power7 :
+  (forall x:'a set. forall y:'a set [mem(x, power(y))]. (subset(x, y) ->
+  mem(x, power(y))))
+
+logic non_empty_power : 'a set -> 'a set set
+
+axiom mem_non_empty_power9 :
+  (forall x:'a set. forall y:'a set [mem(x, non_empty_power(y))]. (mem(x,
+  non_empty_power(y)) -> subset(x, y)))
+
+axiom mem_non_empty_power10 :
+  (forall x:'a set. forall y:'a set [mem(x, non_empty_power(y))]. (mem(x,
+  non_empty_power(y)) -> (not (x = (empty : 'a set)))))
+
+axiom mem_non_empty_power11 :
+  (forall x:'a set. forall y:'a set [mem(x, non_empty_power(y))]. ((subset(x,
+  y) and (not (x = (empty : 'a set)))) -> mem(x, non_empty_power(y))))
+
+type ('a, 'a1) tuple2 = { Tuple2_proj_1 : 'a; Tuple2_proj_2 : 'a1
+}
+
+logic relation : 'a2 set, 'b set -> ('a2, 'b) tuple2 set set
+
+axiom mem_relation9 :
+  (forall f:('a, 'b) tuple2 set. forall s:'a set. forall t:'b set. (mem(f,
+  relation(s, t)) ->
+  (forall x:'a. forall y:'b. (mem({ Tuple2_proj_1 = x; Tuple2_proj_2 = y },
+  f) -> mem(x, s)))))
+
+axiom mem_relation10 :
+  (forall f:('a, 'b) tuple2 set. forall s:'a set. forall t:'b set. (mem(f,
+  relation(s, t)) ->
+  (forall x:'a. forall y:'b. (mem({ Tuple2_proj_1 = x; Tuple2_proj_2 = y },
+  f) -> mem(y, t)))))
+
+axiom mem_relation11 :
+  (forall f:('a, 'b) tuple2 set. forall s:'a set. forall t:'b set.
+  ((forall x:'a. forall y:'b. (mem({ Tuple2_proj_1 = x; Tuple2_proj_2 = y },
+   f) -> (mem(x, s) and mem(y, t)))) ->
+  mem(f, relation(s, t))))
+
+logic image : ('a, 'b) tuple2 set, 'a set -> 'b set
+
+axiom mem_image6 :
+  (forall r:('a, 'b) tuple2 set. forall dom1:'a set. forall y:'b [mem(y,
+  image(r, dom1))]. (mem(y, image(r, dom1)) ->
+  (exists x:'a. (mem(x, dom1) and mem({ Tuple2_proj_1 = x; Tuple2_proj_2 = y
+  }, r)))))
+
+axiom mem_image7 :
+  (forall r:('a, 'b) tuple2 set. forall dom1:'a set. forall y:'b [mem(y,
+  image(r, dom1))].
+  ((exists x:'a. (mem(x, dom1) and mem({ Tuple2_proj_1 = x; Tuple2_proj_2 = y
+   }, r))) ->
+  mem(y, image(r, dom1))))
+
+axiom image_union :
+  (forall r:('a, 'b) tuple2 set. forall s:'a set. forall t:'a set. (image(r,
+  union(s, t)) = union(image(r, s), image(r, t))))
+
+axiom image_add :
+  (forall r:('a, 'b) tuple2 set. forall dom1:'a set. forall x:'a. (image(r,
+  add(x, dom1)) = union(image(r, add(x, (empty : 'a set))), image(r, dom1))))
+
+logic infix_plmngt : 'a set, 'b set -> ('a, 'b) tuple2 set set
+
+axiom mem_function12 :
+  (forall f:('a, 'b) tuple2 set. forall s:'a set. forall t:'b set. (mem(f,
+  infix_plmngt(s, t)) ->
+  (forall x:'a. forall y:'b. (mem({ Tuple2_proj_1 = x; Tuple2_proj_2 = y },
+  f) -> mem(x, s)))))
+
+axiom mem_function13 :
+  (forall f:('a, 'b) tuple2 set. forall s:'a set. forall t:'b set. (mem(f,
+  infix_plmngt(s, t)) ->
+  (forall x:'a. forall y:'b. (mem({ Tuple2_proj_1 = x; Tuple2_proj_2 = y },
+  f) -> mem(y, t)))))
+
+axiom mem_function14 :
+  (forall f:('a, 'b) tuple2 set. forall s:'a set. forall t:'b set. (mem(f,
+  infix_plmngt(s, t)) ->
+  (forall x:'a. forall y1:'b. forall y2:'b. ((mem({ Tuple2_proj_1 = x;
+  Tuple2_proj_2 = y1 }, f) and mem({ Tuple2_proj_1 = x; Tuple2_proj_2 = y2 },
+  f)) -> (y1 = y2)))))
+
+axiom mem_function15 :
+  (forall f:('a, 'b) tuple2 set. forall s:'a set. forall t:'b set.
+  (((forall x:'a. forall y:'b. (mem({ Tuple2_proj_1 = x; Tuple2_proj_2 = y },
+    f) -> (mem(x, s) and mem(y, t)))) and
+  (forall x:'a. forall y1:'b. forall y2:'b. ((mem({ Tuple2_proj_1 = x;
+  Tuple2_proj_2 = y1 }, f) and mem({ Tuple2_proj_1 = x; Tuple2_proj_2 = y2 },
+  f)) -> (y1 = y2)))) -> mem(f, infix_plmngt(s, t))))
+
+axiom domain_function :
+  (forall f:('a, 'b) tuple2 set. forall s:'a set. forall t:'b set.
+  forall x:'a. forall y:'b. (mem(f, infix_plmngt(s, t)) -> (mem({
+  Tuple2_proj_1 = x; Tuple2_proj_2 = y }, f) -> mem(x, s))))
+
+axiom range_function :
+  (forall f:('a, 'b) tuple2 set. forall s:'a set. forall t:'b set.
+  forall x:'a. forall y:'b. (mem(f, infix_plmngt(s, t)) -> (mem({
+  Tuple2_proj_1 = x; Tuple2_proj_2 = y }, f) -> mem(y, t))))
+
+axiom function_extend_range :
+  (forall f:('a, 'b) tuple2 set. forall s:'a set. forall t:'b set.
+  forall u:'b set. (subset(t, u) -> (mem(f, infix_plmngt(s, t)) -> mem(f,
+  infix_plmngt(s, u)))))
+
+axiom function_reduce_range :
+  (forall f:('a, 'b) tuple2 set. forall s:'a set. forall t:'b set.
+  forall u:'b set. (subset(u, t) -> (mem(f, infix_plmngt(s, t)) ->
+  ((forall x:'a. forall y:'b. (mem({ Tuple2_proj_1 = x; Tuple2_proj_2 = y },
+   f) -> mem(y, u))) ->
+  mem(f, infix_plmngt(s, u))))))
+
+logic inverse : ('a, 'b) tuple2 set -> ('b, 'a) tuple2 set
+
+axiom Inverse_def6 :
+  (forall r:('a, 'b) tuple2 set.
+  (forall x:'a. forall y:'b. (mem({ Tuple2_proj_1 = y; Tuple2_proj_2 = x },
+  inverse(r)) -> mem({ Tuple2_proj_1 = x; Tuple2_proj_2 = y }, r))))
+
+axiom Inverse_def7 :
+  (forall r:('a, 'b) tuple2 set.
+  (forall x:'a. forall y:'b. (mem({ Tuple2_proj_1 = x; Tuple2_proj_2 = y },
+  r) -> mem({ Tuple2_proj_1 = y; Tuple2_proj_2 = x }, inverse(r)))))
+
+logic dom : ('a, 'b) tuple2 set -> 'a set
+
+axiom dom_def6 :
+  (forall r:('a, 'b) tuple2 set.
+  (forall x:'a. (mem(x, dom(r)) ->
+  (exists y:'b. mem({ Tuple2_proj_1 = x; Tuple2_proj_2 = y }, r)))))
+
+axiom dom_def7 :
+  (forall r:('a, 'b) tuple2 set.
+  (forall x:'a.
+  ((exists y:'b. mem({ Tuple2_proj_1 = x; Tuple2_proj_2 = y }, r)) -> mem(x,
+  dom(r)))))
+
+logic ran : ('a, 'b) tuple2 set -> 'b set
+
+axiom ran_def6 :
+  (forall r:('a, 'b) tuple2 set.
+  (forall y:'b. (mem(y, ran(r)) ->
+  (exists x:'a. mem({ Tuple2_proj_1 = x; Tuple2_proj_2 = y }, r)))))
+
+axiom ran_def7 :
+  (forall r:('a, 'b) tuple2 set.
+  (forall y:'b.
+  ((exists x:'a. mem({ Tuple2_proj_1 = x; Tuple2_proj_2 = y }, r)) -> mem(y,
+  ran(r)))))
+
+axiom dom_empty : (dom((empty : ('a, 'b) tuple2 set)) = (empty : 'a set))
+
+axiom dom_add :
+  (forall f:('a, 'b) tuple2 set. forall x:'a. forall y:'b. (dom(add({
+  Tuple2_proj_1 = x; Tuple2_proj_2 = y }, f)) = add(x, dom(f))))
+
+axiom dom_singleton :
+  (forall x:'a. forall y:'b. (dom(add({ Tuple2_proj_1 = x; Tuple2_proj_2 = y
+  }, (empty : ('a, 'b) tuple2 set))) = add(x, (empty : 'a set))))
+
+logic infix_mnmngt : 'a set, 'b set -> ('a, 'b) tuple2 set set
+
+axiom mem_total_functions9 :
+  (forall f:('a, 'b) tuple2 set. forall s:'a set. forall t:'b set. (mem(f,
+  infix_mnmngt(s, t)) -> mem(f, infix_plmngt(s, t))))
+
+axiom mem_total_functions10 :
+  (forall f:('a, 'b) tuple2 set. forall s:'a set. forall t:'b set. (mem(f,
+  infix_mnmngt(s, t)) -> (dom(f) = s)))
+
+axiom mem_total_functions11 :
+  (forall f:('a, 'b) tuple2 set. forall s:'a set. forall t:'b set. ((mem(f,
+  infix_plmngt(s, t)) and (dom(f) = s)) -> mem(f, infix_mnmngt(s, t))))
+
+axiom total_function_is_function :
+  (forall f:('a, 'b) tuple2 set. forall s:'a set. forall t:'b set [mem(f,
+  infix_mnmngt(s, t))]. (mem(f, infix_mnmngt(s, t)) -> mem(f, infix_plmngt(s,
+  t))))
+
+axiom singleton_is_partial_function :
+  (forall s:'a set. forall t:'b set. forall x:'a. forall y:'b. ((mem(x,
+  s) and mem(y, t)) -> mem(add({ Tuple2_proj_1 = x; Tuple2_proj_2 = y },
+  (empty : ('a, 'b) tuple2 set)), infix_plmngt(s, t))))
+
+axiom singleton_is_function :
+  (forall x:'a. forall y:'b [add({ Tuple2_proj_1 = x; Tuple2_proj_2 = y },
+  (empty : ('a, 'b) tuple2 set))]. mem(add({ Tuple2_proj_1 = x;
+  Tuple2_proj_2 = y }, (empty : ('a, 'b) tuple2 set)), infix_mnmngt(add(x,
+  (empty : 'a set)), add(y, (empty : 'b set)))))
+
+logic apply : ('a, 'b) tuple2 set, 'a -> 'b
+
+axiom apply_def0 :
+  (forall f:('a, 'b) tuple2 set. forall s:'a set. forall t:'b set.
+  forall a1:'a. ((mem(f, infix_plmngt(s, t)) and mem(a1, dom(f))) -> mem({
+  Tuple2_proj_1 = a1; Tuple2_proj_2 = apply(f, a1) }, f)))
+
+axiom apply_def1 :
+  (forall f:('a, 'b) tuple2 set. forall s:'a set. forall t:'b set.
+  forall a1:'a. ((mem(f, infix_mnmngt(s, t)) and mem(a1, s)) -> mem({
+  Tuple2_proj_1 = a1; Tuple2_proj_2 = apply(f, a1) }, f)))
+
+axiom apply_def2 :
+  (forall f:('a, 'b) tuple2 set. forall s:'a set. forall t:'b set.
+  forall a1:'a. forall b1:'b. ((mem(f, infix_plmngt(s, t)) and mem({
+  Tuple2_proj_1 = a1; Tuple2_proj_2 = b1 }, f)) -> (apply(f, a1) = b1)))
+
+axiom apply_singleton :
+  (forall x:'a. forall y:'b. (apply(add({ Tuple2_proj_1 = x; Tuple2_proj_2 =
+  y }, (empty : ('a, 'b) tuple2 set)), x) = y))
+
+axiom apply_range :
+  (forall x:'a. forall f:('a, 'b) tuple2 set. forall s:'a set.
+  forall t:'b set [mem(f, infix_plmngt(s, t)), apply(f, x)]. ((mem(f,
+  infix_plmngt(s, t)) and mem(x, dom(f))) -> mem(apply(f, x), t)))
+
+logic semicolon : ('a, 'b) tuple2 set, ('b, 'c) tuple2 set -> ('a,
+  'c) tuple2 set
+
+axiom semicolon_def6 :
+  (forall x:'a. forall z:'c. forall p:('a, 'b) tuple2 set. forall q:('b,
+  'c) tuple2 set. (mem({ Tuple2_proj_1 = x; Tuple2_proj_2 = z }, semicolon(p,
+  q)) ->
+  (exists y:'b. (mem({ Tuple2_proj_1 = x; Tuple2_proj_2 = y }, p) and mem({
+  Tuple2_proj_1 = y; Tuple2_proj_2 = z }, q)))))
+
+axiom semicolon_def7 :
+  (forall x:'a. forall z:'c. forall p:('a, 'b) tuple2 set. forall q:('b,
+  'c) tuple2 set.
+  ((exists y:'b. (mem({ Tuple2_proj_1 = x; Tuple2_proj_2 = y }, p) and mem({
+   Tuple2_proj_1 = y; Tuple2_proj_2 = z }, q))) ->
+  mem({ Tuple2_proj_1 = x; Tuple2_proj_2 = z }, semicolon(p, q))))
+
+logic direct_product : ('a, 'b) tuple2 set, ('a, 'c) tuple2 set -> ('a, ('b,
+  'c) tuple2) tuple2 set
+
+axiom direct_product_def6 :
+  (forall e:('t, ('u, 'v) tuple2) tuple2. forall r1:('t, 'u) tuple2 set.
+  forall r2:('t, 'v) tuple2 set [mem(e, direct_product(r1, r2))]. (mem(e,
+  direct_product(r1, r2)) ->
+  (exists x:'t. exists y:'u. exists z:'v. (({ Tuple2_proj_1 = x;
+  Tuple2_proj_2 = { Tuple2_proj_1 = y; Tuple2_proj_2 = z } } = e) and (mem({
+  Tuple2_proj_1 = x; Tuple2_proj_2 = y }, r1) and mem({ Tuple2_proj_1 = x;
+  Tuple2_proj_2 = z }, r2))))))
+
+axiom direct_product_def7 :
+  (forall e:('t, ('u, 'v) tuple2) tuple2. forall r1:('t, 'u) tuple2 set.
+  forall r2:('t, 'v) tuple2 set [mem(e, direct_product(r1, r2))].
+  ((exists x:'t. exists y:'u. exists z:'v. (({ Tuple2_proj_1 = x;
+   Tuple2_proj_2 = { Tuple2_proj_1 = y; Tuple2_proj_2 = z } } = e) and (mem({
+   Tuple2_proj_1 = x; Tuple2_proj_2 = y }, r1) and mem({ Tuple2_proj_1 = x;
+   Tuple2_proj_2 = z }, r2)))) ->
+  mem(e, direct_product(r1, r2))))
+
+logic parallel_product : ('a, 'b) tuple2 set, ('c, 'd) tuple2 set -> (('a,
+  'c) tuple2, ('b, 'd) tuple2) tuple2 set
+
+axiom parallel_product_def6 :
+  (forall e:(('t, 'v) tuple2, ('u, 'w) tuple2) tuple2. forall r1:('t,
+  'u) tuple2 set. forall r2:('v, 'w) tuple2 set. (mem(e, parallel_product(r1,
+  r2)) ->
+  (exists x:'t. exists y:'v. exists z:'u. exists a:'w. (({ Tuple2_proj_1 = {
+  Tuple2_proj_1 = x; Tuple2_proj_2 = y }; Tuple2_proj_2 = { Tuple2_proj_1 =
+  z; Tuple2_proj_2 = a } } = e) and (mem({ Tuple2_proj_1 = x; Tuple2_proj_2 =
+  z }, r1) and mem({ Tuple2_proj_1 = y; Tuple2_proj_2 = a }, r2))))))
+
+axiom parallel_product_def7 :
+  (forall e:(('t, 'v) tuple2, ('u, 'w) tuple2) tuple2. forall r1:('t,
+  'u) tuple2 set. forall r2:('v, 'w) tuple2 set.
+  ((exists x:'t. exists y:'v. exists z:'u. exists a:'w. (({ Tuple2_proj_1 = {
+   Tuple2_proj_1 = x; Tuple2_proj_2 = y }; Tuple2_proj_2 = { Tuple2_proj_1 =
+   z; Tuple2_proj_2 = a } } = e) and (mem({ Tuple2_proj_1 = x;
+   Tuple2_proj_2 = z }, r1) and mem({ Tuple2_proj_1 = y; Tuple2_proj_2 = a },
+   r2)))) ->
+  mem(e, parallel_product(r1, r2))))
+
+axiom semicolon_dom :
+  (forall f:('a, 'b) tuple2 set. forall g:('b, 'c) tuple2 set.
+  subset(dom(semicolon(f, g)), dom(f)))
+
+axiom semicolon_is_function :
+  (forall f:('a, 'b) tuple2 set. forall g:('b, 'c) tuple2 set.
+  forall s:'a set. forall t:'b set. forall u:'c set. ((mem(f, infix_plmngt(s,
+  t)) and mem(g, infix_plmngt(t, u))) -> mem(semicolon(f, g), infix_plmngt(s,
+  u))))
+
+axiom apply_compose :
+  (forall x:'a. forall f:('a, 'b) tuple2 set. forall g:('b, 'c) tuple2 set.
+  forall s:'a set. forall t:'b set. forall u:'c set. ((mem(f, infix_plmngt(s,
+  t)) and (mem(g, infix_plmngt(t, u)) and (mem(x, dom(f)) and mem(apply(f,
+  x), dom(g))))) -> (apply(semicolon(f, g), x) = apply(g, apply(f, x)))))
+
+logic infix_gtplgt : 'a set, 'b set -> ('a, 'b) tuple2 set set
+
+axiom mem_partial_injection9 :
+  (forall f:('a, 'b) tuple2 set. forall s:'a set. forall t:'b set. (mem(f,
+  infix_gtplgt(s, t)) -> mem(f, infix_plmngt(s, t))))
+
+axiom mem_partial_injection10 :
+  (forall f:('a, 'b) tuple2 set. forall s:'a set. forall t:'b set. (mem(f,
+  infix_gtplgt(s, t)) -> mem(inverse(f), infix_plmngt(t, s))))
+
+axiom mem_partial_injection11 :
+  (forall f:('a, 'b) tuple2 set. forall s:'a set. forall t:'b set. ((mem(f,
+  infix_plmngt(s, t)) and mem(inverse(f), infix_plmngt(t, s))) -> mem(f,
+  infix_gtplgt(s, t))))
+
+logic infix_gtmngt : 'a set, 'b set -> ('a, 'b) tuple2 set set
+
+axiom mem_total_injection9 :
+  (forall f:('a, 'b) tuple2 set. forall s:'a set. forall t:'b set. (mem(f,
+  infix_gtmngt(s, t)) -> mem(f, infix_gtplgt(s, t))))
+
+axiom mem_total_injection10 :
+  (forall f:('a, 'b) tuple2 set. forall s:'a set. forall t:'b set. (mem(f,
+  infix_gtmngt(s, t)) -> mem(f, infix_mnmngt(s, t))))
+
+axiom mem_total_injection11 :
+  (forall f:('a, 'b) tuple2 set. forall s:'a set. forall t:'b set. ((mem(f,
+  infix_gtplgt(s, t)) and mem(f, infix_mnmngt(s, t))) -> mem(f,
+  infix_gtmngt(s, t))))
+
+axiom mem_total_injection_alt9 :
+  (forall f:('a, 'b) tuple2 set. forall s:'a set. forall t:'b set. (mem(f,
+  infix_gtmngt(s, t)) -> mem(f, infix_mnmngt(s, t))))
+
+axiom mem_total_injection_alt10 :
+  (forall f:('a, 'b) tuple2 set. forall s:'a set. forall t:'b set. (mem(f,
+  infix_gtmngt(s, t)) -> mem(inverse(f), infix_plmngt(t, s))))
+
+axiom mem_total_injection_alt11 :
+  (forall f:('a, 'b) tuple2 set. forall s:'a set. forall t:'b set. ((mem(f,
+  infix_mnmngt(s, t)) and mem(inverse(f), infix_plmngt(t, s))) -> mem(f,
+  infix_gtmngt(s, t))))
+
+axiom injection :
+  (forall f:('a, 'b) tuple2 set. forall s:'a set. forall t:'b set.
+  (forall x:'a. forall y:'a. (mem(f, infix_gtmngt(s, t)) -> (mem(x, s) ->
+  (mem(y, s) -> ((apply(f, x) = apply(f, y)) -> (x = y)))))))
+
+logic infix_plmngtgt : 'a set, 'b set -> ('a, 'b) tuple2 set set
+
+axiom mem_partial_surjection9 :
+  (forall f:('a, 'b) tuple2 set. forall s:'a set. forall t:'b set. (mem(f,
+  infix_plmngtgt(s, t)) -> mem(f, infix_plmngt(s, t))))
+
+axiom mem_partial_surjection10 :
+  (forall f:('a, 'b) tuple2 set. forall s:'a set. forall t:'b set. (mem(f,
+  infix_plmngtgt(s, t)) -> (ran(f) = t)))
+
+axiom mem_partial_surjection11 :
+  (forall f:('a, 'b) tuple2 set. forall s:'a set. forall t:'b set. ((mem(f,
+  infix_plmngt(s, t)) and (ran(f) = t)) -> mem(f, infix_plmngtgt(s, t))))
+
+logic infix_mnmngtgt : 'a set, 'b set -> ('a, 'b) tuple2 set set
+
+axiom mem_total_surjection9 :
+  (forall f:('a, 'b) tuple2 set. forall s:'a set. forall t:'b set. (mem(f,
+  infix_mnmngtgt(s, t)) -> mem(f, infix_plmngtgt(s, t))))
+
+axiom mem_total_surjection10 :
+  (forall f:('a, 'b) tuple2 set. forall s:'a set. forall t:'b set. (mem(f,
+  infix_mnmngtgt(s, t)) -> mem(f, infix_mnmngt(s, t))))
+
+axiom mem_total_surjection11 :
+  (forall f:('a, 'b) tuple2 set. forall s:'a set. forall t:'b set. ((mem(f,
+  infix_plmngtgt(s, t)) and mem(f, infix_mnmngt(s, t))) -> mem(f,
+  infix_mnmngtgt(s, t))))
+
+logic infix_gtplgtgt : 'a set, 'b set -> ('a, 'b) tuple2 set set
+
+axiom mem_partial_bijection9 :
+  (forall f:('a, 'b) tuple2 set. forall s:'a set. forall t:'b set. (mem(f,
+  infix_gtplgtgt(s, t)) -> mem(f, infix_gtplgt(s, t))))
+
+axiom mem_partial_bijection10 :
+  (forall f:('a, 'b) tuple2 set. forall s:'a set. forall t:'b set. (mem(f,
+  infix_gtplgtgt(s, t)) -> mem(f, infix_plmngtgt(s, t))))
+
+axiom mem_partial_bijection11 :
+  (forall f:('a, 'b) tuple2 set. forall s:'a set. forall t:'b set. ((mem(f,
+  infix_gtplgt(s, t)) and mem(f, infix_plmngtgt(s, t))) -> mem(f,
+  infix_gtplgtgt(s, t))))
+
+logic infix_gtmngtgt : 'a set, 'b set -> ('a, 'b) tuple2 set set
+
+axiom mem_total_bijection9 :
+  (forall f:('a, 'b) tuple2 set. forall s:'a set. forall t:'b set. (mem(f,
+  infix_gtmngtgt(s, t)) -> mem(f, infix_gtmngt(s, t))))
+
+axiom mem_total_bijection10 :
+  (forall f:('a, 'b) tuple2 set. forall s:'a set. forall t:'b set. (mem(f,
+  infix_gtmngtgt(s, t)) -> mem(f, infix_mnmngtgt(s, t))))
+
+axiom mem_total_bijection11 :
+  (forall f:('a, 'b) tuple2 set. forall s:'a set. forall t:'b set. ((mem(f,
+  infix_gtmngt(s, t)) and mem(f, infix_mnmngtgt(s, t))) -> mem(f,
+  infix_gtmngtgt(s, t))))
+
+logic id : 'a set -> ('a, 'a) tuple2 set
+
+axiom id_def9 :
+  (forall x:'a. forall y:'a. forall s:'a set. (mem({ Tuple2_proj_1 = x;
+  Tuple2_proj_2 = y }, id(s)) -> mem(x, s)))
+
+axiom id_def10 :
+  (forall x:'a. forall y:'a. forall s:'a set. (mem({ Tuple2_proj_1 = x;
+  Tuple2_proj_2 = y }, id(s)) -> (x = y)))
+
+axiom id_def11 :
+  (forall x:'a. forall y:'a. forall s:'a set. ((mem(x, s) and (x = y)) ->
+  mem({ Tuple2_proj_1 = x; Tuple2_proj_2 = y }, id(s))))
+
+axiom id_dom : (forall s:'a set. (dom(id(s)) = s))
+
+axiom id_ran : (forall s:'a set. (ran(id(s)) = s))
+
+axiom id_fun : (forall s:'a set. mem(id(s), infix_plmngt(s, s)))
+
+axiom id_total_fun : (forall s:'a set. mem(id(s), infix_mnmngt(s, s)))
+
+function seq_length(n: int, s: 'a set) : (int, 'a) tuple2 set set =
+  infix_mnmngt(mk(1, n), s)
+
+axiom length_uniq :
+  (forall n1:int. forall n2:int. forall s1:'a set. forall s2:'a set.
+  forall r:(int, 'a) tuple2 set. (((0 <= n1) and mem(r, seq_length(n1,
+  s1))) -> (((0 <= n2) and mem(r, seq_length(n2, s2))) -> (n1 = n2))))
+
+logic size : (int, 'a) tuple2 set -> int
+
+axiom size_def :
+  (forall n:int. forall s:'a set. forall r:(int, 'a) tuple2 set.
+  (((0 <= n) and mem(r, seq_length(n, s))) -> (size(r) = n)))
+
+logic seq : 'a set -> (int, 'a) tuple2 set set
+
+axiom seq_def9 :
+  (forall s:'a set. forall r:(int, 'a) tuple2 set. (mem(r, seq(s)) ->
+  (0 <= size(r))))
+
+axiom seq_def10 :
+  (forall s:'a set. forall r:(int, 'a) tuple2 set. (mem(r, seq(s)) -> mem(r,
+  seq_length(size(r), s))))
+
+axiom seq_def11 :
+  (forall s:'a set. forall r:(int, 'a) tuple2 set. (((0 <= size(r)) and
+  mem(r, seq_length(size(r), s))) -> mem(r, seq(s))))
+
+axiom seq_as_total_function :
+  (forall s:'a set. forall r:(int, 'a) tuple2 set. (mem(r, seq(s)) -> mem(r,
+  infix_mnmngt(mk(1, size(r)), s))))
+
+logic seq1 : 'a set -> (int, 'a) tuple2 set set
+
+logic iseq : 'a set -> (int, 'a) tuple2 set set
+
+logic iseq1 : 'a set -> (int, 'a) tuple2 set set
+
+logic perm : 'a set -> (int, 'a) tuple2 set set
+
+logic is_finite_subset : 'a set, 'a set, int -> prop
+
+axiom Empty : (forall s:'a set. is_finite_subset((empty : 'a set), s, 0))
+
+axiom Add_mem :
+  (forall x:'a. forall s1:'a set. forall s2:'a set. forall c:int.
+  (is_finite_subset(s1, s2, c) -> (mem(x, s2) -> (mem(x, s1) ->
+  is_finite_subset(add(x, s1), s2, c)))))
+
+axiom Add_notmem :
+  (forall x:'a. forall s1:'a set. forall s2:'a set. forall c:int.
+  (is_finite_subset(s1, s2, c) -> (mem(x, s2) -> ((not mem(x, s1)) ->
+  is_finite_subset(add(x, s1), s2, (c + 1))))))
+
+axiom is_finite_subset_inversion :
+  (forall z:'a set. forall z1:'a set. forall z2:int. (is_finite_subset(z, z1,
+  z2) ->
+  (((exists s:'a set. (((z = (empty : 'a set)) and (z1 = s)) and (z2 = 0))) or
+  (exists x:'a. exists s1:'a set. exists s2:'a set. exists c:int.
+  (is_finite_subset(s1, s2, c) and (mem(x, s2) and (mem(x, s1) and
+  (((z = add(x, s1)) and (z1 = s2)) and (z2 = c))))))) or
+  (exists x:'a. exists s1:'a set. exists s2:'a set. exists c:int.
+  (is_finite_subset(s1, s2, c) and (mem(x, s2) and ((not mem(x, s1)) and
+  (((z = add(x, s1)) and (z1 = s2)) and (z2 = (c + 1))))))))))
+
+axiom finite_interval :
+  (forall a:int. forall b:int. ((a <= b) -> is_finite_subset(mk(a, b),
+  integer, ((b - a) + 1))))
+
+axiom finite_interval_empty :
+  (forall a:int. forall b:int. ((b <  a) -> is_finite_subset(mk(a, b),
+  integer, 0)))
+
+logic finite_subsets : 'a set -> 'a set set
+
+axiom finite_subsets_def6 :
+  (forall s:'a set. forall x:'a set. (mem(x, finite_subsets(s)) ->
+  (exists c:int. is_finite_subset(x, s, c))))
+
+axiom finite_subsets_def7 :
+  (forall s:'a set. forall x:'a set.
+  ((exists c:int. is_finite_subset(x, s, c)) -> mem(x, finite_subsets(s))))
+
+axiom finite_Empty :
+  (forall s:'a set. mem((empty : 'a set), finite_subsets(s)))
+
+axiom finite_Add :
+  (forall x:'a. forall s1:'a set. forall s2:'a set. (mem(s1,
+  finite_subsets(s2)) -> (mem(x, s2) -> mem(add(x, s1),
+  finite_subsets(s2)))))
+
+axiom finite_Union :
+  (forall s1:'a set. forall s2:'a set. forall s3:'a set. (mem(s1,
+  finite_subsets(s3)) -> (mem(s2, finite_subsets(s3)) -> mem(union(s1, s2),
+  finite_subsets(s3)))))
+
+axiom finite_inversion :
+  (forall s1:'a set. forall s2:'a set. (mem(s1, finite_subsets(s2)) ->
+  ((s1 = (empty : 'a set)) or
+  (exists x:'a. exists s3:'a set. ((s1 = add(x, s3)) and mem(s3,
+  finite_subsets(s2)))))))
+
+logic non_empty_finite_subsets : 'a set -> 'a set set
+
+axiom non_empty_finite_subsets_def6 :
+  (forall s:'a set. forall x:'a set. (mem(x, non_empty_finite_subsets(s)) ->
+  (exists c:int. (is_finite_subset(x, s, c) and
+  (not (x = (empty : 'a set)))))))
+
+axiom non_empty_finite_subsets_def7 :
+  (forall s:'a set. forall x:'a set.
+  ((exists c:int. (is_finite_subset(x, s, c) and
+   (not (x = (empty : 'a set))))) ->
+  mem(x, non_empty_finite_subsets(s))))
+
+axiom card_non_neg :
+  (forall s:'a set. forall x:'a set. forall c:int. (is_finite_subset(x, s,
+  c) -> (0 <= c)))
+
+axiom card_unique :
+  (forall s:'a set. forall x:'a set. forall c1:int. forall c2:int.
+  (is_finite_subset(x, s, c1) -> (is_finite_subset(x, s, c2) -> (c1 = c2))))
+
+logic card : 'a set -> int
+
+axiom card_def :
+  (forall s:'a set. forall x:'a set. forall c:int. (is_finite_subset(x, s,
+  c) -> (card(x) = c)))
+
+axiom card_Empty : (card((empty : 'a set)) = 0)
+
+axiom card_Add_not_mem :
+  (forall x:'a. forall s1:'a set. forall s2:'a set [mem(s1,
+  finite_subsets(s2)), card(add(x, s1))]. (mem(s1, finite_subsets(s2)) ->
+  ((not mem(x, s1)) -> (card(add(x, s1)) = (card(s1) + 1)))))
+
+axiom card_Add_mem :
+  (forall x:'a. forall s1:'a set. forall s2:'a set [mem(s1,
+  finite_subsets(s2)), card(add(x, s1))]. (mem(s1, finite_subsets(s2)) ->
+  (mem(x, s1) -> (card(add(x, s1)) = card(s1)))))
+
+axiom card_Union :
+  (forall s1:'a set. forall s2:'a set. forall s3:'a set [mem(s1,
+  finite_subsets(s3)), mem(s2, finite_subsets(s3)), card(union(s1, s2))].
+  (mem(s1, finite_subsets(s3)) -> (mem(s2, finite_subsets(s3)) ->
+  (is_empty(inter(s1, s2)) -> (card(union(s1,
+  s2)) = (card(s1) + card(s2)))))))
+
+logic times : 'a set, 'b set -> ('a, 'b) tuple2 set
+
+axiom times_def9 :
+  (forall a:'a1 set. forall b:'b1 set. forall x:'a1. forall y:'b1 [mem({
+  Tuple2_proj_1 = x; Tuple2_proj_2 = y }, times(a, b))]. (mem({
+  Tuple2_proj_1 = x; Tuple2_proj_2 = y }, times(a, b)) -> mem(x, a)))
+
+axiom times_def10 :
+  (forall a:'a1 set. forall b:'b1 set. forall x:'a1. forall y:'b1 [mem({
+  Tuple2_proj_1 = x; Tuple2_proj_2 = y }, times(a, b))]. (mem({
+  Tuple2_proj_1 = x; Tuple2_proj_2 = y }, times(a, b)) -> mem(y, b)))
+
+axiom times_def11 :
+  (forall a:'a1 set. forall b:'b1 set. forall x:'a1. forall y:'b1 [mem({
+  Tuple2_proj_1 = x; Tuple2_proj_2 = y }, times(a, b))]. ((mem(x, a) and
+  mem(y, b)) -> mem({ Tuple2_proj_1 = x; Tuple2_proj_2 = y }, times(a, b))))
+
+function relations(u: 'a set, v: 'b set) : ('a, 'b) tuple2 set set =
+  power(times(u, v))
+
+axiom break_mem_in_add6 :
+  (forall c:('a, 'b) tuple2. forall s:('a, 'b) tuple2 set. forall x:'a.
+  forall y:'b. (mem(c, add({ Tuple2_proj_1 = x; Tuple2_proj_2 = y }, s)) ->
+  ((c = { Tuple2_proj_1 = x; Tuple2_proj_2 = y }) or mem(c, s))))
+
+axiom break_mem_in_add7 :
+  (forall c:('a, 'b) tuple2. forall s:('a, 'b) tuple2 set. forall x:'a.
+  forall y:'b. (((c = { Tuple2_proj_1 = x; Tuple2_proj_2 = y }) or mem(c,
+  s)) -> mem(c, add({ Tuple2_proj_1 = x; Tuple2_proj_2 = y }, s))))
+
+axiom break_power_times6 :
+  (forall r:('a, 'b) tuple2 set. forall u:'a set. forall v:'b set. (mem(r,
+  power(times(u, v))) -> subset(r, times(u, v))))
+
+axiom break_power_times7 :
+  (forall r:('a, 'b) tuple2 set. forall u:'a set. forall v:'b set. (subset(r,
+  times(u, v)) -> mem(r, power(times(u, v)))))
+
+axiom subset_of_times9 :
+  (forall r:('a, 'b) tuple2 set. forall u:'a set. forall v:'b set. (subset(r,
+  times(u, v)) ->
+  (forall x:'a. forall y:'b. (mem({ Tuple2_proj_1 = x; Tuple2_proj_2 = y },
+  r) -> mem(x, u)))))
+
+axiom subset_of_times10 :
+  (forall r:('a, 'b) tuple2 set. forall u:'a set. forall v:'b set. (subset(r,
+  times(u, v)) ->
+  (forall x:'a. forall y:'b. (mem({ Tuple2_proj_1 = x; Tuple2_proj_2 = y },
+  r) -> mem(y, v)))))
+
+axiom subset_of_times11 :
+  (forall r:('a, 'b) tuple2 set. forall u:'a set. forall v:'b set.
+  ((forall x:'a. forall y:'b. (mem({ Tuple2_proj_1 = x; Tuple2_proj_2 = y },
+   r) -> (mem(x, u) and mem(y, v)))) ->
+  subset(r, times(u, v))))
+
+axiom apply_times :
+  (forall s:'a set. forall x:'a. forall y:'b [apply(times(s, add(y,
+  (empty : 'b set))), x)]. (mem(x, s) -> (apply(times(s, add(y,
+  (empty : 'b set))), x) = y)))
+
+logic range_restriction : ('a, 'b) tuple2 set, 'b set -> ('a, 'b) tuple2 set
+
+axiom range_restriction_def9 :
+  (forall x:'e1. forall y:'e2. forall r:('e1, 'e2) tuple2 set.
+  forall f:'e2 set. (subset(f, ran(r)) -> (mem({ Tuple2_proj_1 = x;
+  Tuple2_proj_2 = y }, range_restriction(r, f)) -> mem({ Tuple2_proj_1 = x;
+  Tuple2_proj_2 = y }, r))))
+
+axiom range_restriction_def10 :
+  (forall x:'e1. forall y:'e2. forall r:('e1, 'e2) tuple2 set.
+  forall f:'e2 set. (subset(f, ran(r)) -> (mem({ Tuple2_proj_1 = x;
+  Tuple2_proj_2 = y }, range_restriction(r, f)) -> mem(y, f))))
+
+axiom range_restriction_def11 :
+  (forall x:'e1. forall y:'e2. forall r:('e1, 'e2) tuple2 set.
+  forall f:'e2 set. (subset(f, ran(r)) -> ((mem({ Tuple2_proj_1 = x;
+  Tuple2_proj_2 = y }, r) and mem(y, f)) -> mem({ Tuple2_proj_1 = x;
+  Tuple2_proj_2 = y }, range_restriction(r, f)))))
+
+logic range_substraction : ('a, 'b) tuple2 set, 'b set -> ('a, 'b) tuple2 set
+
+axiom range_substraction_def9 :
+  (forall x:'e1. forall y:'e2. forall r:('e1, 'e2) tuple2 set.
+  forall f:'e2 set. (mem({ Tuple2_proj_1 = x; Tuple2_proj_2 = y },
+  range_substraction(r, f)) -> mem({ Tuple2_proj_1 = x; Tuple2_proj_2 = y },
+  r)))
+
+axiom range_substraction_def10 :
+  (forall x:'e1. forall y:'e2. forall r:('e1, 'e2) tuple2 set.
+  forall f:'e2 set. (mem({ Tuple2_proj_1 = x; Tuple2_proj_2 = y },
+  range_substraction(r, f)) -> (not mem(y, f))))
+
+axiom range_substraction_def11 :
+  (forall x:'e1. forall y:'e2. forall r:('e1, 'e2) tuple2 set.
+  forall f:'e2 set. ((mem({ Tuple2_proj_1 = x; Tuple2_proj_2 = y }, r) and
+  (not mem(y, f))) -> mem({ Tuple2_proj_1 = x; Tuple2_proj_2 = y },
+  range_substraction(r, f))))
+
+logic domain_restriction : 'a set, ('a, 'b) tuple2 set -> ('a, 'b) tuple2 set
+
+axiom domain_restriction_def9 :
+  (forall x:'e1. forall y:'e2. forall r:('e1, 'e2) tuple2 set.
+  forall f:'e1 set. (mem({ Tuple2_proj_1 = x; Tuple2_proj_2 = y },
+  domain_restriction(f, r)) -> mem({ Tuple2_proj_1 = x; Tuple2_proj_2 = y },
+  r)))
+
+axiom domain_restriction_def10 :
+  (forall x:'e1. forall y:'e2. forall r:('e1, 'e2) tuple2 set.
+  forall f:'e1 set. (mem({ Tuple2_proj_1 = x; Tuple2_proj_2 = y },
+  domain_restriction(f, r)) -> mem(x, f)))
+
+axiom domain_restriction_def11 :
+  (forall x:'e1. forall y:'e2. forall r:('e1, 'e2) tuple2 set.
+  forall f:'e1 set. ((mem({ Tuple2_proj_1 = x; Tuple2_proj_2 = y }, r) and
+  mem(x, f)) -> mem({ Tuple2_proj_1 = x; Tuple2_proj_2 = y },
+  domain_restriction(f, r))))
+
+logic domain_substraction : 'a set, ('a, 'b) tuple2 set -> ('a,
+  'b) tuple2 set
+
+axiom domain_substraction_def9 :
+  (forall x:'e1. forall y:'e2. forall r:('e1, 'e2) tuple2 set.
+  forall f:'e1 set. (subset(f, dom(r)) -> (mem({ Tuple2_proj_1 = x;
+  Tuple2_proj_2 = y }, domain_substraction(f, r)) -> mem({ Tuple2_proj_1 = x;
+  Tuple2_proj_2 = y }, r))))
+
+axiom domain_substraction_def10 :
+  (forall x:'e1. forall y:'e2. forall r:('e1, 'e2) tuple2 set.
+  forall f:'e1 set. (subset(f, dom(r)) -> (mem({ Tuple2_proj_1 = x;
+  Tuple2_proj_2 = y }, domain_substraction(f, r)) -> (not mem(x, f)))))
+
+axiom domain_substraction_def11 :
+  (forall x:'e1. forall y:'e2. forall r:('e1, 'e2) tuple2 set.
+  forall f:'e1 set. (subset(f, dom(r)) -> ((mem({ Tuple2_proj_1 = x;
+  Tuple2_proj_2 = y }, r) and (not mem(x, f))) -> mem({ Tuple2_proj_1 = x;
+  Tuple2_proj_2 = y }, domain_substraction(f, r)))))
+
+logic infix_lspl : ('a, 'b) tuple2 set, ('a, 'b) tuple2 set -> ('a,
+  'b) tuple2 set
+
+axiom overriding_def9 :
+  (forall x:'a. forall y:'b. forall q:('a, 'b) tuple2 set. forall r:('a,
+  'b) tuple2 set. (mem({ Tuple2_proj_1 = x; Tuple2_proj_2 = y },
+  infix_lspl(q, r)) -> (mem(x, dom(r)) -> mem({ Tuple2_proj_1 = x;
+  Tuple2_proj_2 = y }, r))))
+
+axiom overriding_def10 :
+  (forall x:'a. forall y:'b. forall q:('a, 'b) tuple2 set. forall r:('a,
+  'b) tuple2 set. (mem({ Tuple2_proj_1 = x; Tuple2_proj_2 = y },
+  infix_lspl(q, r)) -> ((not mem(x, dom(r))) -> mem({ Tuple2_proj_1 = x;
+  Tuple2_proj_2 = y }, q))))
+
+axiom overriding_def11 :
+  (forall x:'a. forall y:'b. forall q:('a, 'b) tuple2 set. forall r:('a,
+  'b) tuple2 set. (((mem(x, dom(r)) and mem({ Tuple2_proj_1 = x;
+  Tuple2_proj_2 = y }, r)) or ((not mem(x, dom(r))) and mem({ Tuple2_proj_1 =
+  x; Tuple2_proj_2 = y }, q))) -> mem({ Tuple2_proj_1 = x; Tuple2_proj_2 = y
+  }, infix_lspl(q, r))))
+
+axiom function_overriding :
+  (forall s:'a set. forall t:'b set. forall f:('a, 'b) tuple2 set.
+  forall g:('a, 'b) tuple2 set. ((mem(f, infix_plmngt(s, t)) and mem(g,
+  infix_plmngt(s, t))) -> mem(infix_lspl(f, g), infix_plmngt(s, t))))
+
+axiom dom_overriding :
+  (forall f:('a, 'b) tuple2 set. forall g:('a, 'b) tuple2 set
+  [dom(infix_lspl(f, g))]. (dom(infix_lspl(f, g)) = union(dom(f), dom(g))))
+
+axiom apply_overriding_1 :
+  (forall s:'a set. forall t:'b set. forall f:('a, 'b) tuple2 set.
+  forall g:('a, 'b) tuple2 set. forall x:'a [mem(f, infix_plmngt(s, t)),
+  mem(g, infix_plmngt(s, t)), apply(infix_lspl(f, g), x)]. ((mem(f,
+  infix_plmngt(s, t)) and mem(g, infix_plmngt(s, t))) -> (mem(x, dom(g)) ->
+  (apply(infix_lspl(f, g), x) = apply(g, x)))))
+
+axiom apply_overriding_2 :
+  (forall s:'a set. forall t:'b set. forall f:('a, 'b) tuple2 set.
+  forall g:('a, 'b) tuple2 set. forall x:'a [mem(f, infix_plmngt(s, t)),
+  apply(infix_lspl(f, g), x)| mem(g, infix_plmngt(s, t)), apply(infix_lspl(f,
+  g), x)]. ((mem(f, infix_plmngt(s, t)) and mem(g, infix_plmngt(s, t))) ->
+  ((not mem(x, dom(g))) -> (mem(x, dom(f)) -> (apply(infix_lspl(f, g),
+  x) = apply(f, x))))))
+
+type uninterpreted_type
+
+type enum_OBF__aa = E_OBF__bb | E_OBF__cc | E_OBF__dd | E_OBF__ee | E_OBF__ff
+  | E_OBF__gg | E_OBF__hh
+
+logic match_enum_OBF__aa : enum_OBF__aa, 'a, 'a, 'a, 'a, 'a, 'a, 'a -> 'a
+
+axiom match_enum_OBF__aa_E_OBF__bb :
+  (forall z:'a. forall z1:'a. forall z2:'a. forall z3:'a. forall z4:'a.
+  forall z5:'a. forall z6:'a. (match_enum_OBF__aa(E_OBF__bb, z, z1, z2, z3,
+  z4, z5, z6) = z))
+
+axiom match_enum_OBF__aa_E_OBF__cc :
+  (forall z:'a. forall z1:'a. forall z2:'a. forall z3:'a. forall z4:'a.
+  forall z5:'a. forall z6:'a. (match_enum_OBF__aa(E_OBF__cc, z, z1, z2, z3,
+  z4, z5, z6) = z1))
+
+axiom match_enum_OBF__aa_E_OBF__dd :
+  (forall z:'a. forall z1:'a. forall z2:'a. forall z3:'a. forall z4:'a.
+  forall z5:'a. forall z6:'a. (match_enum_OBF__aa(E_OBF__dd, z, z1, z2, z3,
+  z4, z5, z6) = z2))
+
+axiom match_enum_OBF__aa_E_OBF__ee :
+  (forall z:'a. forall z1:'a. forall z2:'a. forall z3:'a. forall z4:'a.
+  forall z5:'a. forall z6:'a. (match_enum_OBF__aa(E_OBF__ee, z, z1, z2, z3,
+  z4, z5, z6) = z3))
+
+axiom match_enum_OBF__aa_E_OBF__ff :
+  (forall z:'a. forall z1:'a. forall z2:'a. forall z3:'a. forall z4:'a.
+  forall z5:'a. forall z6:'a. (match_enum_OBF__aa(E_OBF__ff, z, z1, z2, z3,
+  z4, z5, z6) = z4))
+
+axiom match_enum_OBF__aa_E_OBF__gg :
+  (forall z:'a. forall z1:'a. forall z2:'a. forall z3:'a. forall z4:'a.
+  forall z5:'a. forall z6:'a. (match_enum_OBF__aa(E_OBF__gg, z, z1, z2, z3,
+  z4, z5, z6) = z5))
+
+axiom match_enum_OBF__aa_E_OBF__hh :
+  (forall z:'a. forall z1:'a. forall z2:'a. forall z3:'a. forall z4:'a.
+  forall z5:'a. forall z6:'a. (match_enum_OBF__aa(E_OBF__hh, z, z1, z2, z3,
+  z4, z5, z6) = z6))
+
+logic set_enum_OBF__aa : enum_OBF__aa set
+
+axiom set_enum_OBF__aa_axiom :
+  (forall x:enum_OBF__aa. mem(x, set_enum_OBF__aa))
+
+type enum_OBF__ii = E_OBF__jj | E_OBF__kk | E_OBF__ll | E_OBF__mm | E_OBF__nn
+  | E_OBF__oo | E_OBF__pp | E_OBF__qq | E_OBF__rr | E_OBF__ss
+
+logic match_enum_OBF__ii : enum_OBF__ii, 'a, 'a, 'a, 'a, 'a, 'a, 'a, 'a, 'a,
+  'a -> 'a
+
+axiom match_enum_OBF__ii_E_OBF__jj :
+  (forall z:'a. forall z1:'a. forall z2:'a. forall z3:'a. forall z4:'a.
+  forall z5:'a. forall z6:'a. forall z7:'a. forall z8:'a. forall z9:'a.
+  (match_enum_OBF__ii(E_OBF__jj, z, z1, z2, z3, z4, z5, z6, z7, z8, z9) = z))
+
+axiom match_enum_OBF__ii_E_OBF__kk :
+  (forall z:'a. forall z1:'a. forall z2:'a. forall z3:'a. forall z4:'a.
+  forall z5:'a. forall z6:'a. forall z7:'a. forall z8:'a. forall z9:'a.
+  (match_enum_OBF__ii(E_OBF__kk, z, z1, z2, z3, z4, z5, z6, z7, z8,
+  z9) = z1))
+
+axiom match_enum_OBF__ii_E_OBF__ll :
+  (forall z:'a. forall z1:'a. forall z2:'a. forall z3:'a. forall z4:'a.
+  forall z5:'a. forall z6:'a. forall z7:'a. forall z8:'a. forall z9:'a.
+  (match_enum_OBF__ii(E_OBF__ll, z, z1, z2, z3, z4, z5, z6, z7, z8,
+  z9) = z2))
+
+axiom match_enum_OBF__ii_E_OBF__mm :
+  (forall z:'a. forall z1:'a. forall z2:'a. forall z3:'a. forall z4:'a.
+  forall z5:'a. forall z6:'a. forall z7:'a. forall z8:'a. forall z9:'a.
+  (match_enum_OBF__ii(E_OBF__mm, z, z1, z2, z3, z4, z5, z6, z7, z8,
+  z9) = z3))
+
+axiom match_enum_OBF__ii_E_OBF__nn :
+  (forall z:'a. forall z1:'a. forall z2:'a. forall z3:'a. forall z4:'a.
+  forall z5:'a. forall z6:'a. forall z7:'a. forall z8:'a. forall z9:'a.
+  (match_enum_OBF__ii(E_OBF__nn, z, z1, z2, z3, z4, z5, z6, z7, z8,
+  z9) = z4))
+
+axiom match_enum_OBF__ii_E_OBF__oo :
+  (forall z:'a. forall z1:'a. forall z2:'a. forall z3:'a. forall z4:'a.
+  forall z5:'a. forall z6:'a. forall z7:'a. forall z8:'a. forall z9:'a.
+  (match_enum_OBF__ii(E_OBF__oo, z, z1, z2, z3, z4, z5, z6, z7, z8,
+  z9) = z5))
+
+axiom match_enum_OBF__ii_E_OBF__pp :
+  (forall z:'a. forall z1:'a. forall z2:'a. forall z3:'a. forall z4:'a.
+  forall z5:'a. forall z6:'a. forall z7:'a. forall z8:'a. forall z9:'a.
+  (match_enum_OBF__ii(E_OBF__pp, z, z1, z2, z3, z4, z5, z6, z7, z8,
+  z9) = z6))
+
+axiom match_enum_OBF__ii_E_OBF__qq :
+  (forall z:'a. forall z1:'a. forall z2:'a. forall z3:'a. forall z4:'a.
+  forall z5:'a. forall z6:'a. forall z7:'a. forall z8:'a. forall z9:'a.
+  (match_enum_OBF__ii(E_OBF__qq, z, z1, z2, z3, z4, z5, z6, z7, z8,
+  z9) = z7))
+
+axiom match_enum_OBF__ii_E_OBF__rr :
+  (forall z:'a. forall z1:'a. forall z2:'a. forall z3:'a. forall z4:'a.
+  forall z5:'a. forall z6:'a. forall z7:'a. forall z8:'a. forall z9:'a.
+  (match_enum_OBF__ii(E_OBF__rr, z, z1, z2, z3, z4, z5, z6, z7, z8,
+  z9) = z8))
+
+axiom match_enum_OBF__ii_E_OBF__ss :
+  (forall z:'a. forall z1:'a. forall z2:'a. forall z3:'a. forall z4:'a.
+  forall z5:'a. forall z6:'a. forall z7:'a. forall z8:'a. forall z9:'a.
+  (match_enum_OBF__ii(E_OBF__ss, z, z1, z2, z3, z4, z5, z6, z7, z8,
+  z9) = z9))
+
+logic set_enum_OBF__ii : enum_OBF__ii set
+
+axiom set_enum_OBF__ii_axiom :
+  (forall x:enum_OBF__ii. mem(x, set_enum_OBF__ii))
+
+predicate f1(v_OBF__zzff: (int, int) tuple2 set, v_OBF__zzee: (int,
+  int) tuple2 set, v_OBF__zzdd: int, v_OBF__zzcc: (int, int) tuple2 set,
+  v_OBF__zzbb: int set, v_OBF__zz: int set, v_OBF__yyff: (int,
+  int) tuple2 set, v_OBF__yyee: int, v_OBF__yydd: int, v_OBF__yycc: (int,
+  int) tuple2 set, v_OBF__yybb: bool, v_OBF__yy: int set, v_OBF__xxff: (int,
+  int) tuple2 set, v_OBF__xxee: int, v_OBF__xxdd: (int, int) tuple2 set,
+  v_OBF__xxcc: (int, int) tuple2 set, v_OBF__xxbb: int set, v_OBF__xx: int,
+  v_OBF__wwff: (int, int) tuple2 set, v_OBF__wwee: int, v_OBF__wwdd: int set,
+  v_OBF__wwcc: (int, int) tuple2 set, v_OBF__wwbb: int set,
+  v_OBF__ww: int set, v_OBF__vvff: (int, int) tuple2 set, v_OBF__vvee: bool,
+  v_OBF__vvdd: ((int, int) tuple2, int) tuple2 set, v_OBF__vvcc: (int,
+  int) tuple2 set, v_OBF__vvbb: (int, int) tuple2 set, v_OBF__vv: int,
+  v_OBF__uuff: (int, int) tuple2 set, v_OBF__uuee: int, v_OBF__uudd: (int,
+  int) tuple2 set, v_OBF__uucc: int set, v_OBF__uubb: int set,
+  v_OBF__uu: int set, v_OBF__ttff: (int, int) tuple2 set, v_OBF__ttee: int,
+  v_OBF__ttdd: (int, int) tuple2 set, v_OBF__ttcc: int set,
+  v_OBF__ttbb: int set, v_OBF__tt: int, v_OBF__ssff: int set,
+  v_OBF__ssee: int, v_OBF__ssdd: (int, int) tuple2 set, v_OBF__sscc: int set,
+  v_OBF__ssbb: int, v_OBF__rrff: (int, int) tuple2 set, v_OBF__rree: int,
+  v_OBF__rrdd: (int, int) tuple2 set, v_OBF__rrcc: (int, int) tuple2 set,
+  v_OBF__rrbb: int, v_OBF__qqff: (int, int) tuple2 set, v_OBF__qqee: int,
+  v_OBF__qqdd: (int, int) tuple2 set, v_OBF__qqcc: int set, v_OBF__qqbb: int,
+  v_OBF__ppff: (int, bool) tuple2 set, v_OBF__ppee: int set,
+  v_OBF__ppdd: (int, int) tuple2 set, v_OBF__ppcc: int, v_OBF__ppbb: int,
+  v_OBF__ooff: int, v_OBF__ooee: (int, int) tuple2 set, v_OBF__oodd: (int,
+  int) tuple2 set, v_OBF__oocc: (int, int) tuple2 set, v_OBF__oobb: int,
+  v_OBF__nnff: int set, v_OBF__nnee: (int, int) tuple2 set,
+  v_OBF__nndd: (int, int) tuple2 set, v_OBF__nncc: (int, int) tuple2 set,
+  v_OBF__nnbb: int set, v_OBF__mmff: (int, bool) tuple2 set,
+  v_OBF__mmee: bool, v_OBF__mmdd: int set, v_OBF__mmcc: (int,
+  int) tuple2 set, v_OBF__mmbb: int set, v_OBF__llff: enum_OBF__ii set,
+  v_OBF__llee: int, v_OBF__lldd: int set, v_OBF__llcc: (int, int) tuple2 set,
+  v_OBF__llbb: int, v_OBF__kkgg: (((int, int) tuple2, int) tuple2,
+  int) tuple2 set, v_OBF__kkff: int set, v_OBF__kkee: int,
+  v_OBF__kkdd: int set, v_OBF__kkcc: (int, int) tuple2 set, v_OBF__kkbb: int,
+  v_OBF__jjgg: ((int, enum_OBF__aa) tuple2, int) tuple2 set,
+  v_OBF__jjff: int set, v_OBF__jjee: int, v_OBF__jjdd: enum_OBF__ii set,
+  v_OBF__jjcc: (int, bool) tuple2 set, v_OBF__jjbb: int set,
+  v_OBF__iigg: ((int, enum_OBF__aa) tuple2, int) tuple2 set,
+  v_OBF__iiff: int set, v_OBF__iiee: (((int, int) tuple2, int) tuple2,
+  int) tuple2 set, v_OBF__iidd: int set, v_OBF__iicc: int set,
+  v_OBF__iibb: int set, v_OBF__hhgg: ((int, enum_OBF__aa) tuple2,
+  int) tuple2 set, v_OBF__hhff: int set, v_OBF__hhee: ((int,
+  enum_OBF__aa) tuple2, int) tuple2 set, v_OBF__hhdd: (int, int) tuple2 set,
+  v_OBF__hhcc: int set, v_OBF__hhbb: int, v_OBF__gggg: ((int,
+  enum_OBF__aa) tuple2, int) tuple2 set, v_OBF__ggff: int set,
+  v_OBF__ggee: enum_OBF__aa, v_OBF__ggdd: (int, int) tuple2 set,
+  v_OBF__ggcc: (int, int) tuple2 set, v_OBF__ggbb: int, v_OBF__ffgg: (int,
+  int) tuple2 set, v_OBF__ffff: (int, int) tuple2 set, v_OBF__ffee: int,
+  v_OBF__ffdd: (int, int) tuple2 set, v_OBF__ffcc: int set, v_OBF__ffbb: int,
+  v_OBF__eegg: (int, int) tuple2 set, v_OBF__eeff: (int, int) tuple2 set,
+  v_OBF__eeee: (int, int) tuple2 set, v_OBF__eedd: (int, int) tuple2 set,
+  v_OBF__eecc: (int, int) tuple2 set, v_OBF__eebb: int, v_OBF__ddgg: (int,
+  int) tuple2 set, v_OBF__ddff: int set, v_OBF__ddee: int, v_OBF__dddd: (int,
+  int) tuple2 set, v_OBF__ddcc: int set, v_OBF__ddbb: int,
+  v_OBF__ccgg: ((int, int) tuple2, int) tuple2 set, v_OBF__ccff: int set,
+  v_OBF__ccee: (int, int) tuple2 set, v_OBF__ccdd: (int, int) tuple2 set,
+  v_OBF__cccc: int set, v_OBF__ccbb: int, v_OBF__bbgg: (int, int) tuple2 set,
+  v_OBF__bbff: bool, v_OBF__bbee: (int, int) tuple2 set, v_OBF__bbdd: int,
+  v_OBF__bbcc: int set, v_OBF__bbbb: int set, v_OBF__aagg: int set,
+  v_OBF__aaff: (int, int) tuple2 set, v_OBF__aaee: (int, int) tuple2 set,
+  v_OBF__aadd: int, v_OBF__aacc: (int, int) tuple2 set, v_OBF__aabb: int) =
+  (((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((mem(v_OBF__wwcc,
+  relation(v_OBF__xxbb, v_OBF__xxbb)) and mem(v_OBF__xxcc,
+  relation(v_OBF__bbcc, v_OBF__xxbb))) and mem(v_OBF__ggcc,
+  relation(v_OBF__xxbb, v_OBF__bbcc))) and mem(v_OBF__aacc,
+  relation(v_OBF__xxbb, v_OBF__bbcc))) and mem(v_OBF__zzcc,
+  relation(v_OBF__xxbb, v_OBF__bbcc))) and mem(v_OBF__ccdd,
+  relation(v_OBF__wwbb, v_OBF__xxbb))) and mem(v_OBF__eedd,
+  relation(v_OBF__wwbb, v_OBF__xxbb))) and infix_eqeq(v_OBF__rrcc,
+  semicolon(v_OBF__xxcc, v_OBF__zzcc))) and infix_eqeq(union(v_OBF__llcc,
+  inverse(v_OBF__llcc)), times(v_OBF__bbcc, v_OBF__bbcc))) and
+  mem(inter(v_OBF__wwcc, inverse(v_OBF__wwcc)), power(id(v_OBF__xxbb)))) and
+  mem(v_OBF__xxcc, infix_plmngt(v_OBF__bbcc, v_OBF__xxbb))) and
+  infix_eqeq(dom(v_OBF__xxcc), v_OBF__bbcc)) and infix_eqeq(ran(v_OBF__xxcc),
+  v_OBF__xxbb)) and mem(semicolon(semicolon(inverse(v_OBF__xxcc),
+  v_OBF__llcc), v_OBF__xxcc), power(v_OBF__wwcc))) and mem(v_OBF__ggcc,
+  infix_plmngt(v_OBF__xxbb, v_OBF__bbcc))) and infix_eqeq(dom(v_OBF__ggcc),
+  v_OBF__xxbb)) and mem(v_OBF__ggcc, power(inverse(v_OBF__xxcc)))) and
+  mem(ran(direct_product(v_OBF__ggcc, inverse(v_OBF__xxcc))),
+  power(v_OBF__llcc))) and mem(v_OBF__aacc, infix_plmngt(v_OBF__xxbb,
+  v_OBF__bbcc))) and infix_eqeq(dom(v_OBF__aacc), v_OBF__xxbb)) and
+  mem(v_OBF__aacc, power(inverse(v_OBF__xxcc)))) and
+  mem(ran(direct_product(inverse(v_OBF__xxcc), v_OBF__aacc)),
+  power(v_OBF__llcc))) and infix_eqeq(v_OBF__dddd, semicolon(v_OBF__ccdd,
+  v_OBF__ggcc))) and infix_eqeq(v_OBF__ffdd, semicolon(v_OBF__eedd,
+  v_OBF__aacc))) and mem(v_OBF__ccdd, infix_plmngt(v_OBF__wwbb,
+  v_OBF__xxbb))) and infix_eqeq(dom(v_OBF__ccdd), v_OBF__wwbb)) and
+  mem(v_OBF__eedd, infix_plmngt(v_OBF__wwbb, v_OBF__xxbb))) and
+  infix_eqeq(dom(v_OBF__eedd), v_OBF__wwbb)) and mem(v_OBF__xxbb,
+  finite_subsets(integer))) and (not infix_eqeq(v_OBF__xxbb,
+  (empty : int set)))) and mem(v_OBF__nnff, power(v_OBF__bbcc))) and
+  mem(v_OBF__hhcc, power(v_OBF__bbcc))) and mem(v_OBF__ffcc,
+  power(v_OBF__bbcc))) and mem(v_OBF__ddcc, power(v_OBF__bbcc))) and
+  mem(v_OBF__cccc, power(v_OBF__bbcc))) and mem(v_OBF__zzbb,
+  power(v_OBF__bbcc))) and mem(v_OBF__uubb, power(v_OBF__bbcc))) and
+  mem(v_OBF__ooff, v_OBF__bbcc)) and infix_eqeq(v_OBF__mmbb,
+  union(union(union(union(union(union(union(v_OBF__nnff, v_OBF__hhcc),
+  v_OBF__ffcc), v_OBF__ddcc), v_OBF__cccc), v_OBF__zzbb), v_OBF__uubb),
+  add(v_OBF__ooff, (empty : int set))))) and mem(v_OBF__hhcc,
+  power(diff(v_OBF__mmbb, v_OBF__nnff)))) and mem(v_OBF__ffcc,
+  power(diff(v_OBF__mmbb, union(v_OBF__nnff, v_OBF__hhcc))))) and
+  mem(v_OBF__ddcc, power(diff(v_OBF__mmbb, union(union(v_OBF__nnff,
+  v_OBF__hhcc), v_OBF__ffcc))))) and mem(v_OBF__cccc, power(diff(v_OBF__mmbb,
+  union(union(union(v_OBF__nnff, v_OBF__hhcc), v_OBF__ffcc),
+  v_OBF__ddcc))))) and mem(v_OBF__zzbb, power(diff(v_OBF__mmbb,
+  union(union(union(union(v_OBF__nnff, v_OBF__hhcc), v_OBF__ffcc),
+  v_OBF__ddcc), v_OBF__cccc))))) and mem(v_OBF__uubb, power(diff(v_OBF__mmbb,
+  union(union(union(union(union(v_OBF__nnff, v_OBF__hhcc), v_OBF__ffcc),
+  v_OBF__ddcc), v_OBF__cccc), v_OBF__zzbb))))) and mem(v_OBF__ooff,
+  v_OBF__mmbb)) and (not mem(v_OBF__ooff, v_OBF__nnff))) and
+  (not mem(v_OBF__ooff, v_OBF__hhcc))) and (not mem(v_OBF__ooff,
+  v_OBF__ffcc))) and (not mem(v_OBF__ooff, v_OBF__ddcc))) and
+  (not mem(v_OBF__ooff, v_OBF__cccc))) and (not mem(v_OBF__ooff,
+  v_OBF__zzbb))) and (not mem(v_OBF__ooff, v_OBF__uubb))) and
+  mem(v_OBF__llcc, relation(v_OBF__bbcc, v_OBF__bbcc))) and mem(v_OBF__rrcc,
+  relation(v_OBF__bbcc, v_OBF__bbcc))) and mem(v_OBF__dddd,
+  relation(v_OBF__wwbb, v_OBF__bbcc))) and mem(v_OBF__ffdd,
+  relation(v_OBF__wwbb, v_OBF__bbcc))) and mem(v_OBF__ppff,
+  relation(v_OBF__wwbb, b_bool))) and mem(v_OBF__rrcc,
+  power(v_OBF__llcc))) and infix_eqeq(v_OBF__qqff,
+  inter(semicolon(v_OBF__dddd, v_OBF__llcc), semicolon(v_OBF__ffdd,
+  inverse(v_OBF__llcc))))) and infix_eqeq(v_OBF__rrff,
+  inter(semicolon(v_OBF__dddd, v_OBF__rrcc), semicolon(v_OBF__ffdd,
+  inverse(v_OBF__llcc))))) and infix_eqeq(v_OBF__ssff,
+  image(inverse(v_OBF__ppff), add(true, (empty : bool set))))) and
+  mem(v_OBF__dddd, infix_plmngt(v_OBF__wwbb, v_OBF__bbcc))) and
+  infix_eqeq(dom(v_OBF__dddd), v_OBF__wwbb)) and mem(v_OBF__ffdd,
+  infix_plmngt(v_OBF__wwbb, v_OBF__bbcc))) and infix_eqeq(dom(v_OBF__ffdd),
+  v_OBF__wwbb)) and mem(v_OBF__ppff, infix_plmngt(v_OBF__wwbb, b_bool))) and
+  infix_eqeq(dom(v_OBF__ppff), v_OBF__wwbb)) and mem(v_OBF__qqff,
+  relation(v_OBF__wwbb, v_OBF__bbcc))) and mem(v_OBF__rrff,
+  relation(v_OBF__wwbb, v_OBF__bbcc))) and mem(v_OBF__ttff,
+  relation(v_OBF__wwbb, v_OBF__bbbb))) and mem(v_OBF__uuff,
+  relation(v_OBF__wwbb, v_OBF__kkdd))) and mem(v_OBF__ssff,
+  power(v_OBF__wwbb))) and infix_eqeq(v_OBF__vvff,
+  image(ran(domain_restriction(v_OBF__ssff, direct_product(v_OBF__uuff,
+  direct_product(v_OBF__qqff, v_OBF__ttff)))), add(v_OBF__ggbb,
+  (empty : int set))))) and infix_eqeq(v_OBF__wwff,
+  image(ran(domain_restriction(v_OBF__ssff, direct_product(v_OBF__uuff,
+  direct_product(v_OBF__qqff, v_OBF__ttff)))), add(v_OBF__hhbb,
+  (empty : int set))))) and infix_eqeq(v_OBF__ooee,
+  image(ran(domain_restriction(v_OBF__ssff, direct_product(v_OBF__uuff,
+  direct_product(v_OBF__qqff, v_OBF__ttff)))), add(v_OBF__ffbb,
+  (empty : int set))))) and infix_eqeq(v_OBF__nnee,
+  image(ran(domain_restriction(v_OBF__ssff, direct_product(v_OBF__uuff,
+  direct_product(v_OBF__rrff, v_OBF__ttff)))), add(v_OBF__ffbb,
+  (empty : int set))))) and mem(v_OBF__rrff, power(v_OBF__qqff))) and
+  mem(v_OBF__ttff, infix_plmngt(v_OBF__wwbb, v_OBF__bbbb))) and
+  infix_eqeq(dom(v_OBF__ttff), v_OBF__wwbb)) and mem(ran(v_OBF__uuff),
+  power(union(union(add(v_OBF__ggbb, (empty : int set)), add(v_OBF__hhbb,
+  (empty : int set))), add(v_OBF__ffbb, (empty : int set)))))) and
+  mem(v_OBF__wwbb, finite_subsets(integer))) and (not infix_eqeq(v_OBF__wwbb,
+  (empty : int set)))) and mem(v_OBF__ooee, relation(v_OBF__bbcc,
+  v_OBF__bbbb))) and mem(v_OBF__nnee, relation(v_OBF__bbcc,
+  v_OBF__bbbb))) and mem(v_OBF__ppee, power(v_OBF__bbbb))) and
+  infix_eqeq(v_OBF__xxff, times(diff(dom(v_OBF__ooee),
+  dom(range_substraction(direct_product(v_OBF__ooee, v_OBF__ooee),
+  id(v_OBF__bbbb)))), v_OBF__bbbb))) and mem(v_OBF__nnee,
+  power(v_OBF__ooee))) and mem(v_OBF__ppcc, v_OBF__bbbb)) and
+  mem(v_OBF__vvff, power(times(v_OBF__bbcc, v_OBF__bbbb)))) and
+  mem(v_OBF__wwff, power(times(v_OBF__bbcc, v_OBF__bbbb)))) and
+  (not (v_OBF__ppcc = v_OBF__ssbb))) and infix_eqeq(v_OBF__yyff,
+  union(v_OBF__vvff, semicolon(v_OBF__vvff, times(add(v_OBF__ppcc,
+  (empty : int set)), v_OBF__bbbb))))) and infix_eqeq(v_OBF__zzff,
+  union(v_OBF__wwff, semicolon(v_OBF__wwff, times(add(v_OBF__ppcc,
+  (empty : int set)), v_OBF__bbbb))))) and mem(v_OBF__llbb, v_OBF__wwdd)) and
+  mem(v_OBF__ssbb, v_OBF__bbbb)) and mem(v_OBF__uu, power(v_OBF__bbcc))) and
+  mem(v_OBF__iibb, power(v_OBF__bbcc))) and mem(v_OBF__mmbb,
+  power(v_OBF__bbcc))) and mem(v_OBF__nnbb, power(v_OBF__bbcc))) and
+  mem(v_OBF__oobb, v_OBF__bbcc)) and mem(v_OBF__ppbb, v_OBF__bbcc)) and
+  mem(v_OBF__qqbb, v_OBF__bbcc)) and mem(v_OBF__rrbb, v_OBF__bbcc)) and
+  mem(v_OBF__yyff, power(times(v_OBF__bbcc, v_OBF__bbbb)))) and
+  mem(v_OBF__zzff, power(times(v_OBF__bbcc, v_OBF__bbbb)))) and
+  mem(v_OBF__xxff, power(times(v_OBF__bbcc, v_OBF__bbbb)))) and
+  mem(v_OBF__aagg, power(v_OBF__bbbb))) and mem(v_OBF__iibb,
+  power(v_OBF__uu))) and mem(v_OBF__mmbb, power(diff(v_OBF__bbcc,
+  v_OBF__uu)))) and mem(v_OBF__nnbb, power(diff(v_OBF__bbcc, union(v_OBF__uu,
+  v_OBF__mmbb))))) and (not mem(v_OBF__oobb, v_OBF__uu))) and
+  (not mem(v_OBF__oobb, v_OBF__mmbb))) and (not mem(v_OBF__oobb,
+  v_OBF__nnbb))) and (not (v_OBF__oobb = v_OBF__ppbb))) and
+  (not (v_OBF__oobb = v_OBF__qqbb))) and
+  (not (v_OBF__oobb = v_OBF__rrbb))) and (not mem(v_OBF__ppbb,
+  v_OBF__uu))) and (not mem(v_OBF__ppbb, v_OBF__mmbb))) and
+  (not mem(v_OBF__ppbb, v_OBF__nnbb))) and
+  (not (v_OBF__ppbb = v_OBF__oobb))) and
+  (not (v_OBF__ppbb = v_OBF__qqbb))) and
+  (not (v_OBF__ppbb = v_OBF__rrbb))) and (not mem(v_OBF__qqbb,
+  v_OBF__uu))) and (not mem(v_OBF__qqbb, v_OBF__mmbb))) and
+  (not mem(v_OBF__qqbb, v_OBF__nnbb))) and
+  (not (v_OBF__qqbb = v_OBF__oobb))) and
+  (not (v_OBF__qqbb = v_OBF__ppbb))) and
+  (not (v_OBF__qqbb = v_OBF__rrbb))) and (not mem(v_OBF__rrbb,
+  v_OBF__uu))) and (not mem(v_OBF__rrbb, v_OBF__mmbb))) and
+  (not mem(v_OBF__rrbb, v_OBF__nnbb))) and
+  (not (v_OBF__rrbb = v_OBF__oobb))) and
+  (not (v_OBF__rrbb = v_OBF__ppbb))) and
+  (not (v_OBF__rrbb = v_OBF__qqbb))) and infix_eqeq(v_OBF__bbcc,
+  union(union(union(v_OBF__uu, v_OBF__mmbb), v_OBF__nnbb),
+  union(union(union(add(v_OBF__oobb, (empty : int set)), add(v_OBF__ppbb,
+  (empty : int set))), add(v_OBF__qqbb, (empty : int set))), add(v_OBF__rrbb,
+  (empty : int set)))))) and infix_eqeq(v_OBF__bbgg,
+  union(union(union(union(union(union(domain_restriction(v_OBF__uu,
+  v_OBF__yyff), times(v_OBF__nnbb, v_OBF__aagg)),
+  times(union(add(v_OBF__oobb, (empty : int set)), add(v_OBF__ppbb,
+  (empty : int set))), v_OBF__aagg)), times(v_OBF__mmbb, add(v_OBF__ssbb,
+  (empty : int set)))), times(v_OBF__iibb, v_OBF__bbbb)),
+  times(add(v_OBF__qqbb, (empty : int set)), v_OBF__bbbb)), add({
+  Tuple2_proj_1 = v_OBF__rrbb; Tuple2_proj_2 = v_OBF__ssbb }, (empty : (int,
+  int) tuple2 set))))) and infix_eqeq(v_OBF__ccgg,
+  union(times(union(union(domain_restriction(v_OBF__uu, v_OBF__zzff),
+  times(v_OBF__nnbb, v_OBF__aagg)), add({ Tuple2_proj_1 = v_OBF__rrbb;
+  Tuple2_proj_2 = v_OBF__ssbb }, (empty : (int, int) tuple2 set))),
+  v_OBF__wwdd), times(times(union(add(v_OBF__oobb, (empty : int set)),
+  add(v_OBF__ppbb, (empty : int set))), v_OBF__aagg), add(v_OBF__llbb,
+  (empty : int set)))))) and infix_eqeq(v_OBF__ddgg,
+  domain_restriction(v_OBF__uu, v_OBF__xxff))) and mem(v_OBF__ddee,
+  integer)) and infix_eqeq(v_OBF__eegg, times(v_OBF__bbcc, v_OBF__bbbb))) and
+  infix_eqeq(v_OBF__ffgg, times(v_OBF__bbcc, v_OBF__bbbb))) and
+  (1 <= v_OBF__ddee)) and mem(v_OBF__gggg, power(times(times(integer,
+  set_enum_OBF__aa), integer)))) and mem(v_OBF__hhgg,
+  power(times(times(integer, set_enum_OBF__aa), integer)))) and
+  mem(v_OBF__iigg, power(times(times(integer, set_enum_OBF__aa),
+  integer)))) and mem(v_OBF__jjgg, power(times(times(integer,
+  set_enum_OBF__aa), integer)))) and mem(v_OBF__hhee,
+  power(times(times(integer, set_enum_OBF__aa), integer)))) and
+  infix_eqeq(v_OBF__gggg, times(times(add(0, (empty : int set)),
+  union(union(union(union(add(E_OBF__bb, (empty : enum_OBF__aa set)),
+  add(E_OBF__ff, (empty : enum_OBF__aa set))), add(E_OBF__gg,
+  (empty : enum_OBF__aa set))), add(E_OBF__ee, (empty : enum_OBF__aa set))),
+  add(E_OBF__cc, (empty : enum_OBF__aa set)))), add(0,
+  (empty : int set))))) and infix_eqeq(v_OBF__hhgg, times(times(add(0,
+  (empty : int set)), union(add(E_OBF__hh, (empty : enum_OBF__aa set)),
+  add(E_OBF__dd, (empty : enum_OBF__aa set)))), add(1,
+  (empty : int set))))) and infix_eqeq(v_OBF__iigg, times(times(add(1,
+  (empty : int set)), add(E_OBF__cc, (empty : enum_OBF__aa set))), add(0,
+  (empty : int set))))) and infix_eqeq(v_OBF__jjgg, times(times(add(1,
+  (empty : int set)), union(union(union(union(union(add(E_OBF__bb,
+  (empty : enum_OBF__aa set)), add(E_OBF__ff, (empty : enum_OBF__aa set))),
+  add(E_OBF__gg, (empty : enum_OBF__aa set))), add(E_OBF__ee,
+  (empty : enum_OBF__aa set))), add(E_OBF__hh, (empty : enum_OBF__aa set))),
+  add(E_OBF__dd, (empty : enum_OBF__aa set)))), add(1,
+  (empty : int set))))) and infix_eqeq(v_OBF__hhee,
+  union(union(union(v_OBF__gggg, v_OBF__hhgg), v_OBF__iigg),
+  v_OBF__jjgg))) and mem(v_OBF__bbgg, power(times(v_OBF__bbcc,
+  v_OBF__bbbb)))) and mem(v_OBF__ccgg, power(times(times(v_OBF__bbcc,
+  v_OBF__bbbb), v_OBF__wwdd)))) and mem(v_OBF__ddgg, power(times(v_OBF__bbcc,
+  v_OBF__bbbb)))) and mem(v_OBF__eegg, power(times(v_OBF__bbcc,
+  v_OBF__bbbb)))) and mem(v_OBF__ffgg, power(times(v_OBF__bbcc,
+  v_OBF__bbbb)))) and infix_eqeq(v_OBF__kkgg,
+  union(union(union(union(union(times(times(v_OBF__bbgg, v_OBF__wwdd),
+  add(v_OBF__ggbb, (empty : int set))), times(v_OBF__ccgg, add(v_OBF__hhbb,
+  (empty : int set)))), times(times(v_OBF__ddgg, v_OBF__wwdd),
+  add(v_OBF__ffbb, (empty : int set)))), times(times(v_OBF__eegg,
+  v_OBF__wwdd), add(v_OBF__jjee, (empty : int set)))),
+  times(times(v_OBF__ffgg, v_OBF__wwdd), add(v_OBF__kkee,
+  (empty : int set)))), times(times(times(v_OBF__bbcc, v_OBF__bbbb),
+  v_OBF__wwdd), add(v_OBF__llee, (empty : int set)))))) and mem(v_OBF__kkgg,
+  power(times(times(times(v_OBF__bbcc, v_OBF__bbbb), v_OBF__wwdd),
+  v_OBF__kkdd)))) and mem(v_OBF__ggbb, v_OBF__kkdd)) and mem(v_OBF__hhbb,
+  v_OBF__kkdd)) and mem(v_OBF__ffbb, v_OBF__kkdd)) and mem(v_OBF__jjee,
+  v_OBF__kkdd)) and mem(v_OBF__kkee, v_OBF__kkdd)) and mem(v_OBF__llee,
+  v_OBF__kkdd)) and (not (v_OBF__ggbb = v_OBF__hhbb))) and
+  (not (v_OBF__ggbb = v_OBF__ffbb))) and
+  (not (v_OBF__ggbb = v_OBF__jjee))) and
+  (not (v_OBF__ggbb = v_OBF__kkee))) and
+  (not (v_OBF__ggbb = v_OBF__llee))) and
+  (not (v_OBF__hhbb = v_OBF__ggbb))) and
+  (not (v_OBF__hhbb = v_OBF__ffbb))) and
+  (not (v_OBF__hhbb = v_OBF__jjee))) and
+  (not (v_OBF__hhbb = v_OBF__kkee))) and
+  (not (v_OBF__hhbb = v_OBF__llee))) and
+  (not (v_OBF__ffbb = v_OBF__ggbb))) and
+  (not (v_OBF__ffbb = v_OBF__hhbb))) and
+  (not (v_OBF__ffbb = v_OBF__jjee))) and
+  (not (v_OBF__ffbb = v_OBF__kkee))) and
+  (not (v_OBF__ffbb = v_OBF__llee))) and
+  (not (v_OBF__jjee = v_OBF__ggbb))) and
+  (not (v_OBF__jjee = v_OBF__hhbb))) and
+  (not (v_OBF__jjee = v_OBF__ffbb))) and
+  (not (v_OBF__jjee = v_OBF__kkee))) and
+  (not (v_OBF__jjee = v_OBF__llee))) and
+  (not (v_OBF__kkee = v_OBF__ggbb))) and
+  (not (v_OBF__kkee = v_OBF__hhbb))) and
+  (not (v_OBF__kkee = v_OBF__ffbb))) and
+  (not (v_OBF__kkee = v_OBF__jjee))) and
+  (not (v_OBF__kkee = v_OBF__llee))) and
+  (not (v_OBF__llee = v_OBF__ggbb))) and
+  (not (v_OBF__llee = v_OBF__hhbb))) and
+  (not (v_OBF__llee = v_OBF__ffbb))) and
+  (not (v_OBF__llee = v_OBF__jjee))) and
+  (not (v_OBF__llee = v_OBF__kkee))) and mem(v_OBF__bbcc,
+  finite_subsets(integer))) and (not infix_eqeq(v_OBF__bbcc,
+  (empty : int set)))) and mem(v_OBF__bbbb, finite_subsets(integer))) and
+  (not infix_eqeq(v_OBF__bbbb, (empty : int set)))) and mem(v_OBF__wwdd,
+  finite_subsets(integer))) and (not infix_eqeq(v_OBF__wwdd,
+  (empty : int set)))) and mem(v_OBF__kkdd, finite_subsets(integer))) and
+  (not infix_eqeq(v_OBF__kkdd, (empty : int set))))
+
+predicate f2(v_OBF__zzff: (int, int) tuple2 set, v_OBF__zzee: (int,
+  int) tuple2 set, v_OBF__zzdd: int, v_OBF__zzcc: (int, int) tuple2 set,
+  v_OBF__zzbb: int set, v_OBF__zz: int set, v_OBF__yyff: (int,
+  int) tuple2 set, v_OBF__yyee: int, v_OBF__yydd: int, v_OBF__yycc: (int,
+  int) tuple2 set, v_OBF__yybb: bool, v_OBF__yy: int set, v_OBF__xxff: (int,
+  int) tuple2 set, v_OBF__xxee: int, v_OBF__xxdd: (int, int) tuple2 set,
+  v_OBF__xxcc: (int, int) tuple2 set, v_OBF__xxbb: int set, v_OBF__xx: int,
+  v_OBF__wwff: (int, int) tuple2 set, v_OBF__wwee: int, v_OBF__wwdd: int set,
+  v_OBF__wwcc: (int, int) tuple2 set, v_OBF__wwbb: int set,
+  v_OBF__ww: int set, v_OBF__vvff: (int, int) tuple2 set, v_OBF__vvee: bool,
+  v_OBF__vvdd: ((int, int) tuple2, int) tuple2 set, v_OBF__vvcc: (int,
+  int) tuple2 set, v_OBF__vvbb: (int, int) tuple2 set, v_OBF__vv: int,
+  v_OBF__uuff: (int, int) tuple2 set, v_OBF__uuee: int, v_OBF__uudd: (int,
+  int) tuple2 set, v_OBF__uucc: int set, v_OBF__uubb: int set,
+  v_OBF__uu: int set, v_OBF__ttff: (int, int) tuple2 set, v_OBF__ttee: int,
+  v_OBF__ttdd: (int, int) tuple2 set, v_OBF__ttcc: int set,
+  v_OBF__ttbb: int set, v_OBF__tt: int, v_OBF__ssff: int set,
+  v_OBF__ssee: int, v_OBF__ssdd: (int, int) tuple2 set, v_OBF__sscc: int set,
+  v_OBF__ssbb: int, v_OBF__rrff: (int, int) tuple2 set, v_OBF__rree: int,
+  v_OBF__rrdd: (int, int) tuple2 set, v_OBF__rrcc: (int, int) tuple2 set,
+  v_OBF__rrbb: int, v_OBF__qqff: (int, int) tuple2 set, v_OBF__qqee: int,
+  v_OBF__qqdd: (int, int) tuple2 set, v_OBF__qqcc: int set, v_OBF__qqbb: int,
+  v_OBF__ppff: (int, bool) tuple2 set, v_OBF__ppee: int set,
+  v_OBF__ppdd: (int, int) tuple2 set, v_OBF__ppcc: int, v_OBF__ppbb: int,
+  v_OBF__ooff: int, v_OBF__ooee: (int, int) tuple2 set, v_OBF__oodd: (int,
+  int) tuple2 set, v_OBF__oocc: (int, int) tuple2 set, v_OBF__oobb: int,
+  v_OBF__nnff: int set, v_OBF__nnee: (int, int) tuple2 set,
+  v_OBF__nndd: (int, int) tuple2 set, v_OBF__nncc: (int, int) tuple2 set,
+  v_OBF__nnbb: int set, v_OBF__mmff: (int, bool) tuple2 set,
+  v_OBF__mmee: bool, v_OBF__mmdd: int set, v_OBF__mmcc: (int,
+  int) tuple2 set, v_OBF__mmbb: int set, v_OBF__llff: enum_OBF__ii set,
+  v_OBF__llee: int, v_OBF__lldd: int set, v_OBF__llcc: (int, int) tuple2 set,
+  v_OBF__llbb: int, v_OBF__kkgg: (((int, int) tuple2, int) tuple2,
+  int) tuple2 set, v_OBF__kkff: int set, v_OBF__kkee: int,
+  v_OBF__kkdd: int set, v_OBF__kkcc: (int, int) tuple2 set, v_OBF__kkbb: int,
+  v_OBF__jjgg: ((int, enum_OBF__aa) tuple2, int) tuple2 set,
+  v_OBF__jjff: int set, v_OBF__jjee: int, v_OBF__jjdd: enum_OBF__ii set,
+  v_OBF__jjcc: (int, bool) tuple2 set, v_OBF__jjbb: int set,
+  v_OBF__iigg: ((int, enum_OBF__aa) tuple2, int) tuple2 set,
+  v_OBF__iiff: int set, v_OBF__iiee: (((int, int) tuple2, int) tuple2,
+  int) tuple2 set, v_OBF__iidd: int set, v_OBF__iicc: int set,
+  v_OBF__iibb: int set, v_OBF__hhgg: ((int, enum_OBF__aa) tuple2,
+  int) tuple2 set, v_OBF__hhff: int set, v_OBF__hhee: ((int,
+  enum_OBF__aa) tuple2, int) tuple2 set, v_OBF__hhdd: (int, int) tuple2 set,
+  v_OBF__hhcc: int set, v_OBF__hhbb: int, v_OBF__gggg: ((int,
+  enum_OBF__aa) tuple2, int) tuple2 set, v_OBF__ggff: int set,
+  v_OBF__ggee: enum_OBF__aa, v_OBF__ggdd: (int, int) tuple2 set,
+  v_OBF__ggcc: (int, int) tuple2 set, v_OBF__ggbb: int, v_OBF__ffgg: (int,
+  int) tuple2 set, v_OBF__ffff: (int, int) tuple2 set, v_OBF__ffee: int,
+  v_OBF__ffdd: (int, int) tuple2 set, v_OBF__ffcc: int set, v_OBF__ffbb: int,
+  v_OBF__eegg: (int, int) tuple2 set, v_OBF__eeff: (int, int) tuple2 set,
+  v_OBF__eeee: (int, int) tuple2 set, v_OBF__eedd: (int, int) tuple2 set,
+  v_OBF__eecc: (int, int) tuple2 set, v_OBF__eebb: int, v_OBF__ddgg: (int,
+  int) tuple2 set, v_OBF__ddff: int set, v_OBF__ddee: int, v_OBF__dddd: (int,
+  int) tuple2 set, v_OBF__ddcc: int set, v_OBF__ddbb: int,
+  v_OBF__ccgg: ((int, int) tuple2, int) tuple2 set, v_OBF__ccff: int set,
+  v_OBF__ccee: (int, int) tuple2 set, v_OBF__ccdd: (int, int) tuple2 set,
+  v_OBF__cccc: int set, v_OBF__ccbb: int, v_OBF__bbgg: (int, int) tuple2 set,
+  v_OBF__bbff: bool, v_OBF__bbee: (int, int) tuple2 set, v_OBF__bbdd: int,
+  v_OBF__bbcc: int set, v_OBF__bbbb: int set, v_OBF__aagg: int set,
+  v_OBF__aaff: (int, int) tuple2 set, v_OBF__aaee: (int, int) tuple2 set,
+  v_OBF__aadd: int, v_OBF__aacc: (int, int) tuple2 set, v_OBF__aabb: int) =
+  (((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((mem(v_OBF__kkcc,
+  relation(v_OBF__wwbb, v_OBF__bbcc)) and mem(v_OBF__mmcc,
+  relation(v_OBF__wwbb, v_OBF__bbcc))) and mem(v_OBF__jjcc,
+  relation(v_OBF__wwbb, b_bool))) and infix_eqeq(v_OBF__ggdd,
+  inter(semicolon(v_OBF__kkcc, v_OBF__llcc), semicolon(v_OBF__mmcc,
+  inverse(v_OBF__llcc))))) and infix_eqeq(v_OBF__hhdd,
+  inter(semicolon(v_OBF__kkcc, v_OBF__rrcc), semicolon(v_OBF__mmcc,
+  inverse(v_OBF__llcc))))) and infix_eqeq(v_OBF__iidd,
+  image(inverse(v_OBF__jjcc), add(true, (empty : bool set))))) and
+  mem(v_OBF__kkcc, infix_plmngt(v_OBF__wwbb, v_OBF__bbcc))) and
+  infix_eqeq(dom(v_OBF__kkcc), v_OBF__wwbb)) and mem(v_OBF__mmcc,
+  infix_plmngt(v_OBF__wwbb, v_OBF__bbcc))) and infix_eqeq(dom(v_OBF__mmcc),
+  v_OBF__wwbb)) and mem(v_OBF__jjcc, infix_plmngt(v_OBF__wwbb, b_bool))) and
+  infix_eqeq(dom(v_OBF__jjcc), v_OBF__wwbb)) and mem(v_OBF__jjdd,
+  power(set_enum_OBF__ii))) and mem(v_OBF__ggdd, relation(v_OBF__wwbb,
+  v_OBF__bbcc))) and mem(v_OBF__hhdd, relation(v_OBF__wwbb,
+  v_OBF__bbcc))) and mem(v_OBF__oocc, relation(v_OBF__wwbb,
+  v_OBF__bbbb))) and mem(v_OBF__nncc, relation(v_OBF__wwbb,
+  v_OBF__kkdd))) and mem(v_OBF__iidd, power(v_OBF__wwbb))) and
+  mem(v_OBF__jjbb, power(v_OBF__wwbb))) and mem(v_OBF__lldd,
+  power(v_OBF__wwbb))) and mem(v_OBF__ww, power(v_OBF__bbbb))) and
+  mem(v_OBF__zz, power(v_OBF__wwbb))) and mem(v_OBF__mmdd,
+  power(v_OBF__wwbb))) and infix_eqeq(v_OBF__nndd,
+  image(ran(domain_restriction(v_OBF__iidd, direct_product(v_OBF__nncc,
+  direct_product(v_OBF__ggdd, v_OBF__oocc)))), add(v_OBF__ggbb,
+  (empty : int set))))) and infix_eqeq(v_OBF__oodd,
+  image(ran(domain_restriction(v_OBF__iidd, direct_product(v_OBF__nncc,
+  direct_product(v_OBF__ggdd, v_OBF__oocc)))), add(v_OBF__hhbb,
+  (empty : int set))))) and infix_eqeq(v_OBF__ppdd,
+  image(ran(domain_restriction(v_OBF__iidd, direct_product(v_OBF__nncc,
+  direct_product(v_OBF__ggdd, v_OBF__oocc)))), add(v_OBF__ffbb,
+  (empty : int set))))) and infix_eqeq(v_OBF__qqdd,
+  image(ran(domain_restriction(v_OBF__iidd, direct_product(v_OBF__nncc,
+  direct_product(v_OBF__hhdd, v_OBF__oocc)))), add(v_OBF__ffbb,
+  (empty : int set))))) and mem(v_OBF__hhdd, power(v_OBF__ggdd))) and
+  mem(v_OBF__oocc, infix_plmngt(v_OBF__wwbb, v_OBF__bbbb))) and
+  infix_eqeq(dom(v_OBF__oocc), v_OBF__wwbb)) and mem(ran(v_OBF__nncc),
+  power(union(union(add(v_OBF__ggbb, (empty : int set)), add(v_OBF__hhbb,
+  (empty : int set))), add(v_OBF__ffbb, (empty : int set)))))) and
+  ((v_OBF__ddbb = 2) -> infix_eqeq(v_OBF__jjbb, inter(v_OBF__iidd,
+  image(inverse(v_OBF__ggdd), add(v_OBF__tt, (empty : int set))))))) and
+  ((v_OBF__ddbb = 2) -> infix_eqeq(v_OBF__lldd, inter(inter(v_OBF__iidd,
+  image(inverse(v_OBF__ggdd), add(v_OBF__tt, (empty : int set)))),
+  image(inverse(v_OBF__nncc), add(v_OBF__eebb, (empty : int set))))))) and
+  ((v_OBF__ddbb = 2) -> infix_eqeq(v_OBF__ww, image(v_OBF__oocc,
+  v_OBF__lldd)))) and ((v_OBF__ddbb = 2) -> infix_eqeq(v_OBF__zz,
+  inter(inter(v_OBF__iidd, image(inverse(v_OBF__hhdd), add(v_OBF__tt,
+  (empty : int set)))), image(inverse(v_OBF__nncc), add(v_OBF__eebb,
+  (empty : int set))))))) and ((v_OBF__ddbb = 2) -> infix_eqeq(v_OBF__mmdd,
+  inter(inter(inter(v_OBF__iidd, image(inverse(v_OBF__ggdd), add(v_OBF__tt,
+  (empty : int set)))), image(inverse(v_OBF__nncc), add(v_OBF__eebb,
+  (empty : int set)))), image(inverse(v_OBF__oocc), union(add(v_OBF__vv,
+  (empty : int set)), add(v_OBF__ppcc, (empty : int set)))))))) and
+  mem(v_OBF__ppdd, relation(v_OBF__bbcc, v_OBF__bbbb))) and mem(v_OBF__qqdd,
+  relation(v_OBF__bbcc, v_OBF__bbbb))) and mem(v_OBF__yy,
+  power(v_OBF__bbbb))) and infix_eqeq(v_OBF__rrdd,
+  times(diff(dom(union(v_OBF__qqdd, range_substraction(v_OBF__ppdd,
+  image(times(add(0, (empty : int set)), diff(v_OBF__yy, add(v_OBF__vv,
+  (empty : int set)))), add(v_OBF__xx, (empty : int set)))))),
+  dom(range_substraction(direct_product(v_OBF__ppdd, v_OBF__ppdd),
+  id(v_OBF__bbbb)))), v_OBF__bbbb))) and mem(v_OBF__qqdd,
+  power(v_OBF__ppdd))) and mem(v_OBF__nndd, power(times(v_OBF__bbcc,
+  v_OBF__bbbb)))) and mem(v_OBF__oodd, power(times(v_OBF__bbcc,
+  v_OBF__bbbb)))) and infix_eqeq(v_OBF__ssdd, union(v_OBF__nndd,
+  semicolon(v_OBF__nndd, times(add(v_OBF__ppcc, (empty : int set)),
+  v_OBF__bbbb))))) and infix_eqeq(v_OBF__ttdd, union(v_OBF__oodd,
+  semicolon(v_OBF__oodd, times(add(v_OBF__ppcc, (empty : int set)),
+  v_OBF__bbbb))))) and mem(v_OBF__ssdd, power(times(v_OBF__bbcc,
+  v_OBF__bbbb)))) and mem(v_OBF__ttdd, power(times(v_OBF__bbcc,
+  v_OBF__bbbb)))) and mem(v_OBF__rrdd, power(times(v_OBF__bbcc,
+  v_OBF__bbbb)))) and mem(v_OBF__ttbb, power(v_OBF__bbbb))) and
+  infix_eqeq(v_OBF__uudd,
+  union(union(union(union(union(union(domain_restriction(v_OBF__uu,
+  v_OBF__ssdd), times(v_OBF__nnbb, v_OBF__ttbb)),
+  times(union(add(v_OBF__oobb, (empty : int set)), add(v_OBF__ppbb,
+  (empty : int set))), v_OBF__ttbb)), times(v_OBF__mmbb, add(v_OBF__ssbb,
+  (empty : int set)))), dom(range_restriction(times(times(v_OBF__iibb,
+  v_OBF__bbbb), add(1, (empty : int set))), add(v_OBF__xx,
+  (empty : int set))))), times(add(v_OBF__qqbb, (empty : int set)),
+  v_OBF__bbbb)), add({ Tuple2_proj_1 = v_OBF__rrbb; Tuple2_proj_2 =
+  v_OBF__ssbb }, (empty : (int, int) tuple2 set))))) and
+  infix_eqeq(v_OBF__vvdd,
+  union(times(union(union(union(domain_restriction(v_OBF__uu, v_OBF__ttdd),
+  times(v_OBF__nnbb, v_OBF__ttbb)),
+  dom(range_restriction(times(times(v_OBF__mmbb, add(v_OBF__ssbb,
+  (empty : int set))), add(false, (empty : bool set))), add(v_OBF__yybb,
+  (empty : bool set))))), add({ Tuple2_proj_1 = v_OBF__rrbb; Tuple2_proj_2 =
+  v_OBF__ssbb }, (empty : (int, int) tuple2 set))), v_OBF__wwdd),
+  times(times(union(add(v_OBF__oobb, (empty : int set)), add(v_OBF__ppbb,
+  (empty : int set))), v_OBF__ttbb), add(v_OBF__llbb,
+  (empty : int set)))))) and infix_eqeq(v_OBF__xxdd,
+  domain_restriction(v_OBF__uu, v_OBF__rrdd))) and mem(v_OBF__yydd,
+  v_OBF__bbbb)) and mem(v_OBF__zzdd, integer)) and mem(v_OBF__aaee,
+  relation(integer, v_OBF__bbbb))) and mem(v_OBF__bbee, relation(integer,
+  v_OBF__bbbb))) and infix_eqeq(v_OBF__ccee,
+  dom(range_substraction(times(times(v_OBF__bbcc, v_OBF__bbbb), add({
+  Tuple2_proj_1 = v_OBF__ddee; Tuple2_proj_2 = 0 }, (empty : (int,
+  int) tuple2 set))), add({ Tuple2_proj_1 = v_OBF__zzdd; Tuple2_proj_2 =
+  v_OBF__xx }, (empty : (int, int) tuple2 set)))))) and
+  infix_eqeq(v_OBF__eeee, dom(range_substraction(times(times(v_OBF__bbcc,
+  v_OBF__bbbb), add({ Tuple2_proj_1 = 0; Tuple2_proj_2 = 0 }, (empty : (int,
+  int) tuple2 set))), add({ Tuple2_proj_1 = v_OBF__zzdd; Tuple2_proj_2 =
+  v_OBF__xx }, (empty : (int, int) tuple2 set)))))) and mem(v_OBF__zzdd,
+  mk(0, v_OBF__ddee))) and mem(v_OBF__aaee, infix_plmngt(mk(1, v_OBF__ddee),
+  v_OBF__bbbb))) and infix_eqeq(dom(v_OBF__aaee), mk(1, v_OBF__ddee))) and
+  mem(v_OBF__bbee, infix_plmngt(mk(1, v_OBF__ddee), v_OBF__bbbb))) and
+  infix_eqeq(dom(v_OBF__bbee), mk(1, v_OBF__ddee))) and mem(v_OBF__ffee,
+  integer)) and mem(v_OBF__xx, integer)) and mem({ Tuple2_proj_1 = {
+  Tuple2_proj_1 = v_OBF__ffee; Tuple2_proj_2 = v_OBF__ggee }; Tuple2_proj_2 =
+  v_OBF__xx }, v_OBF__hhee)) and mem(v_OBF__uudd, power(times(v_OBF__bbcc,
+  v_OBF__bbbb)))) and mem(v_OBF__vvdd, power(times(times(v_OBF__bbcc,
+  v_OBF__bbbb), v_OBF__wwdd)))) and mem(v_OBF__xxdd, power(times(v_OBF__bbcc,
+  v_OBF__bbbb)))) and mem(v_OBF__ccee, power(times(v_OBF__bbcc,
+  v_OBF__bbbb)))) and mem(v_OBF__eeee, power(times(v_OBF__bbcc,
+  v_OBF__bbbb)))) and infix_eqeq(v_OBF__iiee,
+  union(union(union(union(union(times(times(v_OBF__uudd, v_OBF__wwdd),
+  add(v_OBF__ggbb, (empty : int set))), times(v_OBF__vvdd, add(v_OBF__hhbb,
+  (empty : int set)))), times(times(v_OBF__xxdd, v_OBF__wwdd),
+  add(v_OBF__ffbb, (empty : int set)))), times(times(v_OBF__ccee,
+  v_OBF__wwdd), add(v_OBF__jjee, (empty : int set)))),
+  times(times(v_OBF__eeee, v_OBF__wwdd), add(v_OBF__kkee,
+  (empty : int set)))), times(times(times(v_OBF__bbcc, v_OBF__bbbb),
+  v_OBF__wwdd), add(v_OBF__llee, (empty : int set)))))) and mem(v_OBF__ddbb,
+  integer)) and mem(v_OBF__tt, v_OBF__bbcc)) and mem(v_OBF__vv,
+  v_OBF__bbbb)) and mem(v_OBF__kkbb, v_OBF__wwdd)) and mem(v_OBF__eebb,
+  v_OBF__kkdd)) and mem(v_OBF__iiee, power(times(times(times(v_OBF__bbcc,
+  v_OBF__bbbb), v_OBF__wwdd), v_OBF__kkdd)))) and ((v_OBF__ddbb = 2) ->
+  infix_eqeq(v_OBF__lldd, inter(v_OBF__jjbb, image(inverse(v_OBF__nncc),
+  add(v_OBF__eebb, (empty : int set))))))) and (((v_OBF__ddbb = 2) and
+  (v_OBF__eebb = v_OBF__ffbb)) -> infix_eqeq(image(v_OBF__oocc, v_OBF__zz),
+  image(v_OBF__qqdd, add(v_OBF__tt, (empty : int set)))))) and
+  (((v_OBF__ddbb = 2) and (v_OBF__eebb = v_OBF__ffbb)) ->
+  infix_eqeq(v_OBF__ww, image(v_OBF__ppdd, add(v_OBF__tt,
+  (empty : int set)))))) and infix_eqeq(union(v_OBF__qqdd,
+  range_substraction(v_OBF__ppdd, image(times(add(0, (empty : int set)),
+  diff(v_OBF__yy, add(v_OBF__vv, (empty : int set)))), add(1,
+  (empty : int set))))), v_OBF__ppdd)) and infix_eqeq(union(v_OBF__qqdd,
+  range_substraction(v_OBF__ppdd, image(times(add(0, (empty : int set)),
+  diff(v_OBF__yy, add(v_OBF__vv, (empty : int set)))), add(0,
+  (empty : int set))))), union(v_OBF__qqdd, range_substraction(v_OBF__ppdd,
+  diff(v_OBF__yy, add(v_OBF__vv, (empty : int set))))))) and
+  infix_eqeq(union(v_OBF__nnee, range_substraction(v_OBF__ooee,
+  image(times(add(0, (empty : int set)), diff(v_OBF__ppee, add(v_OBF__ssbb,
+  (empty : int set)))), add(1, (empty : int set))))), v_OBF__ooee)) and
+  mem(v_OBF__xx, union(add(0, (empty : int set)), add(1,
+  (empty : int set))))) and mem(v_OBF__hhee, infix_plmngt(times(union(add(0,
+  (empty : int set)), add(1, (empty : int set))), set_enum_OBF__aa),
+  union(add(0, (empty : int set)), add(1, (empty : int set)))))) and
+  infix_eqeq(dom(v_OBF__hhee), times(union(add(0, (empty : int set)), add(1,
+  (empty : int set))), set_enum_OBF__aa))) and mem(v_OBF__vvcc,
+  relation(v_OBF__wwbb, v_OBF__xxbb))) and mem(v_OBF__yycc,
+  relation(v_OBF__wwbb, v_OBF__xxbb))) and infix_eqeq(v_OBF__kkcc,
+  semicolon(v_OBF__vvcc, v_OBF__ggcc))) and infix_eqeq(v_OBF__mmcc,
+  semicolon(v_OBF__yycc, v_OBF__aacc))) and mem(v_OBF__vvcc,
+  infix_plmngt(v_OBF__wwbb, v_OBF__xxbb))) and infix_eqeq(dom(v_OBF__vvcc),
+  v_OBF__wwbb)) and mem(v_OBF__yycc, infix_plmngt(v_OBF__wwbb,
+  v_OBF__xxbb))) and infix_eqeq(dom(v_OBF__yycc), v_OBF__wwbb)) and
+  (v_OBF__qqee = v_OBF__ddbb)) and (v_OBF__rree = v_OBF__tt)) and
+  (v_OBF__ssee = v_OBF__vv)) and (v_OBF__ttee = v_OBF__kkbb)) and
+  (v_OBF__uuee = v_OBF__eebb)) and (v_OBF__vvee = v_OBF__mmee)) and
+  (v_OBF__wwee = v_OBF__xx)) and (v_OBF__xxee = v_OBF__yydd)) and
+  (v_OBF__yyee = v_OBF__zzdd)) and infix_eqeq(v_OBF__zzee, v_OBF__aaee)) and
+  infix_eqeq(v_OBF__aaff, v_OBF__bbee)) and (v_OBF__bbff = v_OBF__yybb)) and
+  infix_eqeq(v_OBF__ccff, v_OBF__ttbb)) and infix_eqeq(v_OBF__ddff,
+  v_OBF__yy)) and infix_eqeq(v_OBF__eeff, v_OBF__oocc)) and
+  infix_eqeq(v_OBF__ffff, v_OBF__nncc)) and infix_eqeq(v_OBF__ggff,
+  v_OBF__jjbb)) and infix_eqeq(v_OBF__hhff, v_OBF__lldd)) and
+  infix_eqeq(v_OBF__iiff, v_OBF__ww)) and infix_eqeq(v_OBF__jjff,
+  v_OBF__zz)) and infix_eqeq(v_OBF__kkff, v_OBF__mmdd)) and
+  infix_eqeq(v_OBF__llff, v_OBF__jjdd)) and infix_eqeq(v_OBF__mmff,
+  v_OBF__jjcc))
+
+predicate f8(v_OBF__zzff: (int, int) tuple2 set, v_OBF__zzee: (int,
+  int) tuple2 set, v_OBF__zzdd: int, v_OBF__zzcc: (int, int) tuple2 set,
+  v_OBF__zzbb: int set, v_OBF__zz: int set, v_OBF__yyff: (int,
+  int) tuple2 set, v_OBF__yyee: int, v_OBF__yydd: int, v_OBF__yycc: (int,
+  int) tuple2 set, v_OBF__yybb: bool, v_OBF__yy: int set, v_OBF__xxff: (int,
+  int) tuple2 set, v_OBF__xxee: int, v_OBF__xxdd: (int, int) tuple2 set,
+  v_OBF__xxcc: (int, int) tuple2 set, v_OBF__xxbb: int set, v_OBF__xx: int,
+  v_OBF__wwff: (int, int) tuple2 set, v_OBF__wwee: int, v_OBF__wwdd: int set,
+  v_OBF__wwcc: (int, int) tuple2 set, v_OBF__wwbb: int set,
+  v_OBF__ww: int set, v_OBF__vvff: (int, int) tuple2 set, v_OBF__vvee: bool,
+  v_OBF__vvdd: ((int, int) tuple2, int) tuple2 set, v_OBF__vvcc: (int,
+  int) tuple2 set, v_OBF__vvbb: (int, int) tuple2 set, v_OBF__vv: int,
+  v_OBF__uuff: (int, int) tuple2 set, v_OBF__uuee: int, v_OBF__uudd: (int,
+  int) tuple2 set, v_OBF__uucc: int set, v_OBF__uubb: int set,
+  v_OBF__uu: int set, v_OBF__ttff: (int, int) tuple2 set, v_OBF__ttee: int,
+  v_OBF__ttdd: (int, int) tuple2 set, v_OBF__ttcc: int set,
+  v_OBF__ttbb: int set, v_OBF__tt: int, v_OBF__ssff: int set,
+  v_OBF__ssee: int, v_OBF__ssdd: (int, int) tuple2 set, v_OBF__sscc: int set,
+  v_OBF__ssbb: int, v_OBF__rrff: (int, int) tuple2 set, v_OBF__rree: int,
+  v_OBF__rrdd: (int, int) tuple2 set, v_OBF__rrcc: (int, int) tuple2 set,
+  v_OBF__rrbb: int, v_OBF__qqff: (int, int) tuple2 set, v_OBF__qqee: int,
+  v_OBF__qqdd: (int, int) tuple2 set, v_OBF__qqcc: int set, v_OBF__qqbb: int,
+  v_OBF__ppff: (int, bool) tuple2 set, v_OBF__ppee: int set,
+  v_OBF__ppdd: (int, int) tuple2 set, v_OBF__ppcc: int, v_OBF__ppbb: int,
+  v_OBF__ooff: int, v_OBF__ooee: (int, int) tuple2 set, v_OBF__oodd: (int,
+  int) tuple2 set, v_OBF__oocc: (int, int) tuple2 set, v_OBF__oobb: int,
+  v_OBF__nnff: int set, v_OBF__nnee: (int, int) tuple2 set,
+  v_OBF__nndd: (int, int) tuple2 set, v_OBF__nncc: (int, int) tuple2 set,
+  v_OBF__nnbb: int set, v_OBF__mmff: (int, bool) tuple2 set,
+  v_OBF__mmee: bool, v_OBF__mmdd: int set, v_OBF__mmcc: (int,
+  int) tuple2 set, v_OBF__mmbb: int set, v_OBF__llff: enum_OBF__ii set,
+  v_OBF__llee: int, v_OBF__lldd: int set, v_OBF__llcc: (int, int) tuple2 set,
+  v_OBF__llbb: int, v_OBF__kkgg: (((int, int) tuple2, int) tuple2,
+  int) tuple2 set, v_OBF__kkff: int set, v_OBF__kkee: int,
+  v_OBF__kkdd: int set, v_OBF__kkcc: (int, int) tuple2 set, v_OBF__kkbb: int,
+  v_OBF__jjgg: ((int, enum_OBF__aa) tuple2, int) tuple2 set,
+  v_OBF__jjff: int set, v_OBF__jjee: int, v_OBF__jjdd: enum_OBF__ii set,
+  v_OBF__jjcc: (int, bool) tuple2 set, v_OBF__jjbb: int set,
+  v_OBF__iigg: ((int, enum_OBF__aa) tuple2, int) tuple2 set,
+  v_OBF__iiff: int set, v_OBF__iiee: (((int, int) tuple2, int) tuple2,
+  int) tuple2 set, v_OBF__iidd: int set, v_OBF__iicc: int set,
+  v_OBF__iibb: int set, v_OBF__hhgg: ((int, enum_OBF__aa) tuple2,
+  int) tuple2 set, v_OBF__hhff: int set, v_OBF__hhee: ((int,
+  enum_OBF__aa) tuple2, int) tuple2 set, v_OBF__hhdd: (int, int) tuple2 set,
+  v_OBF__hhcc: int set, v_OBF__hhbb: int, v_OBF__gggg: ((int,
+  enum_OBF__aa) tuple2, int) tuple2 set, v_OBF__ggff: int set,
+  v_OBF__ggee: enum_OBF__aa, v_OBF__ggdd: (int, int) tuple2 set,
+  v_OBF__ggcc: (int, int) tuple2 set, v_OBF__ggbb: int, v_OBF__ffgg: (int,
+  int) tuple2 set, v_OBF__ffff: (int, int) tuple2 set, v_OBF__ffee: int,
+  v_OBF__ffdd: (int, int) tuple2 set, v_OBF__ffcc: int set, v_OBF__ffbb: int,
+  v_OBF__eegg: (int, int) tuple2 set, v_OBF__eeff: (int, int) tuple2 set,
+  v_OBF__eeee: (int, int) tuple2 set, v_OBF__eedd: (int, int) tuple2 set,
+  v_OBF__eecc: (int, int) tuple2 set, v_OBF__eebb: int, v_OBF__ddgg: (int,
+  int) tuple2 set, v_OBF__ddff: int set, v_OBF__ddee: int, v_OBF__dddd: (int,
+  int) tuple2 set, v_OBF__ddcc: int set, v_OBF__ddbb: int,
+  v_OBF__ccgg: ((int, int) tuple2, int) tuple2 set, v_OBF__ccff: int set,
+  v_OBF__ccee: (int, int) tuple2 set, v_OBF__ccdd: (int, int) tuple2 set,
+  v_OBF__cccc: int set, v_OBF__ccbb: int, v_OBF__bbgg: (int, int) tuple2 set,
+  v_OBF__bbff: bool, v_OBF__bbee: (int, int) tuple2 set, v_OBF__bbdd: int,
+  v_OBF__bbcc: int set, v_OBF__bbbb: int set, v_OBF__aagg: int set,
+  v_OBF__aaff: (int, int) tuple2 set, v_OBF__aaee: (int, int) tuple2 set,
+  v_OBF__aadd: int, v_OBF__aacc: (int, int) tuple2 set, v_OBF__aabb: int) =
+  ((infix_eqeq(semicolon(v_OBF__ggcc, v_OBF__llcc),
+  semicolon(semicolon(semicolon(v_OBF__ggcc, v_OBF__xxcc), v_OBF__wwcc),
+  inverse(v_OBF__xxcc))) and infix_eqeq(semicolon(v_OBF__aacc,
+  inverse(v_OBF__llcc)), semicolon(semicolon(semicolon(v_OBF__aacc,
+  v_OBF__xxcc), inverse(v_OBF__wwcc)), inverse(v_OBF__xxcc)))) and
+  mem(v_OBF__aadd, ran(v_OBF__ggcc)))
+
+predicate f13(v_OBF__zzff: (int, int) tuple2 set, v_OBF__zzee: (int,
+  int) tuple2 set, v_OBF__zzdd: int, v_OBF__zzcc: (int, int) tuple2 set,
+  v_OBF__zzbb: int set, v_OBF__zz: int set, v_OBF__yyff: (int,
+  int) tuple2 set, v_OBF__yyee: int, v_OBF__yydd: int, v_OBF__yycc: (int,
+  int) tuple2 set, v_OBF__yybb: bool, v_OBF__yy: int set, v_OBF__xxff: (int,
+  int) tuple2 set, v_OBF__xxee: int, v_OBF__xxdd: (int, int) tuple2 set,
+  v_OBF__xxcc: (int, int) tuple2 set, v_OBF__xxbb: int set, v_OBF__xx: int,
+  v_OBF__wwff: (int, int) tuple2 set, v_OBF__wwee: int, v_OBF__wwdd: int set,
+  v_OBF__wwcc: (int, int) tuple2 set, v_OBF__wwbb: int set,
+  v_OBF__ww: int set, v_OBF__vvff: (int, int) tuple2 set, v_OBF__vvee: bool,
+  v_OBF__vvdd: ((int, int) tuple2, int) tuple2 set, v_OBF__vvcc: (int,
+  int) tuple2 set, v_OBF__vvbb: (int, int) tuple2 set, v_OBF__vv: int,
+  v_OBF__uuff: (int, int) tuple2 set, v_OBF__uuee: int, v_OBF__uudd: (int,
+  int) tuple2 set, v_OBF__uucc: int set, v_OBF__uubb: int set,
+  v_OBF__uu: int set, v_OBF__ttff: (int, int) tuple2 set, v_OBF__ttee: int,
+  v_OBF__ttdd: (int, int) tuple2 set, v_OBF__ttcc: int set,
+  v_OBF__ttbb: int set, v_OBF__tt: int, v_OBF__ssff: int set,
+  v_OBF__ssee: int, v_OBF__ssdd: (int, int) tuple2 set, v_OBF__sscc: int set,
+  v_OBF__ssbb: int, v_OBF__rrff: (int, int) tuple2 set, v_OBF__rree: int,
+  v_OBF__rrdd: (int, int) tuple2 set, v_OBF__rrcc: (int, int) tuple2 set,
+  v_OBF__rrbb: int, v_OBF__qqff: (int, int) tuple2 set, v_OBF__qqee: int,
+  v_OBF__qqdd: (int, int) tuple2 set, v_OBF__qqcc: int set, v_OBF__qqbb: int,
+  v_OBF__ppff: (int, bool) tuple2 set, v_OBF__ppee: int set,
+  v_OBF__ppdd: (int, int) tuple2 set, v_OBF__ppcc: int, v_OBF__ppbb: int,
+  v_OBF__ooff: int, v_OBF__ooee: (int, int) tuple2 set, v_OBF__oodd: (int,
+  int) tuple2 set, v_OBF__oocc: (int, int) tuple2 set, v_OBF__oobb: int,
+  v_OBF__nnff: int set, v_OBF__nnee: (int, int) tuple2 set,
+  v_OBF__nndd: (int, int) tuple2 set, v_OBF__nncc: (int, int) tuple2 set,
+  v_OBF__nnbb: int set, v_OBF__mmff: (int, bool) tuple2 set,
+  v_OBF__mmee: bool, v_OBF__mmdd: int set, v_OBF__mmcc: (int,
+  int) tuple2 set, v_OBF__mmbb: int set, v_OBF__llff: enum_OBF__ii set,
+  v_OBF__llee: int, v_OBF__lldd: int set, v_OBF__llcc: (int, int) tuple2 set,
+  v_OBF__llbb: int, v_OBF__kkgg: (((int, int) tuple2, int) tuple2,
+  int) tuple2 set, v_OBF__kkff: int set, v_OBF__kkee: int,
+  v_OBF__kkdd: int set, v_OBF__kkcc: (int, int) tuple2 set, v_OBF__kkbb: int,
+  v_OBF__jjgg: ((int, enum_OBF__aa) tuple2, int) tuple2 set,
+  v_OBF__jjff: int set, v_OBF__jjee: int, v_OBF__jjdd: enum_OBF__ii set,
+  v_OBF__jjcc: (int, bool) tuple2 set, v_OBF__jjbb: int set,
+  v_OBF__iigg: ((int, enum_OBF__aa) tuple2, int) tuple2 set,
+  v_OBF__iiff: int set, v_OBF__iiee: (((int, int) tuple2, int) tuple2,
+  int) tuple2 set, v_OBF__iidd: int set, v_OBF__iicc: int set,
+  v_OBF__iibb: int set, v_OBF__hhgg: ((int, enum_OBF__aa) tuple2,
+  int) tuple2 set, v_OBF__hhff: int set, v_OBF__hhee: ((int,
+  enum_OBF__aa) tuple2, int) tuple2 set, v_OBF__hhdd: (int, int) tuple2 set,
+  v_OBF__hhcc: int set, v_OBF__hhbb: int, v_OBF__gggg: ((int,
+  enum_OBF__aa) tuple2, int) tuple2 set, v_OBF__ggff: int set,
+  v_OBF__ggee: enum_OBF__aa, v_OBF__ggdd: (int, int) tuple2 set,
+  v_OBF__ggcc: (int, int) tuple2 set, v_OBF__ggbb: int, v_OBF__ffgg: (int,
+  int) tuple2 set, v_OBF__ffff: (int, int) tuple2 set, v_OBF__ffee: int,
+  v_OBF__ffdd: (int, int) tuple2 set, v_OBF__ffcc: int set, v_OBF__ffbb: int,
+  v_OBF__eegg: (int, int) tuple2 set, v_OBF__eeff: (int, int) tuple2 set,
+  v_OBF__eeee: (int, int) tuple2 set, v_OBF__eedd: (int, int) tuple2 set,
+  v_OBF__eecc: (int, int) tuple2 set, v_OBF__eebb: int, v_OBF__ddgg: (int,
+  int) tuple2 set, v_OBF__ddff: int set, v_OBF__ddee: int, v_OBF__dddd: (int,
+  int) tuple2 set, v_OBF__ddcc: int set, v_OBF__ddbb: int,
+  v_OBF__ccgg: ((int, int) tuple2, int) tuple2 set, v_OBF__ccff: int set,
+  v_OBF__ccee: (int, int) tuple2 set, v_OBF__ccdd: (int, int) tuple2 set,
+  v_OBF__cccc: int set, v_OBF__ccbb: int, v_OBF__bbgg: (int, int) tuple2 set,
+  v_OBF__bbff: bool, v_OBF__bbee: (int, int) tuple2 set, v_OBF__bbdd: int,
+  v_OBF__bbcc: int set, v_OBF__bbbb: int set, v_OBF__aagg: int set,
+  v_OBF__aaff: (int, int) tuple2 set, v_OBF__aaee: (int, int) tuple2 set,
+  v_OBF__aadd: int, v_OBF__aacc: (int, int) tuple2 set, v_OBF__aabb: int) =
+  (((infix_eqeq(semicolon(v_OBF__ggcc, v_OBF__llcc),
+  semicolon(semicolon(semicolon(v_OBF__ggcc, v_OBF__xxcc), v_OBF__wwcc),
+  inverse(v_OBF__xxcc))) and infix_eqeq(semicolon(v_OBF__aacc,
+  inverse(v_OBF__llcc)), semicolon(semicolon(semicolon(v_OBF__aacc,
+  v_OBF__xxcc), inverse(v_OBF__wwcc)), inverse(v_OBF__xxcc)))) and
+  (forall v_OBF__aadd1:int. (mem(v_OBF__aadd1, ran(v_OBF__ggcc)) ->
+  (mem(v_OBF__aadd1, v_OBF__bbcc) and
+  (forall v_OBF__bbdd1:int. ((mem(v_OBF__bbdd1, v_OBF__bbcc) and
+  (apply(v_OBF__xxcc, v_OBF__aadd1) = apply(v_OBF__xxcc, v_OBF__bbdd1))) ->
+  mem({ Tuple2_proj_1 = v_OBF__aadd1; Tuple2_proj_2 = v_OBF__bbdd1 },
+  v_OBF__llcc))))))) and mem(v_OBF__aadd, ran(v_OBF__aacc)))
+
+predicate f35(v_OBF__zzff: (int, int) tuple2 set, v_OBF__zzee: (int,
+  int) tuple2 set, v_OBF__zzdd: int, v_OBF__zzcc: (int, int) tuple2 set,
+  v_OBF__zzbb: int set, v_OBF__zz: int set, v_OBF__yyff: (int,
+  int) tuple2 set, v_OBF__yyee: int, v_OBF__yydd: int, v_OBF__yycc: (int,
+  int) tuple2 set, v_OBF__yybb: bool, v_OBF__yy: int set, v_OBF__xxff: (int,
+  int) tuple2 set, v_OBF__xxee: int, v_OBF__xxdd: (int, int) tuple2 set,
+  v_OBF__xxcc: (int, int) tuple2 set, v_OBF__xxbb: int set, v_OBF__xx: int,
+  v_OBF__wwff: (int, int) tuple2 set, v_OBF__wwee: int, v_OBF__wwdd: int set,
+  v_OBF__wwcc: (int, int) tuple2 set, v_OBF__wwbb: int set,
+  v_OBF__ww: int set, v_OBF__vvff: (int, int) tuple2 set, v_OBF__vvee: bool,
+  v_OBF__vvdd: ((int, int) tuple2, int) tuple2 set, v_OBF__vvcc: (int,
+  int) tuple2 set, v_OBF__vvbb: (int, int) tuple2 set, v_OBF__vv: int,
+  v_OBF__uuff: (int, int) tuple2 set, v_OBF__uuee: int, v_OBF__uudd: (int,
+  int) tuple2 set, v_OBF__uucc: int set, v_OBF__uubb: int set,
+  v_OBF__uu: int set, v_OBF__ttff: (int, int) tuple2 set, v_OBF__ttee: int,
+  v_OBF__ttdd: (int, int) tuple2 set, v_OBF__ttcc: int set,
+  v_OBF__ttbb: int set, v_OBF__tt: int, v_OBF__ssff: int set,
+  v_OBF__ssee: int, v_OBF__ssdd: (int, int) tuple2 set, v_OBF__sscc: int set,
+  v_OBF__ssbb: int, v_OBF__rrff: (int, int) tuple2 set, v_OBF__rree: int,
+  v_OBF__rrdd: (int, int) tuple2 set, v_OBF__rrcc: (int, int) tuple2 set,
+  v_OBF__rrbb: int, v_OBF__qqff: (int, int) tuple2 set, v_OBF__qqee: int,
+  v_OBF__qqdd: (int, int) tuple2 set, v_OBF__qqcc: int set, v_OBF__qqbb: int,
+  v_OBF__ppff: (int, bool) tuple2 set, v_OBF__ppee: int set,
+  v_OBF__ppdd: (int, int) tuple2 set, v_OBF__ppcc: int, v_OBF__ppbb: int,
+  v_OBF__ooff: int, v_OBF__ooee: (int, int) tuple2 set, v_OBF__oodd: (int,
+  int) tuple2 set, v_OBF__oocc: (int, int) tuple2 set, v_OBF__oobb: int,
+  v_OBF__nnff: int set, v_OBF__nnee: (int, int) tuple2 set,
+  v_OBF__nndd: (int, int) tuple2 set, v_OBF__nncc: (int, int) tuple2 set,
+  v_OBF__nnbb: int set, v_OBF__mmff: (int, bool) tuple2 set,
+  v_OBF__mmee: bool, v_OBF__mmdd: int set, v_OBF__mmcc: (int,
+  int) tuple2 set, v_OBF__mmbb: int set, v_OBF__llff: enum_OBF__ii set,
+  v_OBF__llee: int, v_OBF__lldd: int set, v_OBF__llcc: (int, int) tuple2 set,
+  v_OBF__llbb: int, v_OBF__kkgg: (((int, int) tuple2, int) tuple2,
+  int) tuple2 set, v_OBF__kkff: int set, v_OBF__kkee: int,
+  v_OBF__kkdd: int set, v_OBF__kkcc: (int, int) tuple2 set, v_OBF__kkbb: int,
+  v_OBF__jjgg: ((int, enum_OBF__aa) tuple2, int) tuple2 set,
+  v_OBF__jjff: int set, v_OBF__jjee: int, v_OBF__jjdd: enum_OBF__ii set,
+  v_OBF__jjcc: (int, bool) tuple2 set, v_OBF__jjbb: int set,
+  v_OBF__iigg: ((int, enum_OBF__aa) tuple2, int) tuple2 set,
+  v_OBF__iiff: int set, v_OBF__iiee: (((int, int) tuple2, int) tuple2,
+  int) tuple2 set, v_OBF__iidd: int set, v_OBF__iicc: int set,
+  v_OBF__iibb: int set, v_OBF__hhgg: ((int, enum_OBF__aa) tuple2,
+  int) tuple2 set, v_OBF__hhff: int set, v_OBF__hhee: ((int,
+  enum_OBF__aa) tuple2, int) tuple2 set, v_OBF__hhdd: (int, int) tuple2 set,
+  v_OBF__hhcc: int set, v_OBF__hhbb: int, v_OBF__gggg: ((int,
+  enum_OBF__aa) tuple2, int) tuple2 set, v_OBF__ggff: int set,
+  v_OBF__ggee: enum_OBF__aa, v_OBF__ggdd: (int, int) tuple2 set,
+  v_OBF__ggcc: (int, int) tuple2 set, v_OBF__ggbb: int, v_OBF__ffgg: (int,
+  int) tuple2 set, v_OBF__ffff: (int, int) tuple2 set, v_OBF__ffee: int,
+  v_OBF__ffdd: (int, int) tuple2 set, v_OBF__ffcc: int set, v_OBF__ffbb: int,
+  v_OBF__eegg: (int, int) tuple2 set, v_OBF__eeff: (int, int) tuple2 set,
+  v_OBF__eeee: (int, int) tuple2 set, v_OBF__eedd: (int, int) tuple2 set,
+  v_OBF__eecc: (int, int) tuple2 set, v_OBF__eebb: int, v_OBF__ddgg: (int,
+  int) tuple2 set, v_OBF__ddff: int set, v_OBF__ddee: int, v_OBF__dddd: (int,
+  int) tuple2 set, v_OBF__ddcc: int set, v_OBF__ddbb: int,
+  v_OBF__ccgg: ((int, int) tuple2, int) tuple2 set, v_OBF__ccff: int set,
+  v_OBF__ccee: (int, int) tuple2 set, v_OBF__ccdd: (int, int) tuple2 set,
+  v_OBF__cccc: int set, v_OBF__ccbb: int, v_OBF__bbgg: (int, int) tuple2 set,
+  v_OBF__bbff: bool, v_OBF__bbee: (int, int) tuple2 set, v_OBF__bbdd: int,
+  v_OBF__bbcc: int set, v_OBF__bbbb: int set, v_OBF__aagg: int set,
+  v_OBF__aaff: (int, int) tuple2 set, v_OBF__aaee: (int, int) tuple2 set,
+  v_OBF__aadd: int, v_OBF__aacc: (int, int) tuple2 set, v_OBF__aabb: int) =
+  (((((((((infix_eqeq(semicolon(v_OBF__ggcc, v_OBF__llcc),
+  semicolon(semicolon(semicolon(v_OBF__ggcc, v_OBF__xxcc), v_OBF__wwcc),
+  inverse(v_OBF__xxcc))) and infix_eqeq(semicolon(v_OBF__aacc,
+  inverse(v_OBF__llcc)), semicolon(semicolon(semicolon(v_OBF__aacc,
+  v_OBF__xxcc), inverse(v_OBF__wwcc)), inverse(v_OBF__xxcc)))) and
+  (forall v_OBF__aadd1:int. (mem(v_OBF__aadd1, ran(v_OBF__ggcc)) ->
+  (mem(v_OBF__aadd1, v_OBF__bbcc) and
+  (forall v_OBF__bbdd1:int. ((mem(v_OBF__bbdd1, v_OBF__bbcc) and
+  (apply(v_OBF__xxcc, v_OBF__aadd1) = apply(v_OBF__xxcc, v_OBF__bbdd1))) ->
+  mem({ Tuple2_proj_1 = v_OBF__aadd1; Tuple2_proj_2 = v_OBF__bbdd1 },
+  v_OBF__llcc))))))) and
+  (forall v_OBF__aadd1:int. (mem(v_OBF__aadd1, ran(v_OBF__aacc)) ->
+  (mem(v_OBF__aadd1, v_OBF__bbcc) and
+  (forall v_OBF__bbdd1:int. ((mem(v_OBF__bbdd1, v_OBF__bbcc) and
+  (apply(v_OBF__xxcc, v_OBF__aadd1) = apply(v_OBF__xxcc, v_OBF__bbdd1))) ->
+  mem({ Tuple2_proj_1 = v_OBF__bbdd1; Tuple2_proj_2 = v_OBF__aadd1 },
+  v_OBF__llcc))))))) and infix_eqeq(v_OBF__ccdd, semicolon(v_OBF__dddd,
+  v_OBF__xxcc))) and infix_eqeq(v_OBF__eedd, semicolon(v_OBF__ffdd,
+  v_OBF__xxcc))) and infix_eqeq(v_OBF__vvcc, semicolon(v_OBF__kkcc,
+  v_OBF__xxcc))) and infix_eqeq(v_OBF__yycc, semicolon(v_OBF__mmcc,
+  v_OBF__xxcc))) and infix_eqeq(semicolon(semicolon(v_OBF__vvcc,
+  v_OBF__wwcc), inverse(v_OBF__xxcc)), semicolon(v_OBF__kkcc,
+  v_OBF__llcc))) and infix_eqeq(semicolon(semicolon(v_OBF__yycc,
+  inverse(v_OBF__wwcc)), inverse(v_OBF__xxcc)), semicolon(v_OBF__mmcc,
+  inverse(v_OBF__llcc))))
+
+predicate f47(v_OBF__zzff: (int, int) tuple2 set, v_OBF__zzee: (int,
+  int) tuple2 set, v_OBF__zzdd: int, v_OBF__zzcc: (int, int) tuple2 set,
+  v_OBF__zzbb: int set, v_OBF__zz: int set, v_OBF__yyff: (int,
+  int) tuple2 set, v_OBF__yyee: int, v_OBF__yydd: int, v_OBF__yycc: (int,
+  int) tuple2 set, v_OBF__yybb: bool, v_OBF__yy: int set, v_OBF__xxff: (int,
+  int) tuple2 set, v_OBF__xxee: int, v_OBF__xxdd: (int, int) tuple2 set,
+  v_OBF__xxcc: (int, int) tuple2 set, v_OBF__xxbb: int set, v_OBF__xx: int,
+  v_OBF__wwff: (int, int) tuple2 set, v_OBF__wwee: int, v_OBF__wwdd: int set,
+  v_OBF__wwcc: (int, int) tuple2 set, v_OBF__wwbb: int set,
+  v_OBF__ww: int set, v_OBF__vvff: (int, int) tuple2 set, v_OBF__vvee: bool,
+  v_OBF__vvdd: ((int, int) tuple2, int) tuple2 set, v_OBF__vvcc: (int,
+  int) tuple2 set, v_OBF__vvbb: (int, int) tuple2 set, v_OBF__vv: int,
+  v_OBF__uuff: (int, int) tuple2 set, v_OBF__uuee: int, v_OBF__uudd: (int,
+  int) tuple2 set, v_OBF__uucc: int set, v_OBF__uubb: int set,
+  v_OBF__uu: int set, v_OBF__ttff: (int, int) tuple2 set, v_OBF__ttee: int,
+  v_OBF__ttdd: (int, int) tuple2 set, v_OBF__ttcc: int set,
+  v_OBF__ttbb: int set, v_OBF__tt: int, v_OBF__ssff: int set,
+  v_OBF__ssee: int, v_OBF__ssdd: (int, int) tuple2 set, v_OBF__sscc: int set,
+  v_OBF__ssbb: int, v_OBF__rrff: (int, int) tuple2 set, v_OBF__rree: int,
+  v_OBF__rrdd: (int, int) tuple2 set, v_OBF__rrcc: (int, int) tuple2 set,
+  v_OBF__rrbb: int, v_OBF__qqff: (int, int) tuple2 set, v_OBF__qqee: int,
+  v_OBF__qqdd: (int, int) tuple2 set, v_OBF__qqcc: int set, v_OBF__qqbb: int,
+  v_OBF__ppff: (int, bool) tuple2 set, v_OBF__ppee: int set,
+  v_OBF__ppdd: (int, int) tuple2 set, v_OBF__ppcc: int, v_OBF__ppbb: int,
+  v_OBF__ooff: int, v_OBF__ooee: (int, int) tuple2 set, v_OBF__oodd: (int,
+  int) tuple2 set, v_OBF__oocc: (int, int) tuple2 set, v_OBF__oobb: int,
+  v_OBF__nnff: int set, v_OBF__nnee: (int, int) tuple2 set,
+  v_OBF__nndd: (int, int) tuple2 set, v_OBF__nncc: (int, int) tuple2 set,
+  v_OBF__nnbb: int set, v_OBF__mmff: (int, bool) tuple2 set,
+  v_OBF__mmee: bool, v_OBF__mmdd: int set, v_OBF__mmcc: (int,
+  int) tuple2 set, v_OBF__mmbb: int set, v_OBF__llff: enum_OBF__ii set,
+  v_OBF__llee: int, v_OBF__lldd: int set, v_OBF__llcc: (int, int) tuple2 set,
+  v_OBF__llbb: int, v_OBF__kkgg: (((int, int) tuple2, int) tuple2,
+  int) tuple2 set, v_OBF__kkff: int set, v_OBF__kkee: int,
+  v_OBF__kkdd: int set, v_OBF__kkcc: (int, int) tuple2 set, v_OBF__kkbb: int,
+  v_OBF__jjgg: ((int, enum_OBF__aa) tuple2, int) tuple2 set,
+  v_OBF__jjff: int set, v_OBF__jjee: int, v_OBF__jjdd: enum_OBF__ii set,
+  v_OBF__jjcc: (int, bool) tuple2 set, v_OBF__jjbb: int set,
+  v_OBF__iigg: ((int, enum_OBF__aa) tuple2, int) tuple2 set,
+  v_OBF__iiff: int set, v_OBF__iiee: (((int, int) tuple2, int) tuple2,
+  int) tuple2 set, v_OBF__iidd: int set, v_OBF__iicc: int set,
+  v_OBF__iibb: int set, v_OBF__hhgg: ((int, enum_OBF__aa) tuple2,
+  int) tuple2 set, v_OBF__hhff: int set, v_OBF__hhee: ((int,
+  enum_OBF__aa) tuple2, int) tuple2 set, v_OBF__hhdd: (int, int) tuple2 set,
+  v_OBF__hhcc: int set, v_OBF__hhbb: int, v_OBF__gggg: ((int,
+  enum_OBF__aa) tuple2, int) tuple2 set, v_OBF__ggff: int set,
+  v_OBF__ggee: enum_OBF__aa, v_OBF__ggdd: (int, int) tuple2 set,
+  v_OBF__ggcc: (int, int) tuple2 set, v_OBF__ggbb: int, v_OBF__ffgg: (int,
+  int) tuple2 set, v_OBF__ffff: (int, int) tuple2 set, v_OBF__ffee: int,
+  v_OBF__ffdd: (int, int) tuple2 set, v_OBF__ffcc: int set, v_OBF__ffbb: int,
+  v_OBF__eegg: (int, int) tuple2 set, v_OBF__eeff: (int, int) tuple2 set,
+  v_OBF__eeee: (int, int) tuple2 set, v_OBF__eedd: (int, int) tuple2 set,
+  v_OBF__eecc: (int, int) tuple2 set, v_OBF__eebb: int, v_OBF__ddgg: (int,
+  int) tuple2 set, v_OBF__ddff: int set, v_OBF__ddee: int, v_OBF__dddd: (int,
+  int) tuple2 set, v_OBF__ddcc: int set, v_OBF__ddbb: int,
+  v_OBF__ccgg: ((int, int) tuple2, int) tuple2 set, v_OBF__ccff: int set,
+  v_OBF__ccee: (int, int) tuple2 set, v_OBF__ccdd: (int, int) tuple2 set,
+  v_OBF__cccc: int set, v_OBF__ccbb: int, v_OBF__bbgg: (int, int) tuple2 set,
+  v_OBF__bbff: bool, v_OBF__bbee: (int, int) tuple2 set, v_OBF__bbdd: int,
+  v_OBF__bbcc: int set, v_OBF__bbbb: int set, v_OBF__aagg: int set,
+  v_OBF__aaff: (int, int) tuple2 set, v_OBF__aaee: (int, int) tuple2 set,
+  v_OBF__aadd: int, v_OBF__aacc: (int, int) tuple2 set, v_OBF__aabb: int) =
+  ((((((mem(v_OBF__tt, v_OBF__hhcc) and mem(v_OBF__eecc,
+  infix_plmngt(v_OBF__wwbb, v_OBF__xxbb))) and infix_eqeq(dom(v_OBF__eecc),
+  v_OBF__wwbb)) and (v_OBF__ddbb = 2)) and (v_OBF__eebb = v_OBF__hhbb)) and
+  (v_OBF__vv = v_OBF__ssbb)) and (v_OBF__yybb = false))
+
+predicate f49(v_OBF__zzff: (int, int) tuple2 set, v_OBF__zzee: (int,
+  int) tuple2 set, v_OBF__zzdd: int, v_OBF__zzcc: (int, int) tuple2 set,
+  v_OBF__zzbb: int set, v_OBF__zz: int set, v_OBF__yyff: (int,
+  int) tuple2 set, v_OBF__yyee: int, v_OBF__yydd: int, v_OBF__yycc: (int,
+  int) tuple2 set, v_OBF__yybb: bool, v_OBF__yy: int set, v_OBF__xxff: (int,
+  int) tuple2 set, v_OBF__xxee: int, v_OBF__xxdd: (int, int) tuple2 set,
+  v_OBF__xxcc: (int, int) tuple2 set, v_OBF__xxbb: int set, v_OBF__xx: int,
+  v_OBF__wwff: (int, int) tuple2 set, v_OBF__wwee: int, v_OBF__wwdd: int set,
+  v_OBF__wwcc: (int, int) tuple2 set, v_OBF__wwbb: int set,
+  v_OBF__ww: int set, v_OBF__vvff: (int, int) tuple2 set, v_OBF__vvee: bool,
+  v_OBF__vvdd: ((int, int) tuple2, int) tuple2 set, v_OBF__vvcc: (int,
+  int) tuple2 set, v_OBF__vvbb: (int, int) tuple2 set, v_OBF__vv: int,
+  v_OBF__uuff: (int, int) tuple2 set, v_OBF__uuee: int, v_OBF__uudd: (int,
+  int) tuple2 set, v_OBF__uucc: int set, v_OBF__uubb: int set,
+  v_OBF__uu: int set, v_OBF__ttff: (int, int) tuple2 set, v_OBF__ttee: int,
+  v_OBF__ttdd: (int, int) tuple2 set, v_OBF__ttcc: int set,
+  v_OBF__ttbb: int set, v_OBF__tt: int, v_OBF__ssff: int set,
+  v_OBF__ssee: int, v_OBF__ssdd: (int, int) tuple2 set, v_OBF__sscc: int set,
+  v_OBF__ssbb: int, v_OBF__rrff: (int, int) tuple2 set, v_OBF__rree: int,
+  v_OBF__rrdd: (int, int) tuple2 set, v_OBF__rrcc: (int, int) tuple2 set,
+  v_OBF__rrbb: int, v_OBF__qqff: (int, int) tuple2 set, v_OBF__qqee: int,
+  v_OBF__qqdd: (int, int) tuple2 set, v_OBF__qqcc: int set, v_OBF__qqbb: int,
+  v_OBF__ppff: (int, bool) tuple2 set, v_OBF__ppee: int set,
+  v_OBF__ppdd: (int, int) tuple2 set, v_OBF__ppcc: int, v_OBF__ppbb: int,
+  v_OBF__ooff: int, v_OBF__ooee: (int, int) tuple2 set, v_OBF__oodd: (int,
+  int) tuple2 set, v_OBF__oocc: (int, int) tuple2 set, v_OBF__oobb: int,
+  v_OBF__nnff: int set, v_OBF__nnee: (int, int) tuple2 set,
+  v_OBF__nndd: (int, int) tuple2 set, v_OBF__nncc: (int, int) tuple2 set,
+  v_OBF__nnbb: int set, v_OBF__mmff: (int, bool) tuple2 set,
+  v_OBF__mmee: bool, v_OBF__mmdd: int set, v_OBF__mmcc: (int,
+  int) tuple2 set, v_OBF__mmbb: int set, v_OBF__llff: enum_OBF__ii set,
+  v_OBF__llee: int, v_OBF__lldd: int set, v_OBF__llcc: (int, int) tuple2 set,
+  v_OBF__llbb: int, v_OBF__kkgg: (((int, int) tuple2, int) tuple2,
+  int) tuple2 set, v_OBF__kkff: int set, v_OBF__kkee: int,
+  v_OBF__kkdd: int set, v_OBF__kkcc: (int, int) tuple2 set, v_OBF__kkbb: int,
+  v_OBF__jjgg: ((int, enum_OBF__aa) tuple2, int) tuple2 set,
+  v_OBF__jjff: int set, v_OBF__jjee: int, v_OBF__jjdd: enum_OBF__ii set,
+  v_OBF__jjcc: (int, bool) tuple2 set, v_OBF__jjbb: int set,
+  v_OBF__iigg: ((int, enum_OBF__aa) tuple2, int) tuple2 set,
+  v_OBF__iiff: int set, v_OBF__iiee: (((int, int) tuple2, int) tuple2,
+  int) tuple2 set, v_OBF__iidd: int set, v_OBF__iicc: int set,
+  v_OBF__iibb: int set, v_OBF__hhgg: ((int, enum_OBF__aa) tuple2,
+  int) tuple2 set, v_OBF__hhff: int set, v_OBF__hhee: ((int,
+  enum_OBF__aa) tuple2, int) tuple2 set, v_OBF__hhdd: (int, int) tuple2 set,
+  v_OBF__hhcc: int set, v_OBF__hhbb: int, v_OBF__gggg: ((int,
+  enum_OBF__aa) tuple2, int) tuple2 set, v_OBF__ggff: int set,
+  v_OBF__ggee: enum_OBF__aa, v_OBF__ggdd: (int, int) tuple2 set,
+  v_OBF__ggcc: (int, int) tuple2 set, v_OBF__ggbb: int, v_OBF__ffgg: (int,
+  int) tuple2 set, v_OBF__ffff: (int, int) tuple2 set, v_OBF__ffee: int,
+  v_OBF__ffdd: (int, int) tuple2 set, v_OBF__ffcc: int set, v_OBF__ffbb: int,
+  v_OBF__eegg: (int, int) tuple2 set, v_OBF__eeff: (int, int) tuple2 set,
+  v_OBF__eeee: (int, int) tuple2 set, v_OBF__eedd: (int, int) tuple2 set,
+  v_OBF__eecc: (int, int) tuple2 set, v_OBF__eebb: int, v_OBF__ddgg: (int,
+  int) tuple2 set, v_OBF__ddff: int set, v_OBF__ddee: int, v_OBF__dddd: (int,
+  int) tuple2 set, v_OBF__ddcc: int set, v_OBF__ddbb: int,
+  v_OBF__ccgg: ((int, int) tuple2, int) tuple2 set, v_OBF__ccff: int set,
+  v_OBF__ccee: (int, int) tuple2 set, v_OBF__ccdd: (int, int) tuple2 set,
+  v_OBF__cccc: int set, v_OBF__ccbb: int, v_OBF__bbgg: (int, int) tuple2 set,
+  v_OBF__bbff: bool, v_OBF__bbee: (int, int) tuple2 set, v_OBF__bbdd: int,
+  v_OBF__bbcc: int set, v_OBF__bbbb: int set, v_OBF__aagg: int set,
+  v_OBF__aaff: (int, int) tuple2 set, v_OBF__aaee: (int, int) tuple2 set,
+  v_OBF__aadd: int, v_OBF__aacc: (int, int) tuple2 set, v_OBF__aabb: int) =
+  mem(semicolon(v_OBF__eecc, v_OBF__ggcc), infix_plmngt(v_OBF__wwbb,
+  v_OBF__bbcc))
+
+predicate f50(v_OBF__zzff: (int, int) tuple2 set, v_OBF__zzee: (int,
+  int) tuple2 set, v_OBF__zzdd: int, v_OBF__zzcc: (int, int) tuple2 set,
+  v_OBF__zzbb: int set, v_OBF__zz: int set, v_OBF__yyff: (int,
+  int) tuple2 set, v_OBF__yyee: int, v_OBF__yydd: int, v_OBF__yycc: (int,
+  int) tuple2 set, v_OBF__yybb: bool, v_OBF__yy: int set, v_OBF__xxff: (int,
+  int) tuple2 set, v_OBF__xxee: int, v_OBF__xxdd: (int, int) tuple2 set,
+  v_OBF__xxcc: (int, int) tuple2 set, v_OBF__xxbb: int set, v_OBF__xx: int,
+  v_OBF__wwff: (int, int) tuple2 set, v_OBF__wwee: int, v_OBF__wwdd: int set,
+  v_OBF__wwcc: (int, int) tuple2 set, v_OBF__wwbb: int set,
+  v_OBF__ww: int set, v_OBF__vvff: (int, int) tuple2 set, v_OBF__vvee: bool,
+  v_OBF__vvdd: ((int, int) tuple2, int) tuple2 set, v_OBF__vvcc: (int,
+  int) tuple2 set, v_OBF__vvbb: (int, int) tuple2 set, v_OBF__vv: int,
+  v_OBF__uuff: (int, int) tuple2 set, v_OBF__uuee: int, v_OBF__uudd: (int,
+  int) tuple2 set, v_OBF__uucc: int set, v_OBF__uubb: int set,
+  v_OBF__uu: int set, v_OBF__ttff: (int, int) tuple2 set, v_OBF__ttee: int,
+  v_OBF__ttdd: (int, int) tuple2 set, v_OBF__ttcc: int set,
+  v_OBF__ttbb: int set, v_OBF__tt: int, v_OBF__ssff: int set,
+  v_OBF__ssee: int, v_OBF__ssdd: (int, int) tuple2 set, v_OBF__sscc: int set,
+  v_OBF__ssbb: int, v_OBF__rrff: (int, int) tuple2 set, v_OBF__rree: int,
+  v_OBF__rrdd: (int, int) tuple2 set, v_OBF__rrcc: (int, int) tuple2 set,
+  v_OBF__rrbb: int, v_OBF__qqff: (int, int) tuple2 set, v_OBF__qqee: int,
+  v_OBF__qqdd: (int, int) tuple2 set, v_OBF__qqcc: int set, v_OBF__qqbb: int,
+  v_OBF__ppff: (int, bool) tuple2 set, v_OBF__ppee: int set,
+  v_OBF__ppdd: (int, int) tuple2 set, v_OBF__ppcc: int, v_OBF__ppbb: int,
+  v_OBF__ooff: int, v_OBF__ooee: (int, int) tuple2 set, v_OBF__oodd: (int,
+  int) tuple2 set, v_OBF__oocc: (int, int) tuple2 set, v_OBF__oobb: int,
+  v_OBF__nnff: int set, v_OBF__nnee: (int, int) tuple2 set,
+  v_OBF__nndd: (int, int) tuple2 set, v_OBF__nncc: (int, int) tuple2 set,
+  v_OBF__nnbb: int set, v_OBF__mmff: (int, bool) tuple2 set,
+  v_OBF__mmee: bool, v_OBF__mmdd: int set, v_OBF__mmcc: (int,
+  int) tuple2 set, v_OBF__mmbb: int set, v_OBF__llff: enum_OBF__ii set,
+  v_OBF__llee: int, v_OBF__lldd: int set, v_OBF__llcc: (int, int) tuple2 set,
+  v_OBF__llbb: int, v_OBF__kkgg: (((int, int) tuple2, int) tuple2,
+  int) tuple2 set, v_OBF__kkff: int set, v_OBF__kkee: int,
+  v_OBF__kkdd: int set, v_OBF__kkcc: (int, int) tuple2 set, v_OBF__kkbb: int,
+  v_OBF__jjgg: ((int, enum_OBF__aa) tuple2, int) tuple2 set,
+  v_OBF__jjff: int set, v_OBF__jjee: int, v_OBF__jjdd: enum_OBF__ii set,
+  v_OBF__jjcc: (int, bool) tuple2 set, v_OBF__jjbb: int set,
+  v_OBF__iigg: ((int, enum_OBF__aa) tuple2, int) tuple2 set,
+  v_OBF__iiff: int set, v_OBF__iiee: (((int, int) tuple2, int) tuple2,
+  int) tuple2 set, v_OBF__iidd: int set, v_OBF__iicc: int set,
+  v_OBF__iibb: int set, v_OBF__hhgg: ((int, enum_OBF__aa) tuple2,
+  int) tuple2 set, v_OBF__hhff: int set, v_OBF__hhee: ((int,
+  enum_OBF__aa) tuple2, int) tuple2 set, v_OBF__hhdd: (int, int) tuple2 set,
+  v_OBF__hhcc: int set, v_OBF__hhbb: int, v_OBF__gggg: ((int,
+  enum_OBF__aa) tuple2, int) tuple2 set, v_OBF__ggff: int set,
+  v_OBF__ggee: enum_OBF__aa, v_OBF__ggdd: (int, int) tuple2 set,
+  v_OBF__ggcc: (int, int) tuple2 set, v_OBF__ggbb: int, v_OBF__ffgg: (int,
+  int) tuple2 set, v_OBF__ffff: (int, int) tuple2 set, v_OBF__ffee: int,
+  v_OBF__ffdd: (int, int) tuple2 set, v_OBF__ffcc: int set, v_OBF__ffbb: int,
+  v_OBF__eegg: (int, int) tuple2 set, v_OBF__eeff: (int, int) tuple2 set,
+  v_OBF__eeee: (int, int) tuple2 set, v_OBF__eedd: (int, int) tuple2 set,
+  v_OBF__eecc: (int, int) tuple2 set, v_OBF__eebb: int, v_OBF__ddgg: (int,
+  int) tuple2 set, v_OBF__ddff: int set, v_OBF__ddee: int, v_OBF__dddd: (int,
+  int) tuple2 set, v_OBF__ddcc: int set, v_OBF__ddbb: int,
+  v_OBF__ccgg: ((int, int) tuple2, int) tuple2 set, v_OBF__ccff: int set,
+  v_OBF__ccee: (int, int) tuple2 set, v_OBF__ccdd: (int, int) tuple2 set,
+  v_OBF__cccc: int set, v_OBF__ccbb: int, v_OBF__bbgg: (int, int) tuple2 set,
+  v_OBF__bbff: bool, v_OBF__bbee: (int, int) tuple2 set, v_OBF__bbdd: int,
+  v_OBF__bbcc: int set, v_OBF__bbbb: int set, v_OBF__aagg: int set,
+  v_OBF__aaff: (int, int) tuple2 set, v_OBF__aaee: (int, int) tuple2 set,
+  v_OBF__aadd: int, v_OBF__aacc: (int, int) tuple2 set, v_OBF__aabb: int) =
+  infix_eqeq(dom(semicolon(v_OBF__eecc, v_OBF__ggcc)), v_OBF__wwbb)
+
+predicate f52(v_OBF__zzff: (int, int) tuple2 set, v_OBF__zzee: (int,
+  int) tuple2 set, v_OBF__zzdd: int, v_OBF__zzcc: (int, int) tuple2 set,
+  v_OBF__zzbb: int set, v_OBF__zz: int set, v_OBF__yyff: (int,
+  int) tuple2 set, v_OBF__yyee: int, v_OBF__yydd: int, v_OBF__yycc: (int,
+  int) tuple2 set, v_OBF__yybb: bool, v_OBF__yy: int set, v_OBF__xxff: (int,
+  int) tuple2 set, v_OBF__xxee: int, v_OBF__xxdd: (int, int) tuple2 set,
+  v_OBF__xxcc: (int, int) tuple2 set, v_OBF__xxbb: int set, v_OBF__xx: int,
+  v_OBF__wwff: (int, int) tuple2 set, v_OBF__wwee: int, v_OBF__wwdd: int set,
+  v_OBF__wwcc: (int, int) tuple2 set, v_OBF__wwbb: int set,
+  v_OBF__ww: int set, v_OBF__vvff: (int, int) tuple2 set, v_OBF__vvee: bool,
+  v_OBF__vvdd: ((int, int) tuple2, int) tuple2 set, v_OBF__vvcc: (int,
+  int) tuple2 set, v_OBF__vvbb: (int, int) tuple2 set, v_OBF__vv: int,
+  v_OBF__uuff: (int, int) tuple2 set, v_OBF__uuee: int, v_OBF__uudd: (int,
+  int) tuple2 set, v_OBF__uucc: int set, v_OBF__uubb: int set,
+  v_OBF__uu: int set, v_OBF__ttff: (int, int) tuple2 set, v_OBF__ttee: int,
+  v_OBF__ttdd: (int, int) tuple2 set, v_OBF__ttcc: int set,
+  v_OBF__ttbb: int set, v_OBF__tt: int, v_OBF__ssff: int set,
+  v_OBF__ssee: int, v_OBF__ssdd: (int, int) tuple2 set, v_OBF__sscc: int set,
+  v_OBF__ssbb: int, v_OBF__rrff: (int, int) tuple2 set, v_OBF__rree: int,
+  v_OBF__rrdd: (int, int) tuple2 set, v_OBF__rrcc: (int, int) tuple2 set,
+  v_OBF__rrbb: int, v_OBF__qqff: (int, int) tuple2 set, v_OBF__qqee: int,
+  v_OBF__qqdd: (int, int) tuple2 set, v_OBF__qqcc: int set, v_OBF__qqbb: int,
+  v_OBF__ppff: (int, bool) tuple2 set, v_OBF__ppee: int set,
+  v_OBF__ppdd: (int, int) tuple2 set, v_OBF__ppcc: int, v_OBF__ppbb: int,
+  v_OBF__ooff: int, v_OBF__ooee: (int, int) tuple2 set, v_OBF__oodd: (int,
+  int) tuple2 set, v_OBF__oocc: (int, int) tuple2 set, v_OBF__oobb: int,
+  v_OBF__nnff: int set, v_OBF__nnee: (int, int) tuple2 set,
+  v_OBF__nndd: (int, int) tuple2 set, v_OBF__nncc: (int, int) tuple2 set,
+  v_OBF__nnbb: int set, v_OBF__mmff: (int, bool) tuple2 set,
+  v_OBF__mmee: bool, v_OBF__mmdd: int set, v_OBF__mmcc: (int,
+  int) tuple2 set, v_OBF__mmbb: int set, v_OBF__llff: enum_OBF__ii set,
+  v_OBF__llee: int, v_OBF__lldd: int set, v_OBF__llcc: (int, int) tuple2 set,
+  v_OBF__llbb: int, v_OBF__kkgg: (((int, int) tuple2, int) tuple2,
+  int) tuple2 set, v_OBF__kkff: int set, v_OBF__kkee: int,
+  v_OBF__kkdd: int set, v_OBF__kkcc: (int, int) tuple2 set, v_OBF__kkbb: int,
+  v_OBF__jjgg: ((int, enum_OBF__aa) tuple2, int) tuple2 set,
+  v_OBF__jjff: int set, v_OBF__jjee: int, v_OBF__jjdd: enum_OBF__ii set,
+  v_OBF__jjcc: (int, bool) tuple2 set, v_OBF__jjbb: int set,
+  v_OBF__iigg: ((int, enum_OBF__aa) tuple2, int) tuple2 set,
+  v_OBF__iiff: int set, v_OBF__iiee: (((int, int) tuple2, int) tuple2,
+  int) tuple2 set, v_OBF__iidd: int set, v_OBF__iicc: int set,
+  v_OBF__iibb: int set, v_OBF__hhgg: ((int, enum_OBF__aa) tuple2,
+  int) tuple2 set, v_OBF__hhff: int set, v_OBF__hhee: ((int,
+  enum_OBF__aa) tuple2, int) tuple2 set, v_OBF__hhdd: (int, int) tuple2 set,
+  v_OBF__hhcc: int set, v_OBF__hhbb: int, v_OBF__gggg: ((int,
+  enum_OBF__aa) tuple2, int) tuple2 set, v_OBF__ggff: int set,
+  v_OBF__ggee: enum_OBF__aa, v_OBF__ggdd: (int, int) tuple2 set,
+  v_OBF__ggcc: (int, int) tuple2 set, v_OBF__ggbb: int, v_OBF__ffgg: (int,
+  int) tuple2 set, v_OBF__ffff: (int, int) tuple2 set, v_OBF__ffee: int,
+  v_OBF__ffdd: (int, int) tuple2 set, v_OBF__ffcc: int set, v_OBF__ffbb: int,
+  v_OBF__eegg: (int, int) tuple2 set, v_OBF__eeff: (int, int) tuple2 set,
+  v_OBF__eeee: (int, int) tuple2 set, v_OBF__eedd: (int, int) tuple2 set,
+  v_OBF__eecc: (int, int) tuple2 set, v_OBF__eebb: int, v_OBF__ddgg: (int,
+  int) tuple2 set, v_OBF__ddff: int set, v_OBF__ddee: int, v_OBF__dddd: (int,
+  int) tuple2 set, v_OBF__ddcc: int set, v_OBF__ddbb: int,
+  v_OBF__ccgg: ((int, int) tuple2, int) tuple2 set, v_OBF__ccff: int set,
+  v_OBF__ccee: (int, int) tuple2 set, v_OBF__ccdd: (int, int) tuple2 set,
+  v_OBF__cccc: int set, v_OBF__ccbb: int, v_OBF__bbgg: (int, int) tuple2 set,
+  v_OBF__bbff: bool, v_OBF__bbee: (int, int) tuple2 set, v_OBF__bbdd: int,
+  v_OBF__bbcc: int set, v_OBF__bbbb: int set, v_OBF__aagg: int set,
+  v_OBF__aaff: (int, int) tuple2 set, v_OBF__aaee: (int, int) tuple2 set,
+  v_OBF__aadd: int, v_OBF__aacc: (int, int) tuple2 set, v_OBF__aabb: int) =
+  mem(v_OBF__eecc, relation(v_OBF__wwbb, v_OBF__xxbb))
+
+predicate f53(v_OBF__zzff: (int, int) tuple2 set, v_OBF__zzee: (int,
+  int) tuple2 set, v_OBF__zzdd: int, v_OBF__zzcc: (int, int) tuple2 set,
+  v_OBF__zzbb: int set, v_OBF__zz: int set, v_OBF__yyff: (int,
+  int) tuple2 set, v_OBF__yyee: int, v_OBF__yydd: int, v_OBF__yycc: (int,
+  int) tuple2 set, v_OBF__yybb: bool, v_OBF__yy: int set, v_OBF__xxff: (int,
+  int) tuple2 set, v_OBF__xxee: int, v_OBF__xxdd: (int, int) tuple2 set,
+  v_OBF__xxcc: (int, int) tuple2 set, v_OBF__xxbb: int set, v_OBF__xx: int,
+  v_OBF__wwff: (int, int) tuple2 set, v_OBF__wwee: int, v_OBF__wwdd: int set,
+  v_OBF__wwcc: (int, int) tuple2 set, v_OBF__wwbb: int set,
+  v_OBF__ww: int set, v_OBF__vvff: (int, int) tuple2 set, v_OBF__vvee: bool,
+  v_OBF__vvdd: ((int, int) tuple2, int) tuple2 set, v_OBF__vvcc: (int,
+  int) tuple2 set, v_OBF__vvbb: (int, int) tuple2 set, v_OBF__vv: int,
+  v_OBF__uuff: (int, int) tuple2 set, v_OBF__uuee: int, v_OBF__uudd: (int,
+  int) tuple2 set, v_OBF__uucc: int set, v_OBF__uubb: int set,
+  v_OBF__uu: int set, v_OBF__ttff: (int, int) tuple2 set, v_OBF__ttee: int,
+  v_OBF__ttdd: (int, int) tuple2 set, v_OBF__ttcc: int set,
+  v_OBF__ttbb: int set, v_OBF__tt: int, v_OBF__ssff: int set,
+  v_OBF__ssee: int, v_OBF__ssdd: (int, int) tuple2 set, v_OBF__sscc: int set,
+  v_OBF__ssbb: int, v_OBF__rrff: (int, int) tuple2 set, v_OBF__rree: int,
+  v_OBF__rrdd: (int, int) tuple2 set, v_OBF__rrcc: (int, int) tuple2 set,
+  v_OBF__rrbb: int, v_OBF__qqff: (int, int) tuple2 set, v_OBF__qqee: int,
+  v_OBF__qqdd: (int, int) tuple2 set, v_OBF__qqcc: int set, v_OBF__qqbb: int,
+  v_OBF__ppff: (int, bool) tuple2 set, v_OBF__ppee: int set,
+  v_OBF__ppdd: (int, int) tuple2 set, v_OBF__ppcc: int, v_OBF__ppbb: int,
+  v_OBF__ooff: int, v_OBF__ooee: (int, int) tuple2 set, v_OBF__oodd: (int,
+  int) tuple2 set, v_OBF__oocc: (int, int) tuple2 set, v_OBF__oobb: int,
+  v_OBF__nnff: int set, v_OBF__nnee: (int, int) tuple2 set,
+  v_OBF__nndd: (int, int) tuple2 set, v_OBF__nncc: (int, int) tuple2 set,
+  v_OBF__nnbb: int set, v_OBF__mmff: (int, bool) tuple2 set,
+  v_OBF__mmee: bool, v_OBF__mmdd: int set, v_OBF__mmcc: (int,
+  int) tuple2 set, v_OBF__mmbb: int set, v_OBF__llff: enum_OBF__ii set,
+  v_OBF__llee: int, v_OBF__lldd: int set, v_OBF__llcc: (int, int) tuple2 set,
+  v_OBF__llbb: int, v_OBF__kkgg: (((int, int) tuple2, int) tuple2,
+  int) tuple2 set, v_OBF__kkff: int set, v_OBF__kkee: int,
+  v_OBF__kkdd: int set, v_OBF__kkcc: (int, int) tuple2 set, v_OBF__kkbb: int,
+  v_OBF__jjgg: ((int, enum_OBF__aa) tuple2, int) tuple2 set,
+  v_OBF__jjff: int set, v_OBF__jjee: int, v_OBF__jjdd: enum_OBF__ii set,
+  v_OBF__jjcc: (int, bool) tuple2 set, v_OBF__jjbb: int set,
+  v_OBF__iigg: ((int, enum_OBF__aa) tuple2, int) tuple2 set,
+  v_OBF__iiff: int set, v_OBF__iiee: (((int, int) tuple2, int) tuple2,
+  int) tuple2 set, v_OBF__iidd: int set, v_OBF__iicc: int set,
+  v_OBF__iibb: int set, v_OBF__hhgg: ((int, enum_OBF__aa) tuple2,
+  int) tuple2 set, v_OBF__hhff: int set, v_OBF__hhee: ((int,
+  enum_OBF__aa) tuple2, int) tuple2 set, v_OBF__hhdd: (int, int) tuple2 set,
+  v_OBF__hhcc: int set, v_OBF__hhbb: int, v_OBF__gggg: ((int,
+  enum_OBF__aa) tuple2, int) tuple2 set, v_OBF__ggff: int set,
+  v_OBF__ggee: enum_OBF__aa, v_OBF__ggdd: (int, int) tuple2 set,
+  v_OBF__ggcc: (int, int) tuple2 set, v_OBF__ggbb: int, v_OBF__ffgg: (int,
+  int) tuple2 set, v_OBF__ffff: (int, int) tuple2 set, v_OBF__ffee: int,
+  v_OBF__ffdd: (int, int) tuple2 set, v_OBF__ffcc: int set, v_OBF__ffbb: int,
+  v_OBF__eegg: (int, int) tuple2 set, v_OBF__eeff: (int, int) tuple2 set,
+  v_OBF__eeee: (int, int) tuple2 set, v_OBF__eedd: (int, int) tuple2 set,
+  v_OBF__eecc: (int, int) tuple2 set, v_OBF__eebb: int, v_OBF__ddgg: (int,
+  int) tuple2 set, v_OBF__ddff: int set, v_OBF__ddee: int, v_OBF__dddd: (int,
+  int) tuple2 set, v_OBF__ddcc: int set, v_OBF__ddbb: int,
+  v_OBF__ccgg: ((int, int) tuple2, int) tuple2 set, v_OBF__ccff: int set,
+  v_OBF__ccee: (int, int) tuple2 set, v_OBF__ccdd: (int, int) tuple2 set,
+  v_OBF__cccc: int set, v_OBF__ccbb: int, v_OBF__bbgg: (int, int) tuple2 set,
+  v_OBF__bbff: bool, v_OBF__bbee: (int, int) tuple2 set, v_OBF__bbdd: int,
+  v_OBF__bbcc: int set, v_OBF__bbbb: int set, v_OBF__aagg: int set,
+  v_OBF__aaff: (int, int) tuple2 set, v_OBF__aaee: (int, int) tuple2 set,
+  v_OBF__aadd: int, v_OBF__aacc: (int, int) tuple2 set, v_OBF__aabb: int) =
+  ((((((mem(v_OBF__tt, v_OBF__ffcc) and mem(v_OBF__eecc,
+  infix_plmngt(v_OBF__wwbb, v_OBF__xxbb))) and infix_eqeq(dom(v_OBF__eecc),
+  v_OBF__wwbb)) and (v_OBF__ddbb = 2)) and (v_OBF__eebb = v_OBF__hhbb)) and
+  (v_OBF__vv = v_OBF__ssbb)) and (v_OBF__yybb = false))
+
+predicate f54(v_OBF__zzff: (int, int) tuple2 set, v_OBF__zzee: (int,
+  int) tuple2 set, v_OBF__zzdd: int, v_OBF__zzcc: (int, int) tuple2 set,
+  v_OBF__zzbb: int set, v_OBF__zz: int set, v_OBF__yyff: (int,
+  int) tuple2 set, v_OBF__yyee: int, v_OBF__yydd: int, v_OBF__yycc: (int,
+  int) tuple2 set, v_OBF__yybb: bool, v_OBF__yy: int set, v_OBF__xxff: (int,
+  int) tuple2 set, v_OBF__xxee: int, v_OBF__xxdd: (int, int) tuple2 set,
+  v_OBF__xxcc: (int, int) tuple2 set, v_OBF__xxbb: int set, v_OBF__xx: int,
+  v_OBF__wwff: (int, int) tuple2 set, v_OBF__wwee: int, v_OBF__wwdd: int set,
+  v_OBF__wwcc: (int, int) tuple2 set, v_OBF__wwbb: int set,
+  v_OBF__ww: int set, v_OBF__vvff: (int, int) tuple2 set, v_OBF__vvee: bool,
+  v_OBF__vvdd: ((int, int) tuple2, int) tuple2 set, v_OBF__vvcc: (int,
+  int) tuple2 set, v_OBF__vvbb: (int, int) tuple2 set, v_OBF__vv: int,
+  v_OBF__uuff: (int, int) tuple2 set, v_OBF__uuee: int, v_OBF__uudd: (int,
+  int) tuple2 set, v_OBF__uucc: int set, v_OBF__uubb: int set,
+  v_OBF__uu: int set, v_OBF__ttff: (int, int) tuple2 set, v_OBF__ttee: int,
+  v_OBF__ttdd: (int, int) tuple2 set, v_OBF__ttcc: int set,
+  v_OBF__ttbb: int set, v_OBF__tt: int, v_OBF__ssff: int set,
+  v_OBF__ssee: int, v_OBF__ssdd: (int, int) tuple2 set, v_OBF__sscc: int set,
+  v_OBF__ssbb: int, v_OBF__rrff: (int, int) tuple2 set, v_OBF__rree: int,
+  v_OBF__rrdd: (int, int) tuple2 set, v_OBF__rrcc: (int, int) tuple2 set,
+  v_OBF__rrbb: int, v_OBF__qqff: (int, int) tuple2 set, v_OBF__qqee: int,
+  v_OBF__qqdd: (int, int) tuple2 set, v_OBF__qqcc: int set, v_OBF__qqbb: int,
+  v_OBF__ppff: (int, bool) tuple2 set, v_OBF__ppee: int set,
+  v_OBF__ppdd: (int, int) tuple2 set, v_OBF__ppcc: int, v_OBF__ppbb: int,
+  v_OBF__ooff: int, v_OBF__ooee: (int, int) tuple2 set, v_OBF__oodd: (int,
+  int) tuple2 set, v_OBF__oocc: (int, int) tuple2 set, v_OBF__oobb: int,
+  v_OBF__nnff: int set, v_OBF__nnee: (int, int) tuple2 set,
+  v_OBF__nndd: (int, int) tuple2 set, v_OBF__nncc: (int, int) tuple2 set,
+  v_OBF__nnbb: int set, v_OBF__mmff: (int, bool) tuple2 set,
+  v_OBF__mmee: bool, v_OBF__mmdd: int set, v_OBF__mmcc: (int,
+  int) tuple2 set, v_OBF__mmbb: int set, v_OBF__llff: enum_OBF__ii set,
+  v_OBF__llee: int, v_OBF__lldd: int set, v_OBF__llcc: (int, int) tuple2 set,
+  v_OBF__llbb: int, v_OBF__kkgg: (((int, int) tuple2, int) tuple2,
+  int) tuple2 set, v_OBF__kkff: int set, v_OBF__kkee: int,
+  v_OBF__kkdd: int set, v_OBF__kkcc: (int, int) tuple2 set, v_OBF__kkbb: int,
+  v_OBF__jjgg: ((int, enum_OBF__aa) tuple2, int) tuple2 set,
+  v_OBF__jjff: int set, v_OBF__jjee: int, v_OBF__jjdd: enum_OBF__ii set,
+  v_OBF__jjcc: (int, bool) tuple2 set, v_OBF__jjbb: int set,
+  v_OBF__iigg: ((int, enum_OBF__aa) tuple2, int) tuple2 set,
+  v_OBF__iiff: int set, v_OBF__iiee: (((int, int) tuple2, int) tuple2,
+  int) tuple2 set, v_OBF__iidd: int set, v_OBF__iicc: int set,
+  v_OBF__iibb: int set, v_OBF__hhgg: ((int, enum_OBF__aa) tuple2,
+  int) tuple2 set, v_OBF__hhff: int set, v_OBF__hhee: ((int,
+  enum_OBF__aa) tuple2, int) tuple2 set, v_OBF__hhdd: (int, int) tuple2 set,
+  v_OBF__hhcc: int set, v_OBF__hhbb: int, v_OBF__gggg: ((int,
+  enum_OBF__aa) tuple2, int) tuple2 set, v_OBF__ggff: int set,
+  v_OBF__ggee: enum_OBF__aa, v_OBF__ggdd: (int, int) tuple2 set,
+  v_OBF__ggcc: (int, int) tuple2 set, v_OBF__ggbb: int, v_OBF__ffgg: (int,
+  int) tuple2 set, v_OBF__ffff: (int, int) tuple2 set, v_OBF__ffee: int,
+  v_OBF__ffdd: (int, int) tuple2 set, v_OBF__ffcc: int set, v_OBF__ffbb: int,
+  v_OBF__eegg: (int, int) tuple2 set, v_OBF__eeff: (int, int) tuple2 set,
+  v_OBF__eeee: (int, int) tuple2 set, v_OBF__eedd: (int, int) tuple2 set,
+  v_OBF__eecc: (int, int) tuple2 set, v_OBF__eebb: int, v_OBF__ddgg: (int,
+  int) tuple2 set, v_OBF__ddff: int set, v_OBF__ddee: int, v_OBF__dddd: (int,
+  int) tuple2 set, v_OBF__ddcc: int set, v_OBF__ddbb: int,
+  v_OBF__ccgg: ((int, int) tuple2, int) tuple2 set, v_OBF__ccff: int set,
+  v_OBF__ccee: (int, int) tuple2 set, v_OBF__ccdd: (int, int) tuple2 set,
+  v_OBF__cccc: int set, v_OBF__ccbb: int, v_OBF__bbgg: (int, int) tuple2 set,
+  v_OBF__bbff: bool, v_OBF__bbee: (int, int) tuple2 set, v_OBF__bbdd: int,
+  v_OBF__bbcc: int set, v_OBF__bbbb: int set, v_OBF__aagg: int set,
+  v_OBF__aaff: (int, int) tuple2 set, v_OBF__aaee: (int, int) tuple2 set,
+  v_OBF__aadd: int, v_OBF__aacc: (int, int) tuple2 set, v_OBF__aabb: int) =
+  ((((((mem(v_OBF__tt, v_OBF__ddcc) and mem(v_OBF__eecc,
+  infix_plmngt(v_OBF__wwbb, v_OBF__xxbb))) and infix_eqeq(dom(v_OBF__eecc),
+  v_OBF__wwbb)) and (v_OBF__ddbb = 2)) and (v_OBF__eebb = v_OBF__hhbb)) and
+  (v_OBF__vv = v_OBF__ssbb)) and (v_OBF__yybb = false))
+
+predicate f55(v_OBF__zzff: (int, int) tuple2 set, v_OBF__zzee: (int,
+  int) tuple2 set, v_OBF__zzdd: int, v_OBF__zzcc: (int, int) tuple2 set,
+  v_OBF__zzbb: int set, v_OBF__zz: int set, v_OBF__yyff: (int,
+  int) tuple2 set, v_OBF__yyee: int, v_OBF__yydd: int, v_OBF__yycc: (int,
+  int) tuple2 set, v_OBF__yybb: bool, v_OBF__yy: int set, v_OBF__xxff: (int,
+  int) tuple2 set, v_OBF__xxee: int, v_OBF__xxdd: (int, int) tuple2 set,
+  v_OBF__xxcc: (int, int) tuple2 set, v_OBF__xxbb: int set, v_OBF__xx: int,
+  v_OBF__wwff: (int, int) tuple2 set, v_OBF__wwee: int, v_OBF__wwdd: int set,
+  v_OBF__wwcc: (int, int) tuple2 set, v_OBF__wwbb: int set,
+  v_OBF__ww: int set, v_OBF__vvff: (int, int) tuple2 set, v_OBF__vvee: bool,
+  v_OBF__vvdd: ((int, int) tuple2, int) tuple2 set, v_OBF__vvcc: (int,
+  int) tuple2 set, v_OBF__vvbb: (int, int) tuple2 set, v_OBF__vv: int,
+  v_OBF__uuff: (int, int) tuple2 set, v_OBF__uuee: int, v_OBF__uudd: (int,
+  int) tuple2 set, v_OBF__uucc: int set, v_OBF__uubb: int set,
+  v_OBF__uu: int set, v_OBF__ttff: (int, int) tuple2 set, v_OBF__ttee: int,
+  v_OBF__ttdd: (int, int) tuple2 set, v_OBF__ttcc: int set,
+  v_OBF__ttbb: int set, v_OBF__tt: int, v_OBF__ssff: int set,
+  v_OBF__ssee: int, v_OBF__ssdd: (int, int) tuple2 set, v_OBF__sscc: int set,
+  v_OBF__ssbb: int, v_OBF__rrff: (int, int) tuple2 set, v_OBF__rree: int,
+  v_OBF__rrdd: (int, int) tuple2 set, v_OBF__rrcc: (int, int) tuple2 set,
+  v_OBF__rrbb: int, v_OBF__qqff: (int, int) tuple2 set, v_OBF__qqee: int,
+  v_OBF__qqdd: (int, int) tuple2 set, v_OBF__qqcc: int set, v_OBF__qqbb: int,
+  v_OBF__ppff: (int, bool) tuple2 set, v_OBF__ppee: int set,
+  v_OBF__ppdd: (int, int) tuple2 set, v_OBF__ppcc: int, v_OBF__ppbb: int,
+  v_OBF__ooff: int, v_OBF__ooee: (int, int) tuple2 set, v_OBF__oodd: (int,
+  int) tuple2 set, v_OBF__oocc: (int, int) tuple2 set, v_OBF__oobb: int,
+  v_OBF__nnff: int set, v_OBF__nnee: (int, int) tuple2 set,
+  v_OBF__nndd: (int, int) tuple2 set, v_OBF__nncc: (int, int) tuple2 set,
+  v_OBF__nnbb: int set, v_OBF__mmff: (int, bool) tuple2 set,
+  v_OBF__mmee: bool, v_OBF__mmdd: int set, v_OBF__mmcc: (int,
+  int) tuple2 set, v_OBF__mmbb: int set, v_OBF__llff: enum_OBF__ii set,
+  v_OBF__llee: int, v_OBF__lldd: int set, v_OBF__llcc: (int, int) tuple2 set,
+  v_OBF__llbb: int, v_OBF__kkgg: (((int, int) tuple2, int) tuple2,
+  int) tuple2 set, v_OBF__kkff: int set, v_OBF__kkee: int,
+  v_OBF__kkdd: int set, v_OBF__kkcc: (int, int) tuple2 set, v_OBF__kkbb: int,
+  v_OBF__jjgg: ((int, enum_OBF__aa) tuple2, int) tuple2 set,
+  v_OBF__jjff: int set, v_OBF__jjee: int, v_OBF__jjdd: enum_OBF__ii set,
+  v_OBF__jjcc: (int, bool) tuple2 set, v_OBF__jjbb: int set,
+  v_OBF__iigg: ((int, enum_OBF__aa) tuple2, int) tuple2 set,
+  v_OBF__iiff: int set, v_OBF__iiee: (((int, int) tuple2, int) tuple2,
+  int) tuple2 set, v_OBF__iidd: int set, v_OBF__iicc: int set,
+  v_OBF__iibb: int set, v_OBF__hhgg: ((int, enum_OBF__aa) tuple2,
+  int) tuple2 set, v_OBF__hhff: int set, v_OBF__hhee: ((int,
+  enum_OBF__aa) tuple2, int) tuple2 set, v_OBF__hhdd: (int, int) tuple2 set,
+  v_OBF__hhcc: int set, v_OBF__hhbb: int, v_OBF__gggg: ((int,
+  enum_OBF__aa) tuple2, int) tuple2 set, v_OBF__ggff: int set,
+  v_OBF__ggee: enum_OBF__aa, v_OBF__ggdd: (int, int) tuple2 set,
+  v_OBF__ggcc: (int, int) tuple2 set, v_OBF__ggbb: int, v_OBF__ffgg: (int,
+  int) tuple2 set, v_OBF__ffff: (int, int) tuple2 set, v_OBF__ffee: int,
+  v_OBF__ffdd: (int, int) tuple2 set, v_OBF__ffcc: int set, v_OBF__ffbb: int,
+  v_OBF__eegg: (int, int) tuple2 set, v_OBF__eeff: (int, int) tuple2 set,
+  v_OBF__eeee: (int, int) tuple2 set, v_OBF__eedd: (int, int) tuple2 set,
+  v_OBF__eecc: (int, int) tuple2 set, v_OBF__eebb: int, v_OBF__ddgg: (int,
+  int) tuple2 set, v_OBF__ddff: int set, v_OBF__ddee: int, v_OBF__dddd: (int,
+  int) tuple2 set, v_OBF__ddcc: int set, v_OBF__ddbb: int,
+  v_OBF__ccgg: ((int, int) tuple2, int) tuple2 set, v_OBF__ccff: int set,
+  v_OBF__ccee: (int, int) tuple2 set, v_OBF__ccdd: (int, int) tuple2 set,
+  v_OBF__cccc: int set, v_OBF__ccbb: int, v_OBF__bbgg: (int, int) tuple2 set,
+  v_OBF__bbff: bool, v_OBF__bbee: (int, int) tuple2 set, v_OBF__bbdd: int,
+  v_OBF__bbcc: int set, v_OBF__bbbb: int set, v_OBF__aagg: int set,
+  v_OBF__aaff: (int, int) tuple2 set, v_OBF__aaee: (int, int) tuple2 set,
+  v_OBF__aadd: int, v_OBF__aacc: (int, int) tuple2 set, v_OBF__aabb: int) =
+  ((((((mem(v_OBF__tt, v_OBF__cccc) and mem(v_OBF__vvbb,
+  infix_plmngt(v_OBF__wwbb, v_OBF__xxbb))) and infix_eqeq(dom(v_OBF__vvbb),
+  v_OBF__wwbb)) and (v_OBF__ddbb = 2)) and (v_OBF__eebb = v_OBF__hhbb)) and
+  (v_OBF__vv = v_OBF__ssbb)) and (v_OBF__yybb = false))
+
+predicate f56(v_OBF__zzff: (int, int) tuple2 set, v_OBF__zzee: (int,
+  int) tuple2 set, v_OBF__zzdd: int, v_OBF__zzcc: (int, int) tuple2 set,
+  v_OBF__zzbb: int set, v_OBF__zz: int set, v_OBF__yyff: (int,
+  int) tuple2 set, v_OBF__yyee: int, v_OBF__yydd: int, v_OBF__yycc: (int,
+  int) tuple2 set, v_OBF__yybb: bool, v_OBF__yy: int set, v_OBF__xxff: (int,
+  int) tuple2 set, v_OBF__xxee: int, v_OBF__xxdd: (int, int) tuple2 set,
+  v_OBF__xxcc: (int, int) tuple2 set, v_OBF__xxbb: int set, v_OBF__xx: int,
+  v_OBF__wwff: (int, int) tuple2 set, v_OBF__wwee: int, v_OBF__wwdd: int set,
+  v_OBF__wwcc: (int, int) tuple2 set, v_OBF__wwbb: int set,
+  v_OBF__ww: int set, v_OBF__vvff: (int, int) tuple2 set, v_OBF__vvee: bool,
+  v_OBF__vvdd: ((int, int) tuple2, int) tuple2 set, v_OBF__vvcc: (int,
+  int) tuple2 set, v_OBF__vvbb: (int, int) tuple2 set, v_OBF__vv: int,
+  v_OBF__uuff: (int, int) tuple2 set, v_OBF__uuee: int, v_OBF__uudd: (int,
+  int) tuple2 set, v_OBF__uucc: int set, v_OBF__uubb: int set,
+  v_OBF__uu: int set, v_OBF__ttff: (int, int) tuple2 set, v_OBF__ttee: int,
+  v_OBF__ttdd: (int, int) tuple2 set, v_OBF__ttcc: int set,
+  v_OBF__ttbb: int set, v_OBF__tt: int, v_OBF__ssff: int set,
+  v_OBF__ssee: int, v_OBF__ssdd: (int, int) tuple2 set, v_OBF__sscc: int set,
+  v_OBF__ssbb: int, v_OBF__rrff: (int, int) tuple2 set, v_OBF__rree: int,
+  v_OBF__rrdd: (int, int) tuple2 set, v_OBF__rrcc: (int, int) tuple2 set,
+  v_OBF__rrbb: int, v_OBF__qqff: (int, int) tuple2 set, v_OBF__qqee: int,
+  v_OBF__qqdd: (int, int) tuple2 set, v_OBF__qqcc: int set, v_OBF__qqbb: int,
+  v_OBF__ppff: (int, bool) tuple2 set, v_OBF__ppee: int set,
+  v_OBF__ppdd: (int, int) tuple2 set, v_OBF__ppcc: int, v_OBF__ppbb: int,
+  v_OBF__ooff: int, v_OBF__ooee: (int, int) tuple2 set, v_OBF__oodd: (int,
+  int) tuple2 set, v_OBF__oocc: (int, int) tuple2 set, v_OBF__oobb: int,
+  v_OBF__nnff: int set, v_OBF__nnee: (int, int) tuple2 set,
+  v_OBF__nndd: (int, int) tuple2 set, v_OBF__nncc: (int, int) tuple2 set,
+  v_OBF__nnbb: int set, v_OBF__mmff: (int, bool) tuple2 set,
+  v_OBF__mmee: bool, v_OBF__mmdd: int set, v_OBF__mmcc: (int,
+  int) tuple2 set, v_OBF__mmbb: int set, v_OBF__llff: enum_OBF__ii set,
+  v_OBF__llee: int, v_OBF__lldd: int set, v_OBF__llcc: (int, int) tuple2 set,
+  v_OBF__llbb: int, v_OBF__kkgg: (((int, int) tuple2, int) tuple2,
+  int) tuple2 set, v_OBF__kkff: int set, v_OBF__kkee: int,
+  v_OBF__kkdd: int set, v_OBF__kkcc: (int, int) tuple2 set, v_OBF__kkbb: int,
+  v_OBF__jjgg: ((int, enum_OBF__aa) tuple2, int) tuple2 set,
+  v_OBF__jjff: int set, v_OBF__jjee: int, v_OBF__jjdd: enum_OBF__ii set,
+  v_OBF__jjcc: (int, bool) tuple2 set, v_OBF__jjbb: int set,
+  v_OBF__iigg: ((int, enum_OBF__aa) tuple2, int) tuple2 set,
+  v_OBF__iiff: int set, v_OBF__iiee: (((int, int) tuple2, int) tuple2,
+  int) tuple2 set, v_OBF__iidd: int set, v_OBF__iicc: int set,
+  v_OBF__iibb: int set, v_OBF__hhgg: ((int, enum_OBF__aa) tuple2,
+  int) tuple2 set, v_OBF__hhff: int set, v_OBF__hhee: ((int,
+  enum_OBF__aa) tuple2, int) tuple2 set, v_OBF__hhdd: (int, int) tuple2 set,
+  v_OBF__hhcc: int set, v_OBF__hhbb: int, v_OBF__gggg: ((int,
+  enum_OBF__aa) tuple2, int) tuple2 set, v_OBF__ggff: int set,
+  v_OBF__ggee: enum_OBF__aa, v_OBF__ggdd: (int, int) tuple2 set,
+  v_OBF__ggcc: (int, int) tuple2 set, v_OBF__ggbb: int, v_OBF__ffgg: (int,
+  int) tuple2 set, v_OBF__ffff: (int, int) tuple2 set, v_OBF__ffee: int,
+  v_OBF__ffdd: (int, int) tuple2 set, v_OBF__ffcc: int set, v_OBF__ffbb: int,
+  v_OBF__eegg: (int, int) tuple2 set, v_OBF__eeff: (int, int) tuple2 set,
+  v_OBF__eeee: (int, int) tuple2 set, v_OBF__eedd: (int, int) tuple2 set,
+  v_OBF__eecc: (int, int) tuple2 set, v_OBF__eebb: int, v_OBF__ddgg: (int,
+  int) tuple2 set, v_OBF__ddff: int set, v_OBF__ddee: int, v_OBF__dddd: (int,
+  int) tuple2 set, v_OBF__ddcc: int set, v_OBF__ddbb: int,
+  v_OBF__ccgg: ((int, int) tuple2, int) tuple2 set, v_OBF__ccff: int set,
+  v_OBF__ccee: (int, int) tuple2 set, v_OBF__ccdd: (int, int) tuple2 set,
+  v_OBF__cccc: int set, v_OBF__ccbb: int, v_OBF__bbgg: (int, int) tuple2 set,
+  v_OBF__bbff: bool, v_OBF__bbee: (int, int) tuple2 set, v_OBF__bbdd: int,
+  v_OBF__bbcc: int set, v_OBF__bbbb: int set, v_OBF__aagg: int set,
+  v_OBF__aaff: (int, int) tuple2 set, v_OBF__aaee: (int, int) tuple2 set,
+  v_OBF__aadd: int, v_OBF__aacc: (int, int) tuple2 set, v_OBF__aabb: int) =
+  mem(semicolon(v_OBF__vvbb, v_OBF__aacc), infix_plmngt(v_OBF__wwbb,
+  v_OBF__bbcc))
+
+predicate f57(v_OBF__zzff: (int, int) tuple2 set, v_OBF__zzee: (int,
+  int) tuple2 set, v_OBF__zzdd: int, v_OBF__zzcc: (int, int) tuple2 set,
+  v_OBF__zzbb: int set, v_OBF__zz: int set, v_OBF__yyff: (int,
+  int) tuple2 set, v_OBF__yyee: int, v_OBF__yydd: int, v_OBF__yycc: (int,
+  int) tuple2 set, v_OBF__yybb: bool, v_OBF__yy: int set, v_OBF__xxff: (int,
+  int) tuple2 set, v_OBF__xxee: int, v_OBF__xxdd: (int, int) tuple2 set,
+  v_OBF__xxcc: (int, int) tuple2 set, v_OBF__xxbb: int set, v_OBF__xx: int,
+  v_OBF__wwff: (int, int) tuple2 set, v_OBF__wwee: int, v_OBF__wwdd: int set,
+  v_OBF__wwcc: (int, int) tuple2 set, v_OBF__wwbb: int set,
+  v_OBF__ww: int set, v_OBF__vvff: (int, int) tuple2 set, v_OBF__vvee: bool,
+  v_OBF__vvdd: ((int, int) tuple2, int) tuple2 set, v_OBF__vvcc: (int,
+  int) tuple2 set, v_OBF__vvbb: (int, int) tuple2 set, v_OBF__vv: int,
+  v_OBF__uuff: (int, int) tuple2 set, v_OBF__uuee: int, v_OBF__uudd: (int,
+  int) tuple2 set, v_OBF__uucc: int set, v_OBF__uubb: int set,
+  v_OBF__uu: int set, v_OBF__ttff: (int, int) tuple2 set, v_OBF__ttee: int,
+  v_OBF__ttdd: (int, int) tuple2 set, v_OBF__ttcc: int set,
+  v_OBF__ttbb: int set, v_OBF__tt: int, v_OBF__ssff: int set,
+  v_OBF__ssee: int, v_OBF__ssdd: (int, int) tuple2 set, v_OBF__sscc: int set,
+  v_OBF__ssbb: int, v_OBF__rrff: (int, int) tuple2 set, v_OBF__rree: int,
+  v_OBF__rrdd: (int, int) tuple2 set, v_OBF__rrcc: (int, int) tuple2 set,
+  v_OBF__rrbb: int, v_OBF__qqff: (int, int) tuple2 set, v_OBF__qqee: int,
+  v_OBF__qqdd: (int, int) tuple2 set, v_OBF__qqcc: int set, v_OBF__qqbb: int,
+  v_OBF__ppff: (int, bool) tuple2 set, v_OBF__ppee: int set,
+  v_OBF__ppdd: (int, int) tuple2 set, v_OBF__ppcc: int, v_OBF__ppbb: int,
+  v_OBF__ooff: int, v_OBF__ooee: (int, int) tuple2 set, v_OBF__oodd: (int,
+  int) tuple2 set, v_OBF__oocc: (int, int) tuple2 set, v_OBF__oobb: int,
+  v_OBF__nnff: int set, v_OBF__nnee: (int, int) tuple2 set,
+  v_OBF__nndd: (int, int) tuple2 set, v_OBF__nncc: (int, int) tuple2 set,
+  v_OBF__nnbb: int set, v_OBF__mmff: (int, bool) tuple2 set,
+  v_OBF__mmee: bool, v_OBF__mmdd: int set, v_OBF__mmcc: (int,
+  int) tuple2 set, v_OBF__mmbb: int set, v_OBF__llff: enum_OBF__ii set,
+  v_OBF__llee: int, v_OBF__lldd: int set, v_OBF__llcc: (int, int) tuple2 set,
+  v_OBF__llbb: int, v_OBF__kkgg: (((int, int) tuple2, int) tuple2,
+  int) tuple2 set, v_OBF__kkff: int set, v_OBF__kkee: int,
+  v_OBF__kkdd: int set, v_OBF__kkcc: (int, int) tuple2 set, v_OBF__kkbb: int,
+  v_OBF__jjgg: ((int, enum_OBF__aa) tuple2, int) tuple2 set,
+  v_OBF__jjff: int set, v_OBF__jjee: int, v_OBF__jjdd: enum_OBF__ii set,
+  v_OBF__jjcc: (int, bool) tuple2 set, v_OBF__jjbb: int set,
+  v_OBF__iigg: ((int, enum_OBF__aa) tuple2, int) tuple2 set,
+  v_OBF__iiff: int set, v_OBF__iiee: (((int, int) tuple2, int) tuple2,
+  int) tuple2 set, v_OBF__iidd: int set, v_OBF__iicc: int set,
+  v_OBF__iibb: int set, v_OBF__hhgg: ((int, enum_OBF__aa) tuple2,
+  int) tuple2 set, v_OBF__hhff: int set, v_OBF__hhee: ((int,
+  enum_OBF__aa) tuple2, int) tuple2 set, v_OBF__hhdd: (int, int) tuple2 set,
+  v_OBF__hhcc: int set, v_OBF__hhbb: int, v_OBF__gggg: ((int,
+  enum_OBF__aa) tuple2, int) tuple2 set, v_OBF__ggff: int set,
+  v_OBF__ggee: enum_OBF__aa, v_OBF__ggdd: (int, int) tuple2 set,
+  v_OBF__ggcc: (int, int) tuple2 set, v_OBF__ggbb: int, v_OBF__ffgg: (int,
+  int) tuple2 set, v_OBF__ffff: (int, int) tuple2 set, v_OBF__ffee: int,
+  v_OBF__ffdd: (int, int) tuple2 set, v_OBF__ffcc: int set, v_OBF__ffbb: int,
+  v_OBF__eegg: (int, int) tuple2 set, v_OBF__eeff: (int, int) tuple2 set,
+  v_OBF__eeee: (int, int) tuple2 set, v_OBF__eedd: (int, int) tuple2 set,
+  v_OBF__eecc: (int, int) tuple2 set, v_OBF__eebb: int, v_OBF__ddgg: (int,
+  int) tuple2 set, v_OBF__ddff: int set, v_OBF__ddee: int, v_OBF__dddd: (int,
+  int) tuple2 set, v_OBF__ddcc: int set, v_OBF__ddbb: int,
+  v_OBF__ccgg: ((int, int) tuple2, int) tuple2 set, v_OBF__ccff: int set,
+  v_OBF__ccee: (int, int) tuple2 set, v_OBF__ccdd: (int, int) tuple2 set,
+  v_OBF__cccc: int set, v_OBF__ccbb: int, v_OBF__bbgg: (int, int) tuple2 set,
+  v_OBF__bbff: bool, v_OBF__bbee: (int, int) tuple2 set, v_OBF__bbdd: int,
+  v_OBF__bbcc: int set, v_OBF__bbbb: int set, v_OBF__aagg: int set,
+  v_OBF__aaff: (int, int) tuple2 set, v_OBF__aaee: (int, int) tuple2 set,
+  v_OBF__aadd: int, v_OBF__aacc: (int, int) tuple2 set, v_OBF__aabb: int) =
+  infix_eqeq(dom(semicolon(v_OBF__vvbb, v_OBF__aacc)), v_OBF__wwbb)
+
+predicate f59(v_OBF__zzff: (int, int) tuple2 set, v_OBF__zzee: (int,
+  int) tuple2 set, v_OBF__zzdd: int, v_OBF__zzcc: (int, int) tuple2 set,
+  v_OBF__zzbb: int set, v_OBF__zz: int set, v_OBF__yyff: (int,
+  int) tuple2 set, v_OBF__yyee: int, v_OBF__yydd: int, v_OBF__yycc: (int,
+  int) tuple2 set, v_OBF__yybb: bool, v_OBF__yy: int set, v_OBF__xxff: (int,
+  int) tuple2 set, v_OBF__xxee: int, v_OBF__xxdd: (int, int) tuple2 set,
+  v_OBF__xxcc: (int, int) tuple2 set, v_OBF__xxbb: int set, v_OBF__xx: int,
+  v_OBF__wwff: (int, int) tuple2 set, v_OBF__wwee: int, v_OBF__wwdd: int set,
+  v_OBF__wwcc: (int, int) tuple2 set, v_OBF__wwbb: int set,
+  v_OBF__ww: int set, v_OBF__vvff: (int, int) tuple2 set, v_OBF__vvee: bool,
+  v_OBF__vvdd: ((int, int) tuple2, int) tuple2 set, v_OBF__vvcc: (int,
+  int) tuple2 set, v_OBF__vvbb: (int, int) tuple2 set, v_OBF__vv: int,
+  v_OBF__uuff: (int, int) tuple2 set, v_OBF__uuee: int, v_OBF__uudd: (int,
+  int) tuple2 set, v_OBF__uucc: int set, v_OBF__uubb: int set,
+  v_OBF__uu: int set, v_OBF__ttff: (int, int) tuple2 set, v_OBF__ttee: int,
+  v_OBF__ttdd: (int, int) tuple2 set, v_OBF__ttcc: int set,
+  v_OBF__ttbb: int set, v_OBF__tt: int, v_OBF__ssff: int set,
+  v_OBF__ssee: int, v_OBF__ssdd: (int, int) tuple2 set, v_OBF__sscc: int set,
+  v_OBF__ssbb: int, v_OBF__rrff: (int, int) tuple2 set, v_OBF__rree: int,
+  v_OBF__rrdd: (int, int) tuple2 set, v_OBF__rrcc: (int, int) tuple2 set,
+  v_OBF__rrbb: int, v_OBF__qqff: (int, int) tuple2 set, v_OBF__qqee: int,
+  v_OBF__qqdd: (int, int) tuple2 set, v_OBF__qqcc: int set, v_OBF__qqbb: int,
+  v_OBF__ppff: (int, bool) tuple2 set, v_OBF__ppee: int set,
+  v_OBF__ppdd: (int, int) tuple2 set, v_OBF__ppcc: int, v_OBF__ppbb: int,
+  v_OBF__ooff: int, v_OBF__ooee: (int, int) tuple2 set, v_OBF__oodd: (int,
+  int) tuple2 set, v_OBF__oocc: (int, int) tuple2 set, v_OBF__oobb: int,
+  v_OBF__nnff: int set, v_OBF__nnee: (int, int) tuple2 set,
+  v_OBF__nndd: (int, int) tuple2 set, v_OBF__nncc: (int, int) tuple2 set,
+  v_OBF__nnbb: int set, v_OBF__mmff: (int, bool) tuple2 set,
+  v_OBF__mmee: bool, v_OBF__mmdd: int set, v_OBF__mmcc: (int,
+  int) tuple2 set, v_OBF__mmbb: int set, v_OBF__llff: enum_OBF__ii set,
+  v_OBF__llee: int, v_OBF__lldd: int set, v_OBF__llcc: (int, int) tuple2 set,
+  v_OBF__llbb: int, v_OBF__kkgg: (((int, int) tuple2, int) tuple2,
+  int) tuple2 set, v_OBF__kkff: int set, v_OBF__kkee: int,
+  v_OBF__kkdd: int set, v_OBF__kkcc: (int, int) tuple2 set, v_OBF__kkbb: int,
+  v_OBF__jjgg: ((int, enum_OBF__aa) tuple2, int) tuple2 set,
+  v_OBF__jjff: int set, v_OBF__jjee: int, v_OBF__jjdd: enum_OBF__ii set,
+  v_OBF__jjcc: (int, bool) tuple2 set, v_OBF__jjbb: int set,
+  v_OBF__iigg: ((int, enum_OBF__aa) tuple2, int) tuple2 set,
+  v_OBF__iiff: int set, v_OBF__iiee: (((int, int) tuple2, int) tuple2,
+  int) tuple2 set, v_OBF__iidd: int set, v_OBF__iicc: int set,
+  v_OBF__iibb: int set, v_OBF__hhgg: ((int, enum_OBF__aa) tuple2,
+  int) tuple2 set, v_OBF__hhff: int set, v_OBF__hhee: ((int,
+  enum_OBF__aa) tuple2, int) tuple2 set, v_OBF__hhdd: (int, int) tuple2 set,
+  v_OBF__hhcc: int set, v_OBF__hhbb: int, v_OBF__gggg: ((int,
+  enum_OBF__aa) tuple2, int) tuple2 set, v_OBF__ggff: int set,
+  v_OBF__ggee: enum_OBF__aa, v_OBF__ggdd: (int, int) tuple2 set,
+  v_OBF__ggcc: (int, int) tuple2 set, v_OBF__ggbb: int, v_OBF__ffgg: (int,
+  int) tuple2 set, v_OBF__ffff: (int, int) tuple2 set, v_OBF__ffee: int,
+  v_OBF__ffdd: (int, int) tuple2 set, v_OBF__ffcc: int set, v_OBF__ffbb: int,
+  v_OBF__eegg: (int, int) tuple2 set, v_OBF__eeff: (int, int) tuple2 set,
+  v_OBF__eeee: (int, int) tuple2 set, v_OBF__eedd: (int, int) tuple2 set,
+  v_OBF__eecc: (int, int) tuple2 set, v_OBF__eebb: int, v_OBF__ddgg: (int,
+  int) tuple2 set, v_OBF__ddff: int set, v_OBF__ddee: int, v_OBF__dddd: (int,
+  int) tuple2 set, v_OBF__ddcc: int set, v_OBF__ddbb: int,
+  v_OBF__ccgg: ((int, int) tuple2, int) tuple2 set, v_OBF__ccff: int set,
+  v_OBF__ccee: (int, int) tuple2 set, v_OBF__ccdd: (int, int) tuple2 set,
+  v_OBF__cccc: int set, v_OBF__ccbb: int, v_OBF__bbgg: (int, int) tuple2 set,
+  v_OBF__bbff: bool, v_OBF__bbee: (int, int) tuple2 set, v_OBF__bbdd: int,
+  v_OBF__bbcc: int set, v_OBF__bbbb: int set, v_OBF__aagg: int set,
+  v_OBF__aaff: (int, int) tuple2 set, v_OBF__aaee: (int, int) tuple2 set,
+  v_OBF__aadd: int, v_OBF__aacc: (int, int) tuple2 set, v_OBF__aabb: int) =
+  mem(v_OBF__vvbb, relation(v_OBF__wwbb, v_OBF__xxbb))
+
+predicate f60(v_OBF__zzff: (int, int) tuple2 set, v_OBF__zzee: (int,
+  int) tuple2 set, v_OBF__zzdd: int, v_OBF__zzcc: (int, int) tuple2 set,
+  v_OBF__zzbb: int set, v_OBF__zz: int set, v_OBF__yyff: (int,
+  int) tuple2 set, v_OBF__yyee: int, v_OBF__yydd: int, v_OBF__yycc: (int,
+  int) tuple2 set, v_OBF__yybb: bool, v_OBF__yy: int set, v_OBF__xxff: (int,
+  int) tuple2 set, v_OBF__xxee: int, v_OBF__xxdd: (int, int) tuple2 set,
+  v_OBF__xxcc: (int, int) tuple2 set, v_OBF__xxbb: int set, v_OBF__xx: int,
+  v_OBF__wwff: (int, int) tuple2 set, v_OBF__wwee: int, v_OBF__wwdd: int set,
+  v_OBF__wwcc: (int, int) tuple2 set, v_OBF__wwbb: int set,
+  v_OBF__ww: int set, v_OBF__vvff: (int, int) tuple2 set, v_OBF__vvee: bool,
+  v_OBF__vvdd: ((int, int) tuple2, int) tuple2 set, v_OBF__vvcc: (int,
+  int) tuple2 set, v_OBF__vvbb: (int, int) tuple2 set, v_OBF__vv: int,
+  v_OBF__uuff: (int, int) tuple2 set, v_OBF__uuee: int, v_OBF__uudd: (int,
+  int) tuple2 set, v_OBF__uucc: int set, v_OBF__uubb: int set,
+  v_OBF__uu: int set, v_OBF__ttff: (int, int) tuple2 set, v_OBF__ttee: int,
+  v_OBF__ttdd: (int, int) tuple2 set, v_OBF__ttcc: int set,
+  v_OBF__ttbb: int set, v_OBF__tt: int, v_OBF__ssff: int set,
+  v_OBF__ssee: int, v_OBF__ssdd: (int, int) tuple2 set, v_OBF__sscc: int set,
+  v_OBF__ssbb: int, v_OBF__rrff: (int, int) tuple2 set, v_OBF__rree: int,
+  v_OBF__rrdd: (int, int) tuple2 set, v_OBF__rrcc: (int, int) tuple2 set,
+  v_OBF__rrbb: int, v_OBF__qqff: (int, int) tuple2 set, v_OBF__qqee: int,
+  v_OBF__qqdd: (int, int) tuple2 set, v_OBF__qqcc: int set, v_OBF__qqbb: int,
+  v_OBF__ppff: (int, bool) tuple2 set, v_OBF__ppee: int set,
+  v_OBF__ppdd: (int, int) tuple2 set, v_OBF__ppcc: int, v_OBF__ppbb: int,
+  v_OBF__ooff: int, v_OBF__ooee: (int, int) tuple2 set, v_OBF__oodd: (int,
+  int) tuple2 set, v_OBF__oocc: (int, int) tuple2 set, v_OBF__oobb: int,
+  v_OBF__nnff: int set, v_OBF__nnee: (int, int) tuple2 set,
+  v_OBF__nndd: (int, int) tuple2 set, v_OBF__nncc: (int, int) tuple2 set,
+  v_OBF__nnbb: int set, v_OBF__mmff: (int, bool) tuple2 set,
+  v_OBF__mmee: bool, v_OBF__mmdd: int set, v_OBF__mmcc: (int,
+  int) tuple2 set, v_OBF__mmbb: int set, v_OBF__llff: enum_OBF__ii set,
+  v_OBF__llee: int, v_OBF__lldd: int set, v_OBF__llcc: (int, int) tuple2 set,
+  v_OBF__llbb: int, v_OBF__kkgg: (((int, int) tuple2, int) tuple2,
+  int) tuple2 set, v_OBF__kkff: int set, v_OBF__kkee: int,
+  v_OBF__kkdd: int set, v_OBF__kkcc: (int, int) tuple2 set, v_OBF__kkbb: int,
+  v_OBF__jjgg: ((int, enum_OBF__aa) tuple2, int) tuple2 set,
+  v_OBF__jjff: int set, v_OBF__jjee: int, v_OBF__jjdd: enum_OBF__ii set,
+  v_OBF__jjcc: (int, bool) tuple2 set, v_OBF__jjbb: int set,
+  v_OBF__iigg: ((int, enum_OBF__aa) tuple2, int) tuple2 set,
+  v_OBF__iiff: int set, v_OBF__iiee: (((int, int) tuple2, int) tuple2,
+  int) tuple2 set, v_OBF__iidd: int set, v_OBF__iicc: int set,
+  v_OBF__iibb: int set, v_OBF__hhgg: ((int, enum_OBF__aa) tuple2,
+  int) tuple2 set, v_OBF__hhff: int set, v_OBF__hhee: ((int,
+  enum_OBF__aa) tuple2, int) tuple2 set, v_OBF__hhdd: (int, int) tuple2 set,
+  v_OBF__hhcc: int set, v_OBF__hhbb: int, v_OBF__gggg: ((int,
+  enum_OBF__aa) tuple2, int) tuple2 set, v_OBF__ggff: int set,
+  v_OBF__ggee: enum_OBF__aa, v_OBF__ggdd: (int, int) tuple2 set,
+  v_OBF__ggcc: (int, int) tuple2 set, v_OBF__ggbb: int, v_OBF__ffgg: (int,
+  int) tuple2 set, v_OBF__ffff: (int, int) tuple2 set, v_OBF__ffee: int,
+  v_OBF__ffdd: (int, int) tuple2 set, v_OBF__ffcc: int set, v_OBF__ffbb: int,
+  v_OBF__eegg: (int, int) tuple2 set, v_OBF__eeff: (int, int) tuple2 set,
+  v_OBF__eeee: (int, int) tuple2 set, v_OBF__eedd: (int, int) tuple2 set,
+  v_OBF__eecc: (int, int) tuple2 set, v_OBF__eebb: int, v_OBF__ddgg: (int,
+  int) tuple2 set, v_OBF__ddff: int set, v_OBF__ddee: int, v_OBF__dddd: (int,
+  int) tuple2 set, v_OBF__ddcc: int set, v_OBF__ddbb: int,
+  v_OBF__ccgg: ((int, int) tuple2, int) tuple2 set, v_OBF__ccff: int set,
+  v_OBF__ccee: (int, int) tuple2 set, v_OBF__ccdd: (int, int) tuple2 set,
+  v_OBF__cccc: int set, v_OBF__ccbb: int, v_OBF__bbgg: (int, int) tuple2 set,
+  v_OBF__bbff: bool, v_OBF__bbee: (int, int) tuple2 set, v_OBF__bbdd: int,
+  v_OBF__bbcc: int set, v_OBF__bbbb: int set, v_OBF__aagg: int set,
+  v_OBF__aaff: (int, int) tuple2 set, v_OBF__aaee: (int, int) tuple2 set,
+  v_OBF__aadd: int, v_OBF__aacc: (int, int) tuple2 set, v_OBF__aabb: int) =
+  ((((((mem(v_OBF__tt, v_OBF__zzbb) and mem(v_OBF__vvbb,
+  infix_plmngt(v_OBF__wwbb, v_OBF__xxbb))) and infix_eqeq(dom(v_OBF__vvbb),
+  v_OBF__wwbb)) and (v_OBF__ddbb = 2)) and (v_OBF__eebb = v_OBF__hhbb)) and
+  (v_OBF__vv = v_OBF__ssbb)) and (v_OBF__yybb = false))
+
+predicate f61(v_OBF__zzff: (int, int) tuple2 set, v_OBF__zzee: (int,
+  int) tuple2 set, v_OBF__zzdd: int, v_OBF__zzcc: (int, int) tuple2 set,
+  v_OBF__zzbb: int set, v_OBF__zz: int set, v_OBF__yyff: (int,
+  int) tuple2 set, v_OBF__yyee: int, v_OBF__yydd: int, v_OBF__yycc: (int,
+  int) tuple2 set, v_OBF__yybb: bool, v_OBF__yy: int set, v_OBF__xxff: (int,
+  int) tuple2 set, v_OBF__xxee: int, v_OBF__xxdd: (int, int) tuple2 set,
+  v_OBF__xxcc: (int, int) tuple2 set, v_OBF__xxbb: int set, v_OBF__xx: int,
+  v_OBF__wwff: (int, int) tuple2 set, v_OBF__wwee: int, v_OBF__wwdd: int set,
+  v_OBF__wwcc: (int, int) tuple2 set, v_OBF__wwbb: int set,
+  v_OBF__ww: int set, v_OBF__vvff: (int, int) tuple2 set, v_OBF__vvee: bool,
+  v_OBF__vvdd: ((int, int) tuple2, int) tuple2 set, v_OBF__vvcc: (int,
+  int) tuple2 set, v_OBF__vvbb: (int, int) tuple2 set, v_OBF__vv: int,
+  v_OBF__uuff: (int, int) tuple2 set, v_OBF__uuee: int, v_OBF__uudd: (int,
+  int) tuple2 set, v_OBF__uucc: int set, v_OBF__uubb: int set,
+  v_OBF__uu: int set, v_OBF__ttff: (int, int) tuple2 set, v_OBF__ttee: int,
+  v_OBF__ttdd: (int, int) tuple2 set, v_OBF__ttcc: int set,
+  v_OBF__ttbb: int set, v_OBF__tt: int, v_OBF__ssff: int set,
+  v_OBF__ssee: int, v_OBF__ssdd: (int, int) tuple2 set, v_OBF__sscc: int set,
+  v_OBF__ssbb: int, v_OBF__rrff: (int, int) tuple2 set, v_OBF__rree: int,
+  v_OBF__rrdd: (int, int) tuple2 set, v_OBF__rrcc: (int, int) tuple2 set,
+  v_OBF__rrbb: int, v_OBF__qqff: (int, int) tuple2 set, v_OBF__qqee: int,
+  v_OBF__qqdd: (int, int) tuple2 set, v_OBF__qqcc: int set, v_OBF__qqbb: int,
+  v_OBF__ppff: (int, bool) tuple2 set, v_OBF__ppee: int set,
+  v_OBF__ppdd: (int, int) tuple2 set, v_OBF__ppcc: int, v_OBF__ppbb: int,
+  v_OBF__ooff: int, v_OBF__ooee: (int, int) tuple2 set, v_OBF__oodd: (int,
+  int) tuple2 set, v_OBF__oocc: (int, int) tuple2 set, v_OBF__oobb: int,
+  v_OBF__nnff: int set, v_OBF__nnee: (int, int) tuple2 set,
+  v_OBF__nndd: (int, int) tuple2 set, v_OBF__nncc: (int, int) tuple2 set,
+  v_OBF__nnbb: int set, v_OBF__mmff: (int, bool) tuple2 set,
+  v_OBF__mmee: bool, v_OBF__mmdd: int set, v_OBF__mmcc: (int,
+  int) tuple2 set, v_OBF__mmbb: int set, v_OBF__llff: enum_OBF__ii set,
+  v_OBF__llee: int, v_OBF__lldd: int set, v_OBF__llcc: (int, int) tuple2 set,
+  v_OBF__llbb: int, v_OBF__kkgg: (((int, int) tuple2, int) tuple2,
+  int) tuple2 set, v_OBF__kkff: int set, v_OBF__kkee: int,
+  v_OBF__kkdd: int set, v_OBF__kkcc: (int, int) tuple2 set, v_OBF__kkbb: int,
+  v_OBF__jjgg: ((int, enum_OBF__aa) tuple2, int) tuple2 set,
+  v_OBF__jjff: int set, v_OBF__jjee: int, v_OBF__jjdd: enum_OBF__ii set,
+  v_OBF__jjcc: (int, bool) tuple2 set, v_OBF__jjbb: int set,
+  v_OBF__iigg: ((int, enum_OBF__aa) tuple2, int) tuple2 set,
+  v_OBF__iiff: int set, v_OBF__iiee: (((int, int) tuple2, int) tuple2,
+  int) tuple2 set, v_OBF__iidd: int set, v_OBF__iicc: int set,
+  v_OBF__iibb: int set, v_OBF__hhgg: ((int, enum_OBF__aa) tuple2,
+  int) tuple2 set, v_OBF__hhff: int set, v_OBF__hhee: ((int,
+  enum_OBF__aa) tuple2, int) tuple2 set, v_OBF__hhdd: (int, int) tuple2 set,
+  v_OBF__hhcc: int set, v_OBF__hhbb: int, v_OBF__gggg: ((int,
+  enum_OBF__aa) tuple2, int) tuple2 set, v_OBF__ggff: int set,
+  v_OBF__ggee: enum_OBF__aa, v_OBF__ggdd: (int, int) tuple2 set,
+  v_OBF__ggcc: (int, int) tuple2 set, v_OBF__ggbb: int, v_OBF__ffgg: (int,
+  int) tuple2 set, v_OBF__ffff: (int, int) tuple2 set, v_OBF__ffee: int,
+  v_OBF__ffdd: (int, int) tuple2 set, v_OBF__ffcc: int set, v_OBF__ffbb: int,
+  v_OBF__eegg: (int, int) tuple2 set, v_OBF__eeff: (int, int) tuple2 set,
+  v_OBF__eeee: (int, int) tuple2 set, v_OBF__eedd: (int, int) tuple2 set,
+  v_OBF__eecc: (int, int) tuple2 set, v_OBF__eebb: int, v_OBF__ddgg: (int,
+  int) tuple2 set, v_OBF__ddff: int set, v_OBF__ddee: int, v_OBF__dddd: (int,
+  int) tuple2 set, v_OBF__ddcc: int set, v_OBF__ddbb: int,
+  v_OBF__ccgg: ((int, int) tuple2, int) tuple2 set, v_OBF__ccff: int set,
+  v_OBF__ccee: (int, int) tuple2 set, v_OBF__ccdd: (int, int) tuple2 set,
+  v_OBF__cccc: int set, v_OBF__ccbb: int, v_OBF__bbgg: (int, int) tuple2 set,
+  v_OBF__bbff: bool, v_OBF__bbee: (int, int) tuple2 set, v_OBF__bbdd: int,
+  v_OBF__bbcc: int set, v_OBF__bbbb: int set, v_OBF__aagg: int set,
+  v_OBF__aaff: (int, int) tuple2 set, v_OBF__aaee: (int, int) tuple2 set,
+  v_OBF__aadd: int, v_OBF__aacc: (int, int) tuple2 set, v_OBF__aabb: int) =
+  ((((((mem(v_OBF__tt, v_OBF__uubb) and mem(v_OBF__vvbb,
+  infix_plmngt(v_OBF__wwbb, v_OBF__xxbb))) and infix_eqeq(dom(v_OBF__vvbb),
+  v_OBF__wwbb)) and (v_OBF__ddbb = 2)) and (v_OBF__eebb = v_OBF__hhbb)) and
+  (v_OBF__vv = v_OBF__ssbb)) and (v_OBF__yybb = false))
+
+predicate f62(v_OBF__zzff: (int, int) tuple2 set, v_OBF__zzee: (int,
+  int) tuple2 set, v_OBF__zzdd: int, v_OBF__zzcc: (int, int) tuple2 set,
+  v_OBF__zzbb: int set, v_OBF__zz: int set, v_OBF__yyff: (int,
+  int) tuple2 set, v_OBF__yyee: int, v_OBF__yydd: int, v_OBF__yycc: (int,
+  int) tuple2 set, v_OBF__yybb: bool, v_OBF__yy: int set, v_OBF__xxff: (int,
+  int) tuple2 set, v_OBF__xxee: int, v_OBF__xxdd: (int, int) tuple2 set,
+  v_OBF__xxcc: (int, int) tuple2 set, v_OBF__xxbb: int set, v_OBF__xx: int,
+  v_OBF__wwff: (int, int) tuple2 set, v_OBF__wwee: int, v_OBF__wwdd: int set,
+  v_OBF__wwcc: (int, int) tuple2 set, v_OBF__wwbb: int set,
+  v_OBF__ww: int set, v_OBF__vvff: (int, int) tuple2 set, v_OBF__vvee: bool,
+  v_OBF__vvdd: ((int, int) tuple2, int) tuple2 set, v_OBF__vvcc: (int,
+  int) tuple2 set, v_OBF__vvbb: (int, int) tuple2 set, v_OBF__vv: int,
+  v_OBF__uuff: (int, int) tuple2 set, v_OBF__uuee: int, v_OBF__uudd: (int,
+  int) tuple2 set, v_OBF__uucc: int set, v_OBF__uubb: int set,
+  v_OBF__uu: int set, v_OBF__ttff: (int, int) tuple2 set, v_OBF__ttee: int,
+  v_OBF__ttdd: (int, int) tuple2 set, v_OBF__ttcc: int set,
+  v_OBF__ttbb: int set, v_OBF__tt: int, v_OBF__ssff: int set,
+  v_OBF__ssee: int, v_OBF__ssdd: (int, int) tuple2 set, v_OBF__sscc: int set,
+  v_OBF__ssbb: int, v_OBF__rrff: (int, int) tuple2 set, v_OBF__rree: int,
+  v_OBF__rrdd: (int, int) tuple2 set, v_OBF__rrcc: (int, int) tuple2 set,
+  v_OBF__rrbb: int, v_OBF__qqff: (int, int) tuple2 set, v_OBF__qqee: int,
+  v_OBF__qqdd: (int, int) tuple2 set, v_OBF__qqcc: int set, v_OBF__qqbb: int,
+  v_OBF__ppff: (int, bool) tuple2 set, v_OBF__ppee: int set,
+  v_OBF__ppdd: (int, int) tuple2 set, v_OBF__ppcc: int, v_OBF__ppbb: int,
+  v_OBF__ooff: int, v_OBF__ooee: (int, int) tuple2 set, v_OBF__oodd: (int,
+  int) tuple2 set, v_OBF__oocc: (int, int) tuple2 set, v_OBF__oobb: int,
+  v_OBF__nnff: int set, v_OBF__nnee: (int, int) tuple2 set,
+  v_OBF__nndd: (int, int) tuple2 set, v_OBF__nncc: (int, int) tuple2 set,
+  v_OBF__nnbb: int set, v_OBF__mmff: (int, bool) tuple2 set,
+  v_OBF__mmee: bool, v_OBF__mmdd: int set, v_OBF__mmcc: (int,
+  int) tuple2 set, v_OBF__mmbb: int set, v_OBF__llff: enum_OBF__ii set,
+  v_OBF__llee: int, v_OBF__lldd: int set, v_OBF__llcc: (int, int) tuple2 set,
+  v_OBF__llbb: int, v_OBF__kkgg: (((int, int) tuple2, int) tuple2,
+  int) tuple2 set, v_OBF__kkff: int set, v_OBF__kkee: int,
+  v_OBF__kkdd: int set, v_OBF__kkcc: (int, int) tuple2 set, v_OBF__kkbb: int,
+  v_OBF__jjgg: ((int, enum_OBF__aa) tuple2, int) tuple2 set,
+  v_OBF__jjff: int set, v_OBF__jjee: int, v_OBF__jjdd: enum_OBF__ii set,
+  v_OBF__jjcc: (int, bool) tuple2 set, v_OBF__jjbb: int set,
+  v_OBF__iigg: ((int, enum_OBF__aa) tuple2, int) tuple2 set,
+  v_OBF__iiff: int set, v_OBF__iiee: (((int, int) tuple2, int) tuple2,
+  int) tuple2 set, v_OBF__iidd: int set, v_OBF__iicc: int set,
+  v_OBF__iibb: int set, v_OBF__hhgg: ((int, enum_OBF__aa) tuple2,
+  int) tuple2 set, v_OBF__hhff: int set, v_OBF__hhee: ((int,
+  enum_OBF__aa) tuple2, int) tuple2 set, v_OBF__hhdd: (int, int) tuple2 set,
+  v_OBF__hhcc: int set, v_OBF__hhbb: int, v_OBF__gggg: ((int,
+  enum_OBF__aa) tuple2, int) tuple2 set, v_OBF__ggff: int set,
+  v_OBF__ggee: enum_OBF__aa, v_OBF__ggdd: (int, int) tuple2 set,
+  v_OBF__ggcc: (int, int) tuple2 set, v_OBF__ggbb: int, v_OBF__ffgg: (int,
+  int) tuple2 set, v_OBF__ffff: (int, int) tuple2 set, v_OBF__ffee: int,
+  v_OBF__ffdd: (int, int) tuple2 set, v_OBF__ffcc: int set, v_OBF__ffbb: int,
+  v_OBF__eegg: (int, int) tuple2 set, v_OBF__eeff: (int, int) tuple2 set,
+  v_OBF__eeee: (int, int) tuple2 set, v_OBF__eedd: (int, int) tuple2 set,
+  v_OBF__eecc: (int, int) tuple2 set, v_OBF__eebb: int, v_OBF__ddgg: (int,
+  int) tuple2 set, v_OBF__ddff: int set, v_OBF__ddee: int, v_OBF__dddd: (int,
+  int) tuple2 set, v_OBF__ddcc: int set, v_OBF__ddbb: int,
+  v_OBF__ccgg: ((int, int) tuple2, int) tuple2 set, v_OBF__ccff: int set,
+  v_OBF__ccee: (int, int) tuple2 set, v_OBF__ccdd: (int, int) tuple2 set,
+  v_OBF__cccc: int set, v_OBF__ccbb: int, v_OBF__bbgg: (int, int) tuple2 set,
+  v_OBF__bbff: bool, v_OBF__bbee: (int, int) tuple2 set, v_OBF__bbdd: int,
+  v_OBF__bbcc: int set, v_OBF__bbbb: int set, v_OBF__aagg: int set,
+  v_OBF__aaff: (int, int) tuple2 set, v_OBF__aaee: (int, int) tuple2 set,
+  v_OBF__aadd: int, v_OBF__aacc: (int, int) tuple2 set, v_OBF__aabb: int) =
+  (((((((((mem(v_OBF__eebb, union(add(v_OBF__ggbb, (empty : int set)),
+  add(v_OBF__hhbb, (empty : int set)))) and mem(v_OBF__tt,
+  union(union(v_OBF__mmbb, v_OBF__nnbb), union(union(union(add(v_OBF__oobb,
+  (empty : int set)), add(v_OBF__ppbb, (empty : int set))), add(v_OBF__qqbb,
+  (empty : int set))), add(v_OBF__rrbb, (empty : int set)))))) and
+  (mem(v_OBF__tt, v_OBF__mmbb) -> (not (v_OBF__vv = v_OBF__ssbb)))) and
+  (mem(v_OBF__tt, v_OBF__nnbb) -> (not mem(v_OBF__vv, v_OBF__ttbb)))) and
+  ((mem(v_OBF__tt, union(add(v_OBF__oobb, (empty : int set)),
+  add(v_OBF__ppbb, (empty : int set)))) and mem(v_OBF__vv, v_OBF__ttbb)) ->
+  ((v_OBF__eebb = v_OBF__hhbb) and (not (v_OBF__kkbb = v_OBF__llbb))))) and
+  ((v_OBF__tt = v_OBF__qqbb) -> (v_OBF__eebb = v_OBF__hhbb))) and
+  ((v_OBF__tt = v_OBF__rrbb) -> (not (v_OBF__vv = v_OBF__ssbb)))) and
+  (v_OBF__ddbb = 2)) and mem(v_OBF__tt, union(add(v_OBF__oobb,
+  (empty : int set)), add(v_OBF__ppbb, (empty : int set))))) and
+  mem(v_OBF__vv, v_OBF__ttbb))
+
+predicate f64(v_OBF__zzff: (int, int) tuple2 set, v_OBF__zzee: (int,
+  int) tuple2 set, v_OBF__zzdd: int, v_OBF__zzcc: (int, int) tuple2 set,
+  v_OBF__zzbb: int set, v_OBF__zz: int set, v_OBF__yyff: (int,
+  int) tuple2 set, v_OBF__yyee: int, v_OBF__yydd: int, v_OBF__yycc: (int,
+  int) tuple2 set, v_OBF__yybb: bool, v_OBF__yy: int set, v_OBF__xxff: (int,
+  int) tuple2 set, v_OBF__xxee: int, v_OBF__xxdd: (int, int) tuple2 set,
+  v_OBF__xxcc: (int, int) tuple2 set, v_OBF__xxbb: int set, v_OBF__xx: int,
+  v_OBF__wwff: (int, int) tuple2 set, v_OBF__wwee: int, v_OBF__wwdd: int set,
+  v_OBF__wwcc: (int, int) tuple2 set, v_OBF__wwbb: int set,
+  v_OBF__ww: int set, v_OBF__vvff: (int, int) tuple2 set, v_OBF__vvee: bool,
+  v_OBF__vvdd: ((int, int) tuple2, int) tuple2 set, v_OBF__vvcc: (int,
+  int) tuple2 set, v_OBF__vvbb: (int, int) tuple2 set, v_OBF__vv: int,
+  v_OBF__uuff: (int, int) tuple2 set, v_OBF__uuee: int, v_OBF__uudd: (int,
+  int) tuple2 set, v_OBF__uucc: int set, v_OBF__uubb: int set,
+  v_OBF__uu: int set, v_OBF__ttff: (int, int) tuple2 set, v_OBF__ttee: int,
+  v_OBF__ttdd: (int, int) tuple2 set, v_OBF__ttcc: int set,
+  v_OBF__ttbb: int set, v_OBF__tt: int, v_OBF__ssff: int set,
+  v_OBF__ssee: int, v_OBF__ssdd: (int, int) tuple2 set, v_OBF__sscc: int set,
+  v_OBF__ssbb: int, v_OBF__rrff: (int, int) tuple2 set, v_OBF__rree: int,
+  v_OBF__rrdd: (int, int) tuple2 set, v_OBF__rrcc: (int, int) tuple2 set,
+  v_OBF__rrbb: int, v_OBF__qqff: (int, int) tuple2 set, v_OBF__qqee: int,
+  v_OBF__qqdd: (int, int) tuple2 set, v_OBF__qqcc: int set, v_OBF__qqbb: int,
+  v_OBF__ppff: (int, bool) tuple2 set, v_OBF__ppee: int set,
+  v_OBF__ppdd: (int, int) tuple2 set, v_OBF__ppcc: int, v_OBF__ppbb: int,
+  v_OBF__ooff: int, v_OBF__ooee: (int, int) tuple2 set, v_OBF__oodd: (int,
+  int) tuple2 set, v_OBF__oocc: (int, int) tuple2 set, v_OBF__oobb: int,
+  v_OBF__nnff: int set, v_OBF__nnee: (int, int) tuple2 set,
+  v_OBF__nndd: (int, int) tuple2 set, v_OBF__nncc: (int, int) tuple2 set,
+  v_OBF__nnbb: int set, v_OBF__mmff: (int, bool) tuple2 set,
+  v_OBF__mmee: bool, v_OBF__mmdd: int set, v_OBF__mmcc: (int,
+  int) tuple2 set, v_OBF__mmbb: int set, v_OBF__llff: enum_OBF__ii set,
+  v_OBF__llee: int, v_OBF__lldd: int set, v_OBF__llcc: (int, int) tuple2 set,
+  v_OBF__llbb: int, v_OBF__kkgg: (((int, int) tuple2, int) tuple2,
+  int) tuple2 set, v_OBF__kkff: int set, v_OBF__kkee: int,
+  v_OBF__kkdd: int set, v_OBF__kkcc: (int, int) tuple2 set, v_OBF__kkbb: int,
+  v_OBF__jjgg: ((int, enum_OBF__aa) tuple2, int) tuple2 set,
+  v_OBF__jjff: int set, v_OBF__jjee: int, v_OBF__jjdd: enum_OBF__ii set,
+  v_OBF__jjcc: (int, bool) tuple2 set, v_OBF__jjbb: int set,
+  v_OBF__iigg: ((int, enum_OBF__aa) tuple2, int) tuple2 set,
+  v_OBF__iiff: int set, v_OBF__iiee: (((int, int) tuple2, int) tuple2,
+  int) tuple2 set, v_OBF__iidd: int set, v_OBF__iicc: int set,
+  v_OBF__iibb: int set, v_OBF__hhgg: ((int, enum_OBF__aa) tuple2,
+  int) tuple2 set, v_OBF__hhff: int set, v_OBF__hhee: ((int,
+  enum_OBF__aa) tuple2, int) tuple2 set, v_OBF__hhdd: (int, int) tuple2 set,
+  v_OBF__hhcc: int set, v_OBF__hhbb: int, v_OBF__gggg: ((int,
+  enum_OBF__aa) tuple2, int) tuple2 set, v_OBF__ggff: int set,
+  v_OBF__ggee: enum_OBF__aa, v_OBF__ggdd: (int, int) tuple2 set,
+  v_OBF__ggcc: (int, int) tuple2 set, v_OBF__ggbb: int, v_OBF__ffgg: (int,
+  int) tuple2 set, v_OBF__ffff: (int, int) tuple2 set, v_OBF__ffee: int,
+  v_OBF__ffdd: (int, int) tuple2 set, v_OBF__ffcc: int set, v_OBF__ffbb: int,
+  v_OBF__eegg: (int, int) tuple2 set, v_OBF__eeff: (int, int) tuple2 set,
+  v_OBF__eeee: (int, int) tuple2 set, v_OBF__eedd: (int, int) tuple2 set,
+  v_OBF__eecc: (int, int) tuple2 set, v_OBF__eebb: int, v_OBF__ddgg: (int,
+  int) tuple2 set, v_OBF__ddff: int set, v_OBF__ddee: int, v_OBF__dddd: (int,
+  int) tuple2 set, v_OBF__ddcc: int set, v_OBF__ddbb: int,
+  v_OBF__ccgg: ((int, int) tuple2, int) tuple2 set, v_OBF__ccff: int set,
+  v_OBF__ccee: (int, int) tuple2 set, v_OBF__ccdd: (int, int) tuple2 set,
+  v_OBF__cccc: int set, v_OBF__ccbb: int, v_OBF__bbgg: (int, int) tuple2 set,
+  v_OBF__bbff: bool, v_OBF__bbee: (int, int) tuple2 set, v_OBF__bbdd: int,
+  v_OBF__bbcc: int set, v_OBF__bbbb: int set, v_OBF__aagg: int set,
+  v_OBF__aaff: (int, int) tuple2 set, v_OBF__aaee: (int, int) tuple2 set,
+  v_OBF__aadd: int, v_OBF__aacc: (int, int) tuple2 set, v_OBF__aabb: int) =
+  (not (v_OBF__kkbb = v_OBF__llbb))
+
+predicate f67(v_OBF__zzff: (int, int) tuple2 set, v_OBF__zzee: (int,
+  int) tuple2 set, v_OBF__zzdd: int, v_OBF__zzcc: (int, int) tuple2 set,
+  v_OBF__zzbb: int set, v_OBF__zz: int set, v_OBF__yyff: (int,
+  int) tuple2 set, v_OBF__yyee: int, v_OBF__yydd: int, v_OBF__yycc: (int,
+  int) tuple2 set, v_OBF__yybb: bool, v_OBF__yy: int set, v_OBF__xxff: (int,
+  int) tuple2 set, v_OBF__xxee: int, v_OBF__xxdd: (int, int) tuple2 set,
+  v_OBF__xxcc: (int, int) tuple2 set, v_OBF__xxbb: int set, v_OBF__xx: int,
+  v_OBF__wwff: (int, int) tuple2 set, v_OBF__wwee: int, v_OBF__wwdd: int set,
+  v_OBF__wwcc: (int, int) tuple2 set, v_OBF__wwbb: int set,
+  v_OBF__ww: int set, v_OBF__vvff: (int, int) tuple2 set, v_OBF__vvee: bool,
+  v_OBF__vvdd: ((int, int) tuple2, int) tuple2 set, v_OBF__vvcc: (int,
+  int) tuple2 set, v_OBF__vvbb: (int, int) tuple2 set, v_OBF__vv: int,
+  v_OBF__uuff: (int, int) tuple2 set, v_OBF__uuee: int, v_OBF__uudd: (int,
+  int) tuple2 set, v_OBF__uucc: int set, v_OBF__uubb: int set,
+  v_OBF__uu: int set, v_OBF__ttff: (int, int) tuple2 set, v_OBF__ttee: int,
+  v_OBF__ttdd: (int, int) tuple2 set, v_OBF__ttcc: int set,
+  v_OBF__ttbb: int set, v_OBF__tt: int, v_OBF__ssff: int set,
+  v_OBF__ssee: int, v_OBF__ssdd: (int, int) tuple2 set, v_OBF__sscc: int set,
+  v_OBF__ssbb: int, v_OBF__rrff: (int, int) tuple2 set, v_OBF__rree: int,
+  v_OBF__rrdd: (int, int) tuple2 set, v_OBF__rrcc: (int, int) tuple2 set,
+  v_OBF__rrbb: int, v_OBF__qqff: (int, int) tuple2 set, v_OBF__qqee: int,
+  v_OBF__qqdd: (int, int) tuple2 set, v_OBF__qqcc: int set, v_OBF__qqbb: int,
+  v_OBF__ppff: (int, bool) tuple2 set, v_OBF__ppee: int set,
+  v_OBF__ppdd: (int, int) tuple2 set, v_OBF__ppcc: int, v_OBF__ppbb: int,
+  v_OBF__ooff: int, v_OBF__ooee: (int, int) tuple2 set, v_OBF__oodd: (int,
+  int) tuple2 set, v_OBF__oocc: (int, int) tuple2 set, v_OBF__oobb: int,
+  v_OBF__nnff: int set, v_OBF__nnee: (int, int) tuple2 set,
+  v_OBF__nndd: (int, int) tuple2 set, v_OBF__nncc: (int, int) tuple2 set,
+  v_OBF__nnbb: int set, v_OBF__mmff: (int, bool) tuple2 set,
+  v_OBF__mmee: bool, v_OBF__mmdd: int set, v_OBF__mmcc: (int,
+  int) tuple2 set, v_OBF__mmbb: int set, v_OBF__llff: enum_OBF__ii set,
+  v_OBF__llee: int, v_OBF__lldd: int set, v_OBF__llcc: (int, int) tuple2 set,
+  v_OBF__llbb: int, v_OBF__kkgg: (((int, int) tuple2, int) tuple2,
+  int) tuple2 set, v_OBF__kkff: int set, v_OBF__kkee: int,
+  v_OBF__kkdd: int set, v_OBF__kkcc: (int, int) tuple2 set, v_OBF__kkbb: int,
+  v_OBF__jjgg: ((int, enum_OBF__aa) tuple2, int) tuple2 set,
+  v_OBF__jjff: int set, v_OBF__jjee: int, v_OBF__jjdd: enum_OBF__ii set,
+  v_OBF__jjcc: (int, bool) tuple2 set, v_OBF__jjbb: int set,
+  v_OBF__iigg: ((int, enum_OBF__aa) tuple2, int) tuple2 set,
+  v_OBF__iiff: int set, v_OBF__iiee: (((int, int) tuple2, int) tuple2,
+  int) tuple2 set, v_OBF__iidd: int set, v_OBF__iicc: int set,
+  v_OBF__iibb: int set, v_OBF__hhgg: ((int, enum_OBF__aa) tuple2,
+  int) tuple2 set, v_OBF__hhff: int set, v_OBF__hhee: ((int,
+  enum_OBF__aa) tuple2, int) tuple2 set, v_OBF__hhdd: (int, int) tuple2 set,
+  v_OBF__hhcc: int set, v_OBF__hhbb: int, v_OBF__gggg: ((int,
+  enum_OBF__aa) tuple2, int) tuple2 set, v_OBF__ggff: int set,
+  v_OBF__ggee: enum_OBF__aa, v_OBF__ggdd: (int, int) tuple2 set,
+  v_OBF__ggcc: (int, int) tuple2 set, v_OBF__ggbb: int, v_OBF__ffgg: (int,
+  int) tuple2 set, v_OBF__ffff: (int, int) tuple2 set, v_OBF__ffee: int,
+  v_OBF__ffdd: (int, int) tuple2 set, v_OBF__ffcc: int set, v_OBF__ffbb: int,
+  v_OBF__eegg: (int, int) tuple2 set, v_OBF__eeff: (int, int) tuple2 set,
+  v_OBF__eeee: (int, int) tuple2 set, v_OBF__eedd: (int, int) tuple2 set,
+  v_OBF__eecc: (int, int) tuple2 set, v_OBF__eebb: int, v_OBF__ddgg: (int,
+  int) tuple2 set, v_OBF__ddff: int set, v_OBF__ddee: int, v_OBF__dddd: (int,
+  int) tuple2 set, v_OBF__ddcc: int set, v_OBF__ddbb: int,
+  v_OBF__ccgg: ((int, int) tuple2, int) tuple2 set, v_OBF__ccff: int set,
+  v_OBF__ccee: (int, int) tuple2 set, v_OBF__ccdd: (int, int) tuple2 set,
+  v_OBF__cccc: int set, v_OBF__ccbb: int, v_OBF__bbgg: (int, int) tuple2 set,
+  v_OBF__bbff: bool, v_OBF__bbee: (int, int) tuple2 set, v_OBF__bbdd: int,
+  v_OBF__bbcc: int set, v_OBF__bbbb: int set, v_OBF__aagg: int set,
+  v_OBF__aaff: (int, int) tuple2 set, v_OBF__aaee: (int, int) tuple2 set,
+  v_OBF__aadd: int, v_OBF__aacc: (int, int) tuple2 set, v_OBF__aabb: int) =
+  ((((((mem(v_OBF__eebb, union(union(add(v_OBF__ggbb, (empty : int set)),
+  add(v_OBF__hhbb, (empty : int set))), add(v_OBF__ffbb,
+  (empty : int set)))) and mem(v_OBF__tt, v_OBF__uu)) and
+  (((v_OBF__eebb = v_OBF__ggbb) and mem(v_OBF__tt, v_OBF__iibb)) ->
+  (not (v_OBF__xx = 1)))) and (v_OBF__ddbb = 2)) and infix_eqeq(v_OBF__jjbb,
+  (empty : int set))) and mem(v_OBF__tt, v_OBF__iibb)) and
+  (v_OBF__eebb = v_OBF__ggbb))
+
+predicate f68(v_OBF__zzff: (int, int) tuple2 set, v_OBF__zzee: (int,
+  int) tuple2 set, v_OBF__zzdd: int, v_OBF__zzcc: (int, int) tuple2 set,
+  v_OBF__zzbb: int set, v_OBF__zz: int set, v_OBF__yyff: (int,
+  int) tuple2 set, v_OBF__yyee: int, v_OBF__yydd: int, v_OBF__yycc: (int,
+  int) tuple2 set, v_OBF__yybb: bool, v_OBF__yy: int set, v_OBF__xxff: (int,
+  int) tuple2 set, v_OBF__xxee: int, v_OBF__xxdd: (int, int) tuple2 set,
+  v_OBF__xxcc: (int, int) tuple2 set, v_OBF__xxbb: int set, v_OBF__xx: int,
+  v_OBF__wwff: (int, int) tuple2 set, v_OBF__wwee: int, v_OBF__wwdd: int set,
+  v_OBF__wwcc: (int, int) tuple2 set, v_OBF__wwbb: int set,
+  v_OBF__ww: int set, v_OBF__vvff: (int, int) tuple2 set, v_OBF__vvee: bool,
+  v_OBF__vvdd: ((int, int) tuple2, int) tuple2 set, v_OBF__vvcc: (int,
+  int) tuple2 set, v_OBF__vvbb: (int, int) tuple2 set, v_OBF__vv: int,
+  v_OBF__uuff: (int, int) tuple2 set, v_OBF__uuee: int, v_OBF__uudd: (int,
+  int) tuple2 set, v_OBF__uucc: int set, v_OBF__uubb: int set,
+  v_OBF__uu: int set, v_OBF__ttff: (int, int) tuple2 set, v_OBF__ttee: int,
+  v_OBF__ttdd: (int, int) tuple2 set, v_OBF__ttcc: int set,
+  v_OBF__ttbb: int set, v_OBF__tt: int, v_OBF__ssff: int set,
+  v_OBF__ssee: int, v_OBF__ssdd: (int, int) tuple2 set, v_OBF__sscc: int set,
+  v_OBF__ssbb: int, v_OBF__rrff: (int, int) tuple2 set, v_OBF__rree: int,
+  v_OBF__rrdd: (int, int) tuple2 set, v_OBF__rrcc: (int, int) tuple2 set,
+  v_OBF__rrbb: int, v_OBF__qqff: (int, int) tuple2 set, v_OBF__qqee: int,
+  v_OBF__qqdd: (int, int) tuple2 set, v_OBF__qqcc: int set, v_OBF__qqbb: int,
+  v_OBF__ppff: (int, bool) tuple2 set, v_OBF__ppee: int set,
+  v_OBF__ppdd: (int, int) tuple2 set, v_OBF__ppcc: int, v_OBF__ppbb: int,
+  v_OBF__ooff: int, v_OBF__ooee: (int, int) tuple2 set, v_OBF__oodd: (int,
+  int) tuple2 set, v_OBF__oocc: (int, int) tuple2 set, v_OBF__oobb: int,
+  v_OBF__nnff: int set, v_OBF__nnee: (int, int) tuple2 set,
+  v_OBF__nndd: (int, int) tuple2 set, v_OBF__nncc: (int, int) tuple2 set,
+  v_OBF__nnbb: int set, v_OBF__mmff: (int, bool) tuple2 set,
+  v_OBF__mmee: bool, v_OBF__mmdd: int set, v_OBF__mmcc: (int,
+  int) tuple2 set, v_OBF__mmbb: int set, v_OBF__llff: enum_OBF__ii set,
+  v_OBF__llee: int, v_OBF__lldd: int set, v_OBF__llcc: (int, int) tuple2 set,
+  v_OBF__llbb: int, v_OBF__kkgg: (((int, int) tuple2, int) tuple2,
+  int) tuple2 set, v_OBF__kkff: int set, v_OBF__kkee: int,
+  v_OBF__kkdd: int set, v_OBF__kkcc: (int, int) tuple2 set, v_OBF__kkbb: int,
+  v_OBF__jjgg: ((int, enum_OBF__aa) tuple2, int) tuple2 set,
+  v_OBF__jjff: int set, v_OBF__jjee: int, v_OBF__jjdd: enum_OBF__ii set,
+  v_OBF__jjcc: (int, bool) tuple2 set, v_OBF__jjbb: int set,
+  v_OBF__iigg: ((int, enum_OBF__aa) tuple2, int) tuple2 set,
+  v_OBF__iiff: int set, v_OBF__iiee: (((int, int) tuple2, int) tuple2,
+  int) tuple2 set, v_OBF__iidd: int set, v_OBF__iicc: int set,
+  v_OBF__iibb: int set, v_OBF__hhgg: ((int, enum_OBF__aa) tuple2,
+  int) tuple2 set, v_OBF__hhff: int set, v_OBF__hhee: ((int,
+  enum_OBF__aa) tuple2, int) tuple2 set, v_OBF__hhdd: (int, int) tuple2 set,
+  v_OBF__hhcc: int set, v_OBF__hhbb: int, v_OBF__gggg: ((int,
+  enum_OBF__aa) tuple2, int) tuple2 set, v_OBF__ggff: int set,
+  v_OBF__ggee: enum_OBF__aa, v_OBF__ggdd: (int, int) tuple2 set,
+  v_OBF__ggcc: (int, int) tuple2 set, v_OBF__ggbb: int, v_OBF__ffgg: (int,
+  int) tuple2 set, v_OBF__ffff: (int, int) tuple2 set, v_OBF__ffee: int,
+  v_OBF__ffdd: (int, int) tuple2 set, v_OBF__ffcc: int set, v_OBF__ffbb: int,
+  v_OBF__eegg: (int, int) tuple2 set, v_OBF__eeff: (int, int) tuple2 set,
+  v_OBF__eeee: (int, int) tuple2 set, v_OBF__eedd: (int, int) tuple2 set,
+  v_OBF__eecc: (int, int) tuple2 set, v_OBF__eebb: int, v_OBF__ddgg: (int,
+  int) tuple2 set, v_OBF__ddff: int set, v_OBF__ddee: int, v_OBF__dddd: (int,
+  int) tuple2 set, v_OBF__ddcc: int set, v_OBF__ddbb: int,
+  v_OBF__ccgg: ((int, int) tuple2, int) tuple2 set, v_OBF__ccff: int set,
+  v_OBF__ccee: (int, int) tuple2 set, v_OBF__ccdd: (int, int) tuple2 set,
+  v_OBF__cccc: int set, v_OBF__ccbb: int, v_OBF__bbgg: (int, int) tuple2 set,
+  v_OBF__bbff: bool, v_OBF__bbee: (int, int) tuple2 set, v_OBF__bbdd: int,
+  v_OBF__bbcc: int set, v_OBF__bbbb: int set, v_OBF__aagg: int set,
+  v_OBF__aaff: (int, int) tuple2 set, v_OBF__aaee: (int, int) tuple2 set,
+  v_OBF__aadd: int, v_OBF__aacc: (int, int) tuple2 set, v_OBF__aabb: int) =
+  (not (v_OBF__xx = 1))
+
+goal OBF__nngg_2 :
+  (forall v_OBF__zzff:(int, int) tuple2 set. forall v_OBF__zzee:(int,
+  int) tuple2 set. forall v_OBF__zzdd:int. forall v_OBF__zzcc:(int,
+  int) tuple2 set. forall v_OBF__zzbb:int set. forall v_OBF__zz:int set.
+  forall v_OBF__yyff:(int, int) tuple2 set. forall v_OBF__yyee:int.
+  forall v_OBF__yydd:int. forall v_OBF__yycc:(int, int) tuple2 set.
+  forall v_OBF__yybb:bool. forall v_OBF__yy:int set. forall v_OBF__xxff:(int,
+  int) tuple2 set. forall v_OBF__xxee:int. forall v_OBF__xxdd:(int,
+  int) tuple2 set. forall v_OBF__xxcc:(int, int) tuple2 set.
+  forall v_OBF__xxbb:int set. forall v_OBF__xx:int. forall v_OBF__wwff:(int,
+  int) tuple2 set. forall v_OBF__wwee:int. forall v_OBF__wwdd:int set.
+  forall v_OBF__wwcc:(int, int) tuple2 set. forall v_OBF__wwbb:int set.
+  forall v_OBF__ww:int set. forall v_OBF__vvff:(int, int) tuple2 set.
+  forall v_OBF__vvee:bool. forall v_OBF__vvdd:((int, int) tuple2,
+  int) tuple2 set. forall v_OBF__vvcc:(int, int) tuple2 set.
+  forall v_OBF__vvbb:(int, int) tuple2 set. forall v_OBF__vv:int.
+  forall v_OBF__uuff:(int, int) tuple2 set. forall v_OBF__uuee:int.
+  forall v_OBF__uudd:(int, int) tuple2 set. forall v_OBF__uucc:int set.
+  forall v_OBF__uubb:int set. forall v_OBF__uu:int set.
+  forall v_OBF__ttff:(int, int) tuple2 set. forall v_OBF__ttee:int.
+  forall v_OBF__ttdd:(int, int) tuple2 set. forall v_OBF__ttcc:int set.
+  forall v_OBF__ttbb:int set. forall v_OBF__tt:int.
+  forall v_OBF__ssff:int set. forall v_OBF__ssee:int.
+  forall v_OBF__ssdd:(int, int) tuple2 set. forall v_OBF__sscc:int set.
+  forall v_OBF__ssbb:int. forall v_OBF__rrff:(int, int) tuple2 set.
+  forall v_OBF__rree:int. forall v_OBF__rrdd:(int, int) tuple2 set.
+  forall v_OBF__rrcc:(int, int) tuple2 set. forall v_OBF__rrbb:int.
+  forall v_OBF__qqff:(int, int) tuple2 set. forall v_OBF__qqee:int.
+  forall v_OBF__qqdd:(int, int) tuple2 set. forall v_OBF__qqcc:int set.
+  forall v_OBF__qqbb:int. forall v_OBF__ppff:(int, bool) tuple2 set.
+  forall v_OBF__ppee:int set. forall v_OBF__ppdd:(int, int) tuple2 set.
+  forall v_OBF__ppcc:int. forall v_OBF__ppbb:int. forall v_OBF__ooff:int.
+  forall v_OBF__ooee:(int, int) tuple2 set. forall v_OBF__oodd:(int,
+  int) tuple2 set. forall v_OBF__oocc:(int, int) tuple2 set.
+  forall v_OBF__oobb:int. forall v_OBF__nnff:int set.
+  forall v_OBF__nnee:(int, int) tuple2 set. forall v_OBF__nndd:(int,
+  int) tuple2 set. forall v_OBF__nncc:(int, int) tuple2 set.
+  forall v_OBF__nnbb:int set. forall v_OBF__mmff:(int, bool) tuple2 set.
+  forall v_OBF__mmee:bool. forall v_OBF__mmdd:int set.
+  forall v_OBF__mmcc:(int, int) tuple2 set. forall v_OBF__mmbb:int set.
+  forall v_OBF__llff:enum_OBF__ii set. forall v_OBF__llee:int.
+  forall v_OBF__lldd:int set. forall v_OBF__llcc:(int, int) tuple2 set.
+  forall v_OBF__llbb:int. forall v_OBF__kkgg:(((int, int) tuple2,
+  int) tuple2, int) tuple2 set. forall v_OBF__kkff:int set.
+  forall v_OBF__kkee:int. forall v_OBF__kkdd:int set.
+  forall v_OBF__kkcc:(int, int) tuple2 set. forall v_OBF__kkbb:int.
+  forall v_OBF__jjgg:((int, enum_OBF__aa) tuple2, int) tuple2 set.
+  forall v_OBF__jjff:int set. forall v_OBF__jjee:int.
+  forall v_OBF__jjdd:enum_OBF__ii set. forall v_OBF__jjcc:(int,
+  bool) tuple2 set. forall v_OBF__jjbb:int set. forall v_OBF__iigg:((int,
+  enum_OBF__aa) tuple2, int) tuple2 set. forall v_OBF__iiff:int set.
+  forall v_OBF__iiee:(((int, int) tuple2, int) tuple2, int) tuple2 set.
+  forall v_OBF__iidd:int set. forall v_OBF__iicc:int set.
+  forall v_OBF__iibb:int set. forall v_OBF__hhgg:((int, enum_OBF__aa) tuple2,
+  int) tuple2 set. forall v_OBF__hhff:int set. forall v_OBF__hhee:((int,
+  enum_OBF__aa) tuple2, int) tuple2 set. forall v_OBF__hhdd:(int,
+  int) tuple2 set. forall v_OBF__hhcc:int set. forall v_OBF__hhbb:int.
+  forall v_OBF__gggg:((int, enum_OBF__aa) tuple2, int) tuple2 set.
+  forall v_OBF__ggff:int set. forall v_OBF__ggee:enum_OBF__aa.
+  forall v_OBF__ggdd:(int, int) tuple2 set. forall v_OBF__ggcc:(int,
+  int) tuple2 set. forall v_OBF__ggbb:int. forall v_OBF__ffgg:(int,
+  int) tuple2 set. forall v_OBF__ffff:(int, int) tuple2 set.
+  forall v_OBF__ffee:int. forall v_OBF__ffdd:(int, int) tuple2 set.
+  forall v_OBF__ffcc:int set. forall v_OBF__ffbb:int.
+  forall v_OBF__eegg:(int, int) tuple2 set. forall v_OBF__eeff:(int,
+  int) tuple2 set. forall v_OBF__eeee:(int, int) tuple2 set.
+  forall v_OBF__eedd:(int, int) tuple2 set. forall v_OBF__eecc:(int,
+  int) tuple2 set. forall v_OBF__eebb:int. forall v_OBF__ddgg:(int,
+  int) tuple2 set. forall v_OBF__ddff:int set. forall v_OBF__ddee:int.
+  forall v_OBF__dddd:(int, int) tuple2 set. forall v_OBF__ddcc:int set.
+  forall v_OBF__ddbb:int. forall v_OBF__ccgg:((int, int) tuple2,
+  int) tuple2 set. forall v_OBF__ccff:int set. forall v_OBF__ccee:(int,
+  int) tuple2 set. forall v_OBF__ccdd:(int, int) tuple2 set.
+  forall v_OBF__cccc:int set. forall v_OBF__ccbb:int.
+  forall v_OBF__bbgg:(int, int) tuple2 set. forall v_OBF__bbff:bool.
+  forall v_OBF__bbee:(int, int) tuple2 set. forall v_OBF__bbdd:int.
+  forall v_OBF__bbcc:int set. forall v_OBF__bbbb:int set.
+  forall v_OBF__aagg:int set. forall v_OBF__aaff:(int, int) tuple2 set.
+  forall v_OBF__aaee:(int, int) tuple2 set. forall v_OBF__aadd:int.
+  forall v_OBF__aacc:(int, int) tuple2 set. forall v_OBF__aabb:int.
+  ((f1(v_OBF__zzff, v_OBF__zzee, v_OBF__zzdd, v_OBF__zzcc, v_OBF__zzbb,
+  v_OBF__zz, v_OBF__yyff, v_OBF__yyee, v_OBF__yydd, v_OBF__yycc, v_OBF__yybb,
+  v_OBF__yy, v_OBF__xxff, v_OBF__xxee, v_OBF__xxdd, v_OBF__xxcc, v_OBF__xxbb,
+  v_OBF__xx, v_OBF__wwff, v_OBF__wwee, v_OBF__wwdd, v_OBF__wwcc, v_OBF__wwbb,
+  v_OBF__ww, v_OBF__vvff, v_OBF__vvee, v_OBF__vvdd, v_OBF__vvcc, v_OBF__vvbb,
+  v_OBF__vv, v_OBF__uuff, v_OBF__uuee, v_OBF__uudd, v_OBF__uucc, v_OBF__uubb,
+  v_OBF__uu, v_OBF__ttff, v_OBF__ttee, v_OBF__ttdd, v_OBF__ttcc, v_OBF__ttbb,
+  v_OBF__tt, v_OBF__ssff, v_OBF__ssee, v_OBF__ssdd, v_OBF__sscc, v_OBF__ssbb,
+  v_OBF__rrff, v_OBF__rree, v_OBF__rrdd, v_OBF__rrcc, v_OBF__rrbb,
+  v_OBF__qqff, v_OBF__qqee, v_OBF__qqdd, v_OBF__qqcc, v_OBF__qqbb,
+  v_OBF__ppff, v_OBF__ppee, v_OBF__ppdd, v_OBF__ppcc, v_OBF__ppbb,
+  v_OBF__ooff, v_OBF__ooee, v_OBF__oodd, v_OBF__oocc, v_OBF__oobb,
+  v_OBF__nnff, v_OBF__nnee, v_OBF__nndd, v_OBF__nncc, v_OBF__nnbb,
+  v_OBF__mmff, v_OBF__mmee, v_OBF__mmdd, v_OBF__mmcc, v_OBF__mmbb,
+  v_OBF__llff, v_OBF__llee, v_OBF__lldd, v_OBF__llcc, v_OBF__llbb,
+  v_OBF__kkgg, v_OBF__kkff, v_OBF__kkee, v_OBF__kkdd, v_OBF__kkcc,
+  v_OBF__kkbb, v_OBF__jjgg, v_OBF__jjff, v_OBF__jjee, v_OBF__jjdd,
+  v_OBF__jjcc, v_OBF__jjbb, v_OBF__iigg, v_OBF__iiff, v_OBF__iiee,
+  v_OBF__iidd, v_OBF__iicc, v_OBF__iibb, v_OBF__hhgg, v_OBF__hhff,
+  v_OBF__hhee, v_OBF__hhdd, v_OBF__hhcc, v_OBF__hhbb, v_OBF__gggg,
+  v_OBF__ggff, v_OBF__ggee, v_OBF__ggdd, v_OBF__ggcc, v_OBF__ggbb,
+  v_OBF__ffgg, v_OBF__ffff, v_OBF__ffee, v_OBF__ffdd, v_OBF__ffcc,
+  v_OBF__ffbb, v_OBF__eegg, v_OBF__eeff, v_OBF__eeee, v_OBF__eedd,
+  v_OBF__eecc, v_OBF__eebb, v_OBF__ddgg, v_OBF__ddff, v_OBF__ddee,
+  v_OBF__dddd, v_OBF__ddcc, v_OBF__ddbb, v_OBF__ccgg, v_OBF__ccff,
+  v_OBF__ccee, v_OBF__ccdd, v_OBF__cccc, v_OBF__ccbb, v_OBF__bbgg,
+  v_OBF__bbff, v_OBF__bbee, v_OBF__bbdd, v_OBF__bbcc, v_OBF__bbbb,
+  v_OBF__aagg, v_OBF__aaff, v_OBF__aaee, v_OBF__aadd, v_OBF__aacc,
+  v_OBF__aabb) and (f2(v_OBF__zzff, v_OBF__zzee, v_OBF__zzdd, v_OBF__zzcc,
+  v_OBF__zzbb, v_OBF__zz, v_OBF__yyff, v_OBF__yyee, v_OBF__yydd, v_OBF__yycc,
+  v_OBF__yybb, v_OBF__yy, v_OBF__xxff, v_OBF__xxee, v_OBF__xxdd, v_OBF__xxcc,
+  v_OBF__xxbb, v_OBF__xx, v_OBF__wwff, v_OBF__wwee, v_OBF__wwdd, v_OBF__wwcc,
+  v_OBF__wwbb, v_OBF__ww, v_OBF__vvff, v_OBF__vvee, v_OBF__vvdd, v_OBF__vvcc,
+  v_OBF__vvbb, v_OBF__vv, v_OBF__uuff, v_OBF__uuee, v_OBF__uudd, v_OBF__uucc,
+  v_OBF__uubb, v_OBF__uu, v_OBF__ttff, v_OBF__ttee, v_OBF__ttdd, v_OBF__ttcc,
+  v_OBF__ttbb, v_OBF__tt, v_OBF__ssff, v_OBF__ssee, v_OBF__ssdd, v_OBF__sscc,
+  v_OBF__ssbb, v_OBF__rrff, v_OBF__rree, v_OBF__rrdd, v_OBF__rrcc,
+  v_OBF__rrbb, v_OBF__qqff, v_OBF__qqee, v_OBF__qqdd, v_OBF__qqcc,
+  v_OBF__qqbb, v_OBF__ppff, v_OBF__ppee, v_OBF__ppdd, v_OBF__ppcc,
+  v_OBF__ppbb, v_OBF__ooff, v_OBF__ooee, v_OBF__oodd, v_OBF__oocc,
+  v_OBF__oobb, v_OBF__nnff, v_OBF__nnee, v_OBF__nndd, v_OBF__nncc,
+  v_OBF__nnbb, v_OBF__mmff, v_OBF__mmee, v_OBF__mmdd, v_OBF__mmcc,
+  v_OBF__mmbb, v_OBF__llff, v_OBF__llee, v_OBF__lldd, v_OBF__llcc,
+  v_OBF__llbb, v_OBF__kkgg, v_OBF__kkff, v_OBF__kkee, v_OBF__kkdd,
+  v_OBF__kkcc, v_OBF__kkbb, v_OBF__jjgg, v_OBF__jjff, v_OBF__jjee,
+  v_OBF__jjdd, v_OBF__jjcc, v_OBF__jjbb, v_OBF__iigg, v_OBF__iiff,
+  v_OBF__iiee, v_OBF__iidd, v_OBF__iicc, v_OBF__iibb, v_OBF__hhgg,
+  v_OBF__hhff, v_OBF__hhee, v_OBF__hhdd, v_OBF__hhcc, v_OBF__hhbb,
+  v_OBF__gggg, v_OBF__ggff, v_OBF__ggee, v_OBF__ggdd, v_OBF__ggcc,
+  v_OBF__ggbb, v_OBF__ffgg, v_OBF__ffff, v_OBF__ffee, v_OBF__ffdd,
+  v_OBF__ffcc, v_OBF__ffbb, v_OBF__eegg, v_OBF__eeff, v_OBF__eeee,
+  v_OBF__eedd, v_OBF__eecc, v_OBF__eebb, v_OBF__ddgg, v_OBF__ddff,
+  v_OBF__ddee, v_OBF__dddd, v_OBF__ddcc, v_OBF__ddbb, v_OBF__ccgg,
+  v_OBF__ccff, v_OBF__ccee, v_OBF__ccdd, v_OBF__cccc, v_OBF__ccbb,
+  v_OBF__bbgg, v_OBF__bbff, v_OBF__bbee, v_OBF__bbdd, v_OBF__bbcc,
+  v_OBF__bbbb, v_OBF__aagg, v_OBF__aaff, v_OBF__aaee, v_OBF__aadd,
+  v_OBF__aacc, v_OBF__aabb) and (f35(v_OBF__zzff, v_OBF__zzee, v_OBF__zzdd,
+  v_OBF__zzcc, v_OBF__zzbb, v_OBF__zz, v_OBF__yyff, v_OBF__yyee, v_OBF__yydd,
+  v_OBF__yycc, v_OBF__yybb, v_OBF__yy, v_OBF__xxff, v_OBF__xxee, v_OBF__xxdd,
+  v_OBF__xxcc, v_OBF__xxbb, v_OBF__xx, v_OBF__wwff, v_OBF__wwee, v_OBF__wwdd,
+  v_OBF__wwcc, v_OBF__wwbb, v_OBF__ww, v_OBF__vvff, v_OBF__vvee, v_OBF__vvdd,
+  v_OBF__vvcc, v_OBF__vvbb, v_OBF__vv, v_OBF__uuff, v_OBF__uuee, v_OBF__uudd,
+  v_OBF__uucc, v_OBF__uubb, v_OBF__uu, v_OBF__ttff, v_OBF__ttee, v_OBF__ttdd,
+  v_OBF__ttcc, v_OBF__ttbb, v_OBF__tt, v_OBF__ssff, v_OBF__ssee, v_OBF__ssdd,
+  v_OBF__sscc, v_OBF__ssbb, v_OBF__rrff, v_OBF__rree, v_OBF__rrdd,
+  v_OBF__rrcc, v_OBF__rrbb, v_OBF__qqff, v_OBF__qqee, v_OBF__qqdd,
+  v_OBF__qqcc, v_OBF__qqbb, v_OBF__ppff, v_OBF__ppee, v_OBF__ppdd,
+  v_OBF__ppcc, v_OBF__ppbb, v_OBF__ooff, v_OBF__ooee, v_OBF__oodd,
+  v_OBF__oocc, v_OBF__oobb, v_OBF__nnff, v_OBF__nnee, v_OBF__nndd,
+  v_OBF__nncc, v_OBF__nnbb, v_OBF__mmff, v_OBF__mmee, v_OBF__mmdd,
+  v_OBF__mmcc, v_OBF__mmbb, v_OBF__llff, v_OBF__llee, v_OBF__lldd,
+  v_OBF__llcc, v_OBF__llbb, v_OBF__kkgg, v_OBF__kkff, v_OBF__kkee,
+  v_OBF__kkdd, v_OBF__kkcc, v_OBF__kkbb, v_OBF__jjgg, v_OBF__jjff,
+  v_OBF__jjee, v_OBF__jjdd, v_OBF__jjcc, v_OBF__jjbb, v_OBF__iigg,
+  v_OBF__iiff, v_OBF__iiee, v_OBF__iidd, v_OBF__iicc, v_OBF__iibb,
+  v_OBF__hhgg, v_OBF__hhff, v_OBF__hhee, v_OBF__hhdd, v_OBF__hhcc,
+  v_OBF__hhbb, v_OBF__gggg, v_OBF__ggff, v_OBF__ggee, v_OBF__ggdd,
+  v_OBF__ggcc, v_OBF__ggbb, v_OBF__ffgg, v_OBF__ffff, v_OBF__ffee,
+  v_OBF__ffdd, v_OBF__ffcc, v_OBF__ffbb, v_OBF__eegg, v_OBF__eeff,
+  v_OBF__eeee, v_OBF__eedd, v_OBF__eecc, v_OBF__eebb, v_OBF__ddgg,
+  v_OBF__ddff, v_OBF__ddee, v_OBF__dddd, v_OBF__ddcc, v_OBF__ddbb,
+  v_OBF__ccgg, v_OBF__ccff, v_OBF__ccee, v_OBF__ccdd, v_OBF__cccc,
+  v_OBF__ccbb, v_OBF__bbgg, v_OBF__bbff, v_OBF__bbee, v_OBF__bbdd,
+  v_OBF__bbcc, v_OBF__bbbb, v_OBF__aagg, v_OBF__aaff, v_OBF__aaee,
+  v_OBF__aadd, v_OBF__aacc, v_OBF__aabb) and f47(v_OBF__zzff, v_OBF__zzee,
+  v_OBF__zzdd, v_OBF__zzcc, v_OBF__zzbb, v_OBF__zz, v_OBF__yyff, v_OBF__yyee,
+  v_OBF__yydd, v_OBF__yycc, v_OBF__yybb, v_OBF__yy, v_OBF__xxff, v_OBF__xxee,
+  v_OBF__xxdd, v_OBF__xxcc, v_OBF__xxbb, v_OBF__xx, v_OBF__wwff, v_OBF__wwee,
+  v_OBF__wwdd, v_OBF__wwcc, v_OBF__wwbb, v_OBF__ww, v_OBF__vvff, v_OBF__vvee,
+  v_OBF__vvdd, v_OBF__vvcc, v_OBF__vvbb, v_OBF__vv, v_OBF__uuff, v_OBF__uuee,
+  v_OBF__uudd, v_OBF__uucc, v_OBF__uubb, v_OBF__uu, v_OBF__ttff, v_OBF__ttee,
+  v_OBF__ttdd, v_OBF__ttcc, v_OBF__ttbb, v_OBF__tt, v_OBF__ssff, v_OBF__ssee,
+  v_OBF__ssdd, v_OBF__sscc, v_OBF__ssbb, v_OBF__rrff, v_OBF__rree,
+  v_OBF__rrdd, v_OBF__rrcc, v_OBF__rrbb, v_OBF__qqff, v_OBF__qqee,
+  v_OBF__qqdd, v_OBF__qqcc, v_OBF__qqbb, v_OBF__ppff, v_OBF__ppee,
+  v_OBF__ppdd, v_OBF__ppcc, v_OBF__ppbb, v_OBF__ooff, v_OBF__ooee,
+  v_OBF__oodd, v_OBF__oocc, v_OBF__oobb, v_OBF__nnff, v_OBF__nnee,
+  v_OBF__nndd, v_OBF__nncc, v_OBF__nnbb, v_OBF__mmff, v_OBF__mmee,
+  v_OBF__mmdd, v_OBF__mmcc, v_OBF__mmbb, v_OBF__llff, v_OBF__llee,
+  v_OBF__lldd, v_OBF__llcc, v_OBF__llbb, v_OBF__kkgg, v_OBF__kkff,
+  v_OBF__kkee, v_OBF__kkdd, v_OBF__kkcc, v_OBF__kkbb, v_OBF__jjgg,
+  v_OBF__jjff, v_OBF__jjee, v_OBF__jjdd, v_OBF__jjcc, v_OBF__jjbb,
+  v_OBF__iigg, v_OBF__iiff, v_OBF__iiee, v_OBF__iidd, v_OBF__iicc,
+  v_OBF__iibb, v_OBF__hhgg, v_OBF__hhff, v_OBF__hhee, v_OBF__hhdd,
+  v_OBF__hhcc, v_OBF__hhbb, v_OBF__gggg, v_OBF__ggff, v_OBF__ggee,
+  v_OBF__ggdd, v_OBF__ggcc, v_OBF__ggbb, v_OBF__ffgg, v_OBF__ffff,
+  v_OBF__ffee, v_OBF__ffdd, v_OBF__ffcc, v_OBF__ffbb, v_OBF__eegg,
+  v_OBF__eeff, v_OBF__eeee, v_OBF__eedd, v_OBF__eecc, v_OBF__eebb,
+  v_OBF__ddgg, v_OBF__ddff, v_OBF__ddee, v_OBF__dddd, v_OBF__ddcc,
+  v_OBF__ddbb, v_OBF__ccgg, v_OBF__ccff, v_OBF__ccee, v_OBF__ccdd,
+  v_OBF__cccc, v_OBF__ccbb, v_OBF__bbgg, v_OBF__bbff, v_OBF__bbee,
+  v_OBF__bbdd, v_OBF__bbcc, v_OBF__bbbb, v_OBF__aagg, v_OBF__aaff,
+  v_OBF__aaee, v_OBF__aadd, v_OBF__aacc, v_OBF__aabb)))) -> f50(v_OBF__zzff,
+  v_OBF__zzee, v_OBF__zzdd, v_OBF__zzcc, v_OBF__zzbb, v_OBF__zz, v_OBF__yyff,
+  v_OBF__yyee, v_OBF__yydd, v_OBF__yycc, v_OBF__yybb, v_OBF__yy, v_OBF__xxff,
+  v_OBF__xxee, v_OBF__xxdd, v_OBF__xxcc, v_OBF__xxbb, v_OBF__xx, v_OBF__wwff,
+  v_OBF__wwee, v_OBF__wwdd, v_OBF__wwcc, v_OBF__wwbb, v_OBF__ww, v_OBF__vvff,
+  v_OBF__vvee, v_OBF__vvdd, v_OBF__vvcc, v_OBF__vvbb, v_OBF__vv, v_OBF__uuff,
+  v_OBF__uuee, v_OBF__uudd, v_OBF__uucc, v_OBF__uubb, v_OBF__uu, v_OBF__ttff,
+  v_OBF__ttee, v_OBF__ttdd, v_OBF__ttcc, v_OBF__ttbb, v_OBF__tt, v_OBF__ssff,
+  v_OBF__ssee, v_OBF__ssdd, v_OBF__sscc, v_OBF__ssbb, v_OBF__rrff,
+  v_OBF__rree, v_OBF__rrdd, v_OBF__rrcc, v_OBF__rrbb, v_OBF__qqff,
+  v_OBF__qqee, v_OBF__qqdd, v_OBF__qqcc, v_OBF__qqbb, v_OBF__ppff,
+  v_OBF__ppee, v_OBF__ppdd, v_OBF__ppcc, v_OBF__ppbb, v_OBF__ooff,
+  v_OBF__ooee, v_OBF__oodd, v_OBF__oocc, v_OBF__oobb, v_OBF__nnff,
+  v_OBF__nnee, v_OBF__nndd, v_OBF__nncc, v_OBF__nnbb, v_OBF__mmff,
+  v_OBF__mmee, v_OBF__mmdd, v_OBF__mmcc, v_OBF__mmbb, v_OBF__llff,
+  v_OBF__llee, v_OBF__lldd, v_OBF__llcc, v_OBF__llbb, v_OBF__kkgg,
+  v_OBF__kkff, v_OBF__kkee, v_OBF__kkdd, v_OBF__kkcc, v_OBF__kkbb,
+  v_OBF__jjgg, v_OBF__jjff, v_OBF__jjee, v_OBF__jjdd, v_OBF__jjcc,
+  v_OBF__jjbb, v_OBF__iigg, v_OBF__iiff, v_OBF__iiee, v_OBF__iidd,
+  v_OBF__iicc, v_OBF__iibb, v_OBF__hhgg, v_OBF__hhff, v_OBF__hhee,
+  v_OBF__hhdd, v_OBF__hhcc, v_OBF__hhbb, v_OBF__gggg, v_OBF__ggff,
+  v_OBF__ggee, v_OBF__ggdd, v_OBF__ggcc, v_OBF__ggbb, v_OBF__ffgg,
+  v_OBF__ffff, v_OBF__ffee, v_OBF__ffdd, v_OBF__ffcc, v_OBF__ffbb,
+  v_OBF__eegg, v_OBF__eeff, v_OBF__eeee, v_OBF__eedd, v_OBF__eecc,
+  v_OBF__eebb, v_OBF__ddgg, v_OBF__ddff, v_OBF__ddee, v_OBF__dddd,
+  v_OBF__ddcc, v_OBF__ddbb, v_OBF__ccgg, v_OBF__ccff, v_OBF__ccee,
+  v_OBF__ccdd, v_OBF__cccc, v_OBF__ccbb, v_OBF__bbgg, v_OBF__bbff,
+  v_OBF__bbee, v_OBF__bbdd, v_OBF__bbcc, v_OBF__bbbb, v_OBF__aagg,
+  v_OBF__aaff, v_OBF__aaee, v_OBF__aadd, v_OBF__aacc, v_OBF__aabb)))

@@ -1,0 +1,2722 @@
+(*
+Copyright 2012-2015 Consortium of the BWare ANR Project (ANR-12-INSE-0010)
+	  	    <http://bware.lri.fr/>
+Copyright 2012-2015 Cedric (CPR Team)
+	  	    David DELAHAYE
+	  	    <david.delahaye@cnam.fr>
+Copyright 2012-2015 LRI (VALS team)
+	  	    Sylvain CONCHON
+	  	    <sylvain.conchon@lri.fr>
+Copyright 2012-2015 Inria (Gallium, Deducteam)
+	  	    Damien DOLIGEZ
+	  	    <damien.doligez@inria.fr>
+Copyright 2012-2015 Mitsubishi Electric R&D Centre Europe
+	  	    David MENTRE
+	  	    <d.mentre@fr.merce.mee.com>
+Copyright 2012-2015 ClearSy
+	  	    Thierry LECOMTE
+	  	    <thierry.lecomte@clearsy.com>
+Copyright 2012-2015 OCamlPro
+	  	    Fabrice LE FESSANT
+		    <fabrice.le_fessant@ocamlpro.com>
+
+This file is a free software.
+
+This software is governed by the CeCILL-B license under French law and 
+abiding by the rules of distribution of free software.  
+You can use, modify and/or redistribute the software under the terms of the 
+CeCILL-B license as circulated by CEA, CNRS and INRIA at the following URL 
+"http://www.cecill.info". 
+
+As a counterpart to the access to the source code and rights to copy,
+modify and redistribute granted by the license, users are provided only
+with a limited warranty and the software's author, the holder of the
+economic rights, and the successive licensors have only limited liability. 
+
+In this respect, the user's attention is drawn to the risks associated
+with loading, using, modifying and/or developing or reproducing the
+software by the user in light of its specific status of free software,
+that may mean that it is complicated to manipulate, and that also
+therefore means that it is reserved for developers and experienced
+professionals having in-depth computer knowledge. Users are therefore
+encouraged to load and test the software's suitability as regards their
+requirements in conditions enabling the security of their systems and/or 
+data to be ensured and, more generally, to use and operate it in the 
+same conditions as regards security. 
+
+The fact that you are presently reading this means that you have had
+knowledge of the CeCILL-B license and that you accept its terms.
+
+--------------------------------------------------------------------------------
+*)
+logic safe_comp_div: int, int -> int
+axiom safe_comp_div_def: forall x, y:int. x >= 0 and y > 0 -> safe_comp_div(x,y) = x / y
+logic safe_comp_mod: int, int -> int
+axiom safe_comp_mod_def: forall x, y:int. x >= 0 and y > 0 -> safe_comp_mod(x,y) = x % y
+logic match_bool : bool, 'a, 'a -> 'a
+
+axiom match_bool_True :
+  (forall z:'a. forall z1:'a. (match_bool(true, z, z1) = z))
+
+axiom match_bool_False :
+  (forall z:'a. forall z1:'a. (match_bool(false, z, z1) = z1))
+
+function andb(x: bool, y: bool) : bool = match_bool(x, y, false)
+
+function orb(x: bool, y: bool) : bool = match_bool(x, true, y)
+
+function xorb(x: bool, y: bool) : bool = match_bool(y, match_bool(x, false,
+  true), match_bool(x, true, false))
+
+function notb(x: bool) : bool = match_bool(x, false, true)
+
+function implb(x: bool, y: bool) : bool = match_bool(y, true, match_bool(x,
+  false, true))
+
+axiom CompatOrderMult :
+  (forall x:int. forall y:int. forall z:int. ((x <= y) -> ((0 <= z) ->
+  ((x * z) <= (y * z)))))
+
+logic abs : int -> int
+
+axiom abs_def198 : (forall x:int. ((0 <= x) -> (abs(x) = x)))
+
+axiom abs_def199 : (forall x:int. ((not (0 <= x)) -> (abs(x) = (-x))))
+
+axiom Abs_le297 :
+  (forall x:int. forall y:int. ((abs(x) <= y) -> ((-y) <= x)))
+
+axiom Abs_le298 : (forall x:int. forall y:int. ((abs(x) <= y) -> (x <= y)))
+
+axiom Abs_le299 :
+  (forall x:int. forall y:int. ((((-y) <= x) and (x <= y)) -> (abs(x) <= y)))
+
+axiom Abs_pos : (forall x:int. (0 <= abs(x)))
+
+axiom Div_mod :
+  (forall x:int. forall y:int. ((not (y = 0)) ->
+  (x = ((y * safe_comp_div(x,y)) + safe_comp_mod(x,y)))))
+
+axiom Div_bound198 :
+  (forall x:int. forall y:int. (((0 <= x) and (0 <  y)) ->
+  (0 <= safe_comp_div(x,y))))
+
+axiom Div_bound199 :
+  (forall x:int. forall y:int. (((0 <= x) and (0 <  y)) ->
+  (safe_comp_div(x,y) <= x)))
+
+axiom Mod_bound198 :
+  (forall x:int. forall y:int. ((not (y = 0)) ->
+  ((-abs(y)) <  safe_comp_mod(x,y))))
+
+axiom Mod_bound199 :
+  (forall x:int. forall y:int. ((not (y = 0)) ->
+  (safe_comp_mod(x,y) <  abs(y))))
+
+axiom Div_sign_pos :
+  (forall x:int. forall y:int. (((0 <= x) and (0 <  y)) ->
+  (0 <= safe_comp_div(x,y))))
+
+axiom Div_sign_neg :
+  (forall x:int. forall y:int. (((x <= 0) and (0 <  y)) ->
+  (safe_comp_div(x,y) <= 0)))
+
+axiom Mod_sign_pos :
+  (forall x:int. forall y:int. (((0 <= x) and (not (y = 0))) ->
+  (0 <= safe_comp_mod(x,y))))
+
+axiom Mod_sign_neg :
+  (forall x:int. forall y:int. (((x <= 0) and (not (y = 0))) ->
+  (safe_comp_mod(x,y) <= 0)))
+
+axiom Rounds_toward_zero :
+  (forall x:int. forall y:int. ((not (y = 0)) ->
+  (abs((safe_comp_div(x,y) * y)) <= abs(x))))
+
+axiom Div_1 : (forall x:int. (safe_comp_div(x,1) = x))
+
+axiom Mod_1 : (forall x:int. (safe_comp_mod(x,1) = 0))
+
+axiom Div_inf :
+  (forall x:int. forall y:int. (((0 <= x) and (x <  y)) ->
+  (safe_comp_div(x,y) = 0)))
+
+axiom Mod_inf :
+  (forall x:int. forall y:int. (((0 <= x) and (x <  y)) ->
+  (safe_comp_mod(x,y) = x)))
+
+axiom Div_mult :
+  (forall x:int. forall y:int. forall z:int [safe_comp_div(((x * y) + z),x)].
+  (((0 <  x) and ((0 <= y) and (0 <= z))) ->
+  (safe_comp_div(((x * y) + z),x) = (y + safe_comp_div(z,x)))))
+
+axiom Mod_mult :
+  (forall x:int. forall y:int. forall z:int [safe_comp_mod(((x * y) + z),x)].
+  (((0 <  x) and ((0 <= y) and (0 <= z))) ->
+  (safe_comp_mod(((x * y) + z),x) = safe_comp_mod(z,x))))
+
+type 'a set
+
+logic mem : 'a, 'a set -> prop
+
+predicate infix_eqeq(s1: 'a set, s2: 'a set) =
+  (forall x:'a. (mem(x, s1) <-> mem(x, s2)))
+
+axiom extensionality :
+  (forall s1:'a set. forall s2:'a set. (infix_eqeq(s1, s2) -> (s1 = s2)))
+
+predicate subset(s1: 'a set, s2: 'a set) =
+  (forall x:'a. (mem(x, s1) -> mem(x, s2)))
+
+axiom subset_refl : (forall s:'a set. subset(s, s))
+
+axiom subset_trans :
+  (forall s1:'a set. forall s2:'a set. forall s3:'a set. (subset(s1, s2) ->
+  (subset(s2, s3) -> subset(s1, s3))))
+
+logic empty : 'a set
+
+predicate is_empty(s: 'a set) = (forall x:'a. (not mem(x, s)))
+
+axiom empty_def1 : is_empty((empty : 'a set))
+
+axiom mem_empty198 : (forall x:'a. (not mem(x, (empty : 'a set))))
+
+axiom mem_empty199 : true
+
+logic add : 'a, 'a set -> 'a set
+
+axiom add_def1198 :
+  (forall x:'a. forall y:'a.
+  (forall s:'a set. (mem(x, add(y, s)) -> ((x = y) or mem(x, s)))))
+
+axiom add_def1199 :
+  (forall x:'a. forall y:'a.
+  (forall s:'a set. (((x = y) or mem(x, s)) -> mem(x, add(y, s)))))
+
+logic remove : 'a, 'a set -> 'a set
+
+axiom remove_def1297 :
+  (forall x:'a. forall y:'a. forall s:'a set. (mem(x, remove(y, s)) ->
+  (not (x = y))))
+
+axiom remove_def1298 :
+  (forall x:'a. forall y:'a. forall s:'a set. (mem(x, remove(y, s)) -> mem(x,
+  s)))
+
+axiom remove_def1299 :
+  (forall x:'a. forall y:'a. forall s:'a set. (((not (x = y)) and mem(x,
+  s)) -> mem(x, remove(y, s))))
+
+axiom add_remove :
+  (forall x:'a. forall s:'a set. (mem(x, s) -> (add(x, remove(x, s)) = s)))
+
+axiom remove_add :
+  (forall x:'a. forall s:'a set. (remove(x, add(x, s)) = remove(x, s)))
+
+axiom subset_remove : (forall x:'a. forall s:'a set. subset(remove(x, s), s))
+
+logic union : 'a set, 'a set -> 'a set
+
+axiom union_def1198 :
+  (forall s1:'a set. forall s2:'a set. forall x:'a. (mem(x, union(s1, s2)) ->
+  (mem(x, s1) or mem(x, s2))))
+
+axiom union_def1199 :
+  (forall s1:'a set. forall s2:'a set. forall x:'a. ((mem(x, s1) or mem(x,
+  s2)) -> mem(x, union(s1, s2))))
+
+logic inter : 'a set, 'a set -> 'a set
+
+axiom inter_def1297 :
+  (forall s1:'a set. forall s2:'a set. forall x:'a. (mem(x, inter(s1, s2)) ->
+  mem(x, s1)))
+
+axiom inter_def1298 :
+  (forall s1:'a set. forall s2:'a set. forall x:'a. (mem(x, inter(s1, s2)) ->
+  mem(x, s2)))
+
+axiom inter_def1299 :
+  (forall s1:'a set. forall s2:'a set. forall x:'a. ((mem(x, s1) and mem(x,
+  s2)) -> mem(x, inter(s1, s2))))
+
+logic diff : 'a set, 'a set -> 'a set
+
+axiom diff_def1297 :
+  (forall s1:'a set. forall s2:'a set. forall x:'a. (mem(x, diff(s1, s2)) ->
+  mem(x, s1)))
+
+axiom diff_def1298 :
+  (forall s1:'a set. forall s2:'a set. forall x:'a. (mem(x, diff(s1, s2)) ->
+  (not mem(x, s2))))
+
+axiom diff_def1299 :
+  (forall s1:'a set. forall s2:'a set. forall x:'a. ((mem(x, s1) and
+  (not mem(x, s2))) -> mem(x, diff(s1, s2))))
+
+axiom subset_diff :
+  (forall s1:'a set. forall s2:'a set. subset(diff(s1, s2), s1))
+
+logic choose : 'a set -> 'a
+
+axiom choose_def :
+  (forall s:'a set. ((not is_empty(s)) -> mem(choose(s), s)))
+
+logic all : 'a set
+
+axiom all_def : (forall x:'a. mem(x, (all : 'a set)))
+
+logic b_bool : bool set
+
+axiom mem_b_bool : (forall x:bool. mem(x, b_bool))
+
+logic integer : int set
+
+axiom mem_integer : (forall x:int. mem(x, integer))
+
+logic natural : int set
+
+axiom mem_natural297 : (forall x:int. (mem(x, natural) -> (0 <= x)))
+
+axiom mem_natural298 : (forall x:int. ((0 <= x) -> mem(x, natural)))
+
+logic natural1 : int set
+
+axiom mem_natural1199 : (forall x:int. (mem(x, natural1) -> (0 <  x)))
+
+axiom mem_natural1200 : (forall x:int. ((0 <  x) -> mem(x, natural1)))
+
+logic nat : int set
+
+axiom mem_nat396 : (forall x:int. (mem(x, nat) -> (0 <= x)))
+
+axiom mem_nat397 : (forall x:int. (mem(x, nat) -> (x <= 2147483647)))
+
+axiom mem_nat398 :
+  (forall x:int. (((0 <= x) and (x <= 2147483647)) -> mem(x, nat)))
+
+logic nat1 : int set
+
+axiom mem_nat1298 : (forall x:int. (mem(x, nat1) -> (0 <  x)))
+
+axiom mem_nat1299 : (forall x:int. (mem(x, nat1) -> (x <= 2147483647)))
+
+axiom mem_nat1300 :
+  (forall x:int. (((0 <  x) and (x <= 2147483647)) -> mem(x, nat1)))
+
+logic bounded_int : int set
+
+axiom mem_bounded_int297 :
+  (forall x:int. (mem(x, bounded_int) -> ((-2147483647) <= x)))
+
+axiom mem_bounded_int298 :
+  (forall x:int. (mem(x, bounded_int) -> (x <= 2147483647)))
+
+axiom mem_bounded_int299 :
+  (forall x:int. ((((-2147483647) <= x) and (x <= 2147483647)) -> mem(x,
+  bounded_int)))
+
+logic mk : int, int -> int set
+
+axiom mem_interval297 :
+  (forall x:int. forall a:int. forall b:int [mem(x, mk(a, b))]. (mem(x, mk(a,
+  b)) -> (a <= x)))
+
+axiom mem_interval298 :
+  (forall x:int. forall a:int. forall b:int [mem(x, mk(a, b))]. (mem(x, mk(a,
+  b)) -> (x <= b)))
+
+axiom mem_interval299 :
+  (forall x:int. forall a:int. forall b:int [mem(x, mk(a, b))].
+  (((a <= x) and (x <= b)) -> mem(x, mk(a, b))))
+
+axiom interval_empty :
+  (forall a:int. forall b:int. ((b <  a) -> (mk(a, b) = (empty : int set))))
+
+axiom interval_add :
+  (forall a:int. forall b:int. ((a <= b) -> (mk(a, b) = add(b, mk(a,
+  (b - 1))))))
+
+logic power : 'a set -> 'a set set
+
+axiom mem_power198 :
+  (forall x:'a set. forall y:'a set [mem(x, power(y))]. (mem(x, power(y)) ->
+  subset(x, y)))
+
+axiom mem_power199 :
+  (forall x:'a set. forall y:'a set [mem(x, power(y))]. (subset(x, y) ->
+  mem(x, power(y))))
+
+logic non_empty_power : 'a set -> 'a set set
+
+axiom mem_non_empty_power297 :
+  (forall x:'a set. forall y:'a set [mem(x, non_empty_power(y))]. (mem(x,
+  non_empty_power(y)) -> subset(x, y)))
+
+axiom mem_non_empty_power298 :
+  (forall x:'a set. forall y:'a set [mem(x, non_empty_power(y))]. (mem(x,
+  non_empty_power(y)) -> (not (x = (empty : 'a set)))))
+
+axiom mem_non_empty_power299 :
+  (forall x:'a set. forall y:'a set [mem(x, non_empty_power(y))]. ((subset(x,
+  y) and (not (x = (empty : 'a set)))) -> mem(x, non_empty_power(y))))
+
+type ('a, 'a1) tuple2 = { Tuple2_proj_1 : 'a; Tuple2_proj_2 : 'a1
+}
+
+logic relation : 'a2 set, 'b set -> ('a2, 'b) tuple2 set set
+
+axiom mem_relation297 :
+  (forall f:('a, 'b) tuple2 set. forall s:'a set. forall t:'b set. (mem(f,
+  relation(s, t)) ->
+  (forall x:'a. forall y:'b. (mem({ Tuple2_proj_1 = x; Tuple2_proj_2 = y },
+  f) -> mem(x, s)))))
+
+axiom mem_relation298 :
+  (forall f:('a, 'b) tuple2 set. forall s:'a set. forall t:'b set. (mem(f,
+  relation(s, t)) ->
+  (forall x:'a. forall y:'b. (mem({ Tuple2_proj_1 = x; Tuple2_proj_2 = y },
+  f) -> mem(y, t)))))
+
+axiom mem_relation299 :
+  (forall f:('a, 'b) tuple2 set. forall s:'a set. forall t:'b set.
+  ((forall x:'a. forall y:'b. (mem({ Tuple2_proj_1 = x; Tuple2_proj_2 = y },
+   f) -> (mem(x, s) and mem(y, t)))) ->
+  mem(f, relation(s, t))))
+
+logic image : ('a, 'b) tuple2 set, 'a set -> 'b set
+
+axiom mem_image198 :
+  (forall r:('a, 'b) tuple2 set. forall dom1:'a set. forall y:'b [mem(y,
+  image(r, dom1))]. (mem(y, image(r, dom1)) ->
+  (exists x:'a. (mem(x, dom1) and mem({ Tuple2_proj_1 = x; Tuple2_proj_2 = y
+  }, r)))))
+
+axiom mem_image199 :
+  (forall r:('a, 'b) tuple2 set. forall dom1:'a set. forall y:'b [mem(y,
+  image(r, dom1))].
+  ((exists x:'a. (mem(x, dom1) and mem({ Tuple2_proj_1 = x; Tuple2_proj_2 = y
+   }, r))) ->
+  mem(y, image(r, dom1))))
+
+axiom image_union :
+  (forall r:('a, 'b) tuple2 set. forall s:'a set. forall t:'a set. (image(r,
+  union(s, t)) = union(image(r, s), image(r, t))))
+
+axiom image_add :
+  (forall r:('a, 'b) tuple2 set. forall dom1:'a set. forall x:'a. (image(r,
+  add(x, dom1)) = union(image(r, add(x, (empty : 'a set))), image(r, dom1))))
+
+logic infix_plmngt : 'a set, 'b set -> ('a, 'b) tuple2 set set
+
+axiom mem_function396 :
+  (forall f:('a, 'b) tuple2 set. forall s:'a set. forall t:'b set. (mem(f,
+  infix_plmngt(s, t)) ->
+  (forall x:'a. forall y:'b. (mem({ Tuple2_proj_1 = x; Tuple2_proj_2 = y },
+  f) -> mem(x, s)))))
+
+axiom mem_function397 :
+  (forall f:('a, 'b) tuple2 set. forall s:'a set. forall t:'b set. (mem(f,
+  infix_plmngt(s, t)) ->
+  (forall x:'a. forall y:'b. (mem({ Tuple2_proj_1 = x; Tuple2_proj_2 = y },
+  f) -> mem(y, t)))))
+
+axiom mem_function398 :
+  (forall f:('a, 'b) tuple2 set. forall s:'a set. forall t:'b set. (mem(f,
+  infix_plmngt(s, t)) ->
+  (forall x:'a. forall y1:'b. forall y2:'b. ((mem({ Tuple2_proj_1 = x;
+  Tuple2_proj_2 = y1 }, f) and mem({ Tuple2_proj_1 = x; Tuple2_proj_2 = y2 },
+  f)) -> (y1 = y2)))))
+
+axiom mem_function399 :
+  (forall f:('a, 'b) tuple2 set. forall s:'a set. forall t:'b set.
+  (((forall x:'a. forall y:'b. (mem({ Tuple2_proj_1 = x; Tuple2_proj_2 = y },
+    f) -> (mem(x, s) and mem(y, t)))) and
+  (forall x:'a. forall y1:'b. forall y2:'b. ((mem({ Tuple2_proj_1 = x;
+  Tuple2_proj_2 = y1 }, f) and mem({ Tuple2_proj_1 = x; Tuple2_proj_2 = y2 },
+  f)) -> (y1 = y2)))) -> mem(f, infix_plmngt(s, t))))
+
+axiom domain_function :
+  (forall f:('a, 'b) tuple2 set. forall s:'a set. forall t:'b set.
+  forall x:'a. forall y:'b. (mem(f, infix_plmngt(s, t)) -> (mem({
+  Tuple2_proj_1 = x; Tuple2_proj_2 = y }, f) -> mem(x, s))))
+
+axiom range_function :
+  (forall f:('a, 'b) tuple2 set. forall s:'a set. forall t:'b set.
+  forall x:'a. forall y:'b. (mem(f, infix_plmngt(s, t)) -> (mem({
+  Tuple2_proj_1 = x; Tuple2_proj_2 = y }, f) -> mem(y, t))))
+
+axiom function_extend_range :
+  (forall f:('a, 'b) tuple2 set. forall s:'a set. forall t:'b set.
+  forall u:'b set. (subset(t, u) -> (mem(f, infix_plmngt(s, t)) -> mem(f,
+  infix_plmngt(s, u)))))
+
+axiom function_reduce_range :
+  (forall f:('a, 'b) tuple2 set. forall s:'a set. forall t:'b set.
+  forall u:'b set. (subset(u, t) -> (mem(f, infix_plmngt(s, t)) ->
+  ((forall x:'a. forall y:'b. (mem({ Tuple2_proj_1 = x; Tuple2_proj_2 = y },
+   f) -> mem(y, u))) ->
+  mem(f, infix_plmngt(s, u))))))
+
+logic inverse : ('a, 'b) tuple2 set -> ('b, 'a) tuple2 set
+
+axiom Inverse_def198 :
+  (forall r:('a, 'b) tuple2 set.
+  (forall x:'a. forall y:'b. (mem({ Tuple2_proj_1 = y; Tuple2_proj_2 = x },
+  inverse(r)) -> mem({ Tuple2_proj_1 = x; Tuple2_proj_2 = y }, r))))
+
+axiom Inverse_def199 :
+  (forall r:('a, 'b) tuple2 set.
+  (forall x:'a. forall y:'b. (mem({ Tuple2_proj_1 = x; Tuple2_proj_2 = y },
+  r) -> mem({ Tuple2_proj_1 = y; Tuple2_proj_2 = x }, inverse(r)))))
+
+logic dom : ('a, 'b) tuple2 set -> 'a set
+
+axiom dom_def198 :
+  (forall r:('a, 'b) tuple2 set.
+  (forall x:'a. (mem(x, dom(r)) ->
+  (exists y:'b. mem({ Tuple2_proj_1 = x; Tuple2_proj_2 = y }, r)))))
+
+axiom dom_def199 :
+  (forall r:('a, 'b) tuple2 set.
+  (forall x:'a.
+  ((exists y:'b. mem({ Tuple2_proj_1 = x; Tuple2_proj_2 = y }, r)) -> mem(x,
+  dom(r)))))
+
+logic ran : ('a, 'b) tuple2 set -> 'b set
+
+axiom ran_def198 :
+  (forall r:('a, 'b) tuple2 set.
+  (forall y:'b. (mem(y, ran(r)) ->
+  (exists x:'a. mem({ Tuple2_proj_1 = x; Tuple2_proj_2 = y }, r)))))
+
+axiom ran_def199 :
+  (forall r:('a, 'b) tuple2 set.
+  (forall y:'b.
+  ((exists x:'a. mem({ Tuple2_proj_1 = x; Tuple2_proj_2 = y }, r)) -> mem(y,
+  ran(r)))))
+
+axiom dom_empty : (dom((empty : ('a, 'b) tuple2 set)) = (empty : 'a set))
+
+axiom dom_add :
+  (forall f:('a, 'b) tuple2 set. forall x:'a. forall y:'b. (dom(add({
+  Tuple2_proj_1 = x; Tuple2_proj_2 = y }, f)) = add(x, dom(f))))
+
+axiom dom_singleton :
+  (forall x:'a. forall y:'b. (dom(add({ Tuple2_proj_1 = x; Tuple2_proj_2 = y
+  }, (empty : ('a, 'b) tuple2 set))) = add(x, (empty : 'a set))))
+
+logic infix_mnmngt : 'a set, 'b set -> ('a, 'b) tuple2 set set
+
+axiom mem_total_functions297 :
+  (forall f:('a, 'b) tuple2 set. forall s:'a set. forall t:'b set. (mem(f,
+  infix_mnmngt(s, t)) -> mem(f, infix_plmngt(s, t))))
+
+axiom mem_total_functions298 :
+  (forall f:('a, 'b) tuple2 set. forall s:'a set. forall t:'b set. (mem(f,
+  infix_mnmngt(s, t)) -> (dom(f) = s)))
+
+axiom mem_total_functions299 :
+  (forall f:('a, 'b) tuple2 set. forall s:'a set. forall t:'b set. ((mem(f,
+  infix_plmngt(s, t)) and (dom(f) = s)) -> mem(f, infix_mnmngt(s, t))))
+
+axiom total_function_is_function :
+  (forall f:('a, 'b) tuple2 set. forall s:'a set. forall t:'b set [mem(f,
+  infix_mnmngt(s, t))]. (mem(f, infix_mnmngt(s, t)) -> mem(f, infix_plmngt(s,
+  t))))
+
+axiom singleton_is_partial_function :
+  (forall s:'a set. forall t:'b set. forall x:'a. forall y:'b. ((mem(x,
+  s) and mem(y, t)) -> mem(add({ Tuple2_proj_1 = x; Tuple2_proj_2 = y },
+  (empty : ('a, 'b) tuple2 set)), infix_plmngt(s, t))))
+
+axiom singleton_is_function :
+  (forall x:'a. forall y:'b [add({ Tuple2_proj_1 = x; Tuple2_proj_2 = y },
+  (empty : ('a, 'b) tuple2 set))]. mem(add({ Tuple2_proj_1 = x;
+  Tuple2_proj_2 = y }, (empty : ('a, 'b) tuple2 set)), infix_mnmngt(add(x,
+  (empty : 'a set)), add(y, (empty : 'b set)))))
+
+logic apply : ('a, 'b) tuple2 set, 'a -> 'b
+
+axiom apply_def0 :
+  (forall f:('a, 'b) tuple2 set. forall s:'a set. forall t:'b set.
+  forall a1:'a. ((mem(f, infix_plmngt(s, t)) and mem(a1, dom(f))) -> mem({
+  Tuple2_proj_1 = a1; Tuple2_proj_2 = apply(f, a1) }, f)))
+
+axiom apply_def1 :
+  (forall f:('a, 'b) tuple2 set. forall s:'a set. forall t:'b set.
+  forall a1:'a. ((mem(f, infix_mnmngt(s, t)) and mem(a1, s)) -> mem({
+  Tuple2_proj_1 = a1; Tuple2_proj_2 = apply(f, a1) }, f)))
+
+axiom apply_def2 :
+  (forall f:('a, 'b) tuple2 set. forall s:'a set. forall t:'b set.
+  forall a1:'a. forall b1:'b. ((mem(f, infix_plmngt(s, t)) and mem({
+  Tuple2_proj_1 = a1; Tuple2_proj_2 = b1 }, f)) -> (apply(f, a1) = b1)))
+
+axiom apply_singleton :
+  (forall x:'a. forall y:'b. (apply(add({ Tuple2_proj_1 = x; Tuple2_proj_2 =
+  y }, (empty : ('a, 'b) tuple2 set)), x) = y))
+
+axiom apply_range :
+  (forall x:'a. forall f:('a, 'b) tuple2 set. forall s:'a set.
+  forall t:'b set [mem(f, infix_plmngt(s, t)), apply(f, x)]. ((mem(f,
+  infix_plmngt(s, t)) and mem(x, dom(f))) -> mem(apply(f, x), t)))
+
+logic semicolon : ('a, 'b) tuple2 set, ('b, 'c) tuple2 set -> ('a,
+  'c) tuple2 set
+
+axiom semicolon_def198 :
+  (forall x:'a. forall z:'c. forall p:('a, 'b) tuple2 set. forall q:('b,
+  'c) tuple2 set. (mem({ Tuple2_proj_1 = x; Tuple2_proj_2 = z }, semicolon(p,
+  q)) ->
+  (exists y:'b. (mem({ Tuple2_proj_1 = x; Tuple2_proj_2 = y }, p) and mem({
+  Tuple2_proj_1 = y; Tuple2_proj_2 = z }, q)))))
+
+axiom semicolon_def199 :
+  (forall x:'a. forall z:'c. forall p:('a, 'b) tuple2 set. forall q:('b,
+  'c) tuple2 set.
+  ((exists y:'b. (mem({ Tuple2_proj_1 = x; Tuple2_proj_2 = y }, p) and mem({
+   Tuple2_proj_1 = y; Tuple2_proj_2 = z }, q))) ->
+  mem({ Tuple2_proj_1 = x; Tuple2_proj_2 = z }, semicolon(p, q))))
+
+logic direct_product : ('a, 'b) tuple2 set, ('a, 'c) tuple2 set -> ('a, ('b,
+  'c) tuple2) tuple2 set
+
+axiom direct_product_def198 :
+  (forall e:('t, ('u, 'v) tuple2) tuple2. forall r1:('t, 'u) tuple2 set.
+  forall r2:('t, 'v) tuple2 set [mem(e, direct_product(r1, r2))]. (mem(e,
+  direct_product(r1, r2)) ->
+  (exists x:'t. exists y:'u. exists z:'v. (({ Tuple2_proj_1 = x;
+  Tuple2_proj_2 = { Tuple2_proj_1 = y; Tuple2_proj_2 = z } } = e) and (mem({
+  Tuple2_proj_1 = x; Tuple2_proj_2 = y }, r1) and mem({ Tuple2_proj_1 = x;
+  Tuple2_proj_2 = z }, r2))))))
+
+axiom direct_product_def199 :
+  (forall e:('t, ('u, 'v) tuple2) tuple2. forall r1:('t, 'u) tuple2 set.
+  forall r2:('t, 'v) tuple2 set [mem(e, direct_product(r1, r2))].
+  ((exists x:'t. exists y:'u. exists z:'v. (({ Tuple2_proj_1 = x;
+   Tuple2_proj_2 = { Tuple2_proj_1 = y; Tuple2_proj_2 = z } } = e) and (mem({
+   Tuple2_proj_1 = x; Tuple2_proj_2 = y }, r1) and mem({ Tuple2_proj_1 = x;
+   Tuple2_proj_2 = z }, r2)))) ->
+  mem(e, direct_product(r1, r2))))
+
+logic parallel_product : ('a, 'b) tuple2 set, ('c, 'd) tuple2 set -> (('a,
+  'c) tuple2, ('b, 'd) tuple2) tuple2 set
+
+axiom parallel_product_def198 :
+  (forall e:(('t, 'v) tuple2, ('u, 'w) tuple2) tuple2. forall r1:('t,
+  'u) tuple2 set. forall r2:('v, 'w) tuple2 set. (mem(e, parallel_product(r1,
+  r2)) ->
+  (exists x:'t. exists y:'v. exists z:'u. exists a:'w. (({ Tuple2_proj_1 = {
+  Tuple2_proj_1 = x; Tuple2_proj_2 = y }; Tuple2_proj_2 = { Tuple2_proj_1 =
+  z; Tuple2_proj_2 = a } } = e) and (mem({ Tuple2_proj_1 = x; Tuple2_proj_2 =
+  z }, r1) and mem({ Tuple2_proj_1 = y; Tuple2_proj_2 = a }, r2))))))
+
+axiom parallel_product_def199 :
+  (forall e:(('t, 'v) tuple2, ('u, 'w) tuple2) tuple2. forall r1:('t,
+  'u) tuple2 set. forall r2:('v, 'w) tuple2 set.
+  ((exists x:'t. exists y:'v. exists z:'u. exists a:'w. (({ Tuple2_proj_1 = {
+   Tuple2_proj_1 = x; Tuple2_proj_2 = y }; Tuple2_proj_2 = { Tuple2_proj_1 =
+   z; Tuple2_proj_2 = a } } = e) and (mem({ Tuple2_proj_1 = x;
+   Tuple2_proj_2 = z }, r1) and mem({ Tuple2_proj_1 = y; Tuple2_proj_2 = a },
+   r2)))) ->
+  mem(e, parallel_product(r1, r2))))
+
+axiom semicolon_dom :
+  (forall f:('a, 'b) tuple2 set. forall g:('b, 'c) tuple2 set.
+  subset(dom(semicolon(f, g)), dom(f)))
+
+axiom semicolon_is_function :
+  (forall f:('a, 'b) tuple2 set. forall g:('b, 'c) tuple2 set.
+  forall s:'a set. forall t:'b set. forall u:'c set. ((mem(f, infix_plmngt(s,
+  t)) and mem(g, infix_plmngt(t, u))) -> mem(semicolon(f, g), infix_plmngt(s,
+  u))))
+
+axiom apply_compose :
+  (forall x:'a. forall f:('a, 'b) tuple2 set. forall g:('b, 'c) tuple2 set.
+  forall s:'a set. forall t:'b set. forall u:'c set. ((mem(f, infix_plmngt(s,
+  t)) and (mem(g, infix_plmngt(t, u)) and (mem(x, dom(f)) and mem(apply(f,
+  x), dom(g))))) -> (apply(semicolon(f, g), x) = apply(g, apply(f, x)))))
+
+logic infix_gtplgt : 'a set, 'b set -> ('a, 'b) tuple2 set set
+
+axiom mem_partial_injection297 :
+  (forall f:('a, 'b) tuple2 set. forall s:'a set. forall t:'b set. (mem(f,
+  infix_gtplgt(s, t)) -> mem(f, infix_plmngt(s, t))))
+
+axiom mem_partial_injection298 :
+  (forall f:('a, 'b) tuple2 set. forall s:'a set. forall t:'b set. (mem(f,
+  infix_gtplgt(s, t)) -> mem(inverse(f), infix_plmngt(t, s))))
+
+axiom mem_partial_injection299 :
+  (forall f:('a, 'b) tuple2 set. forall s:'a set. forall t:'b set. ((mem(f,
+  infix_plmngt(s, t)) and mem(inverse(f), infix_plmngt(t, s))) -> mem(f,
+  infix_gtplgt(s, t))))
+
+logic infix_gtmngt : 'a set, 'b set -> ('a, 'b) tuple2 set set
+
+axiom mem_total_injection297 :
+  (forall f:('a, 'b) tuple2 set. forall s:'a set. forall t:'b set. (mem(f,
+  infix_gtmngt(s, t)) -> mem(f, infix_gtplgt(s, t))))
+
+axiom mem_total_injection298 :
+  (forall f:('a, 'b) tuple2 set. forall s:'a set. forall t:'b set. (mem(f,
+  infix_gtmngt(s, t)) -> mem(f, infix_mnmngt(s, t))))
+
+axiom mem_total_injection299 :
+  (forall f:('a, 'b) tuple2 set. forall s:'a set. forall t:'b set. ((mem(f,
+  infix_gtplgt(s, t)) and mem(f, infix_mnmngt(s, t))) -> mem(f,
+  infix_gtmngt(s, t))))
+
+axiom mem_total_injection_alt297 :
+  (forall f:('a, 'b) tuple2 set. forall s:'a set. forall t:'b set. (mem(f,
+  infix_gtmngt(s, t)) -> mem(f, infix_mnmngt(s, t))))
+
+axiom mem_total_injection_alt298 :
+  (forall f:('a, 'b) tuple2 set. forall s:'a set. forall t:'b set. (mem(f,
+  infix_gtmngt(s, t)) -> mem(inverse(f), infix_plmngt(t, s))))
+
+axiom mem_total_injection_alt299 :
+  (forall f:('a, 'b) tuple2 set. forall s:'a set. forall t:'b set. ((mem(f,
+  infix_mnmngt(s, t)) and mem(inverse(f), infix_plmngt(t, s))) -> mem(f,
+  infix_gtmngt(s, t))))
+
+axiom injection :
+  (forall f:('a, 'b) tuple2 set. forall s:'a set. forall t:'b set.
+  (forall x:'a. forall y:'a. (mem(f, infix_gtmngt(s, t)) -> (mem(x, s) ->
+  (mem(y, s) -> ((apply(f, x) = apply(f, y)) -> (x = y)))))))
+
+logic infix_plmngtgt : 'a set, 'b set -> ('a, 'b) tuple2 set set
+
+axiom mem_partial_surjection297 :
+  (forall f:('a, 'b) tuple2 set. forall s:'a set. forall t:'b set. (mem(f,
+  infix_plmngtgt(s, t)) -> mem(f, infix_plmngt(s, t))))
+
+axiom mem_partial_surjection298 :
+  (forall f:('a, 'b) tuple2 set. forall s:'a set. forall t:'b set. (mem(f,
+  infix_plmngtgt(s, t)) -> (ran(f) = t)))
+
+axiom mem_partial_surjection299 :
+  (forall f:('a, 'b) tuple2 set. forall s:'a set. forall t:'b set. ((mem(f,
+  infix_plmngt(s, t)) and (ran(f) = t)) -> mem(f, infix_plmngtgt(s, t))))
+
+logic infix_mnmngtgt : 'a set, 'b set -> ('a, 'b) tuple2 set set
+
+axiom mem_total_surjection297 :
+  (forall f:('a, 'b) tuple2 set. forall s:'a set. forall t:'b set. (mem(f,
+  infix_mnmngtgt(s, t)) -> mem(f, infix_plmngtgt(s, t))))
+
+axiom mem_total_surjection298 :
+  (forall f:('a, 'b) tuple2 set. forall s:'a set. forall t:'b set. (mem(f,
+  infix_mnmngtgt(s, t)) -> mem(f, infix_mnmngt(s, t))))
+
+axiom mem_total_surjection299 :
+  (forall f:('a, 'b) tuple2 set. forall s:'a set. forall t:'b set. ((mem(f,
+  infix_plmngtgt(s, t)) and mem(f, infix_mnmngt(s, t))) -> mem(f,
+  infix_mnmngtgt(s, t))))
+
+logic infix_gtplgtgt : 'a set, 'b set -> ('a, 'b) tuple2 set set
+
+axiom mem_partial_bijection297 :
+  (forall f:('a, 'b) tuple2 set. forall s:'a set. forall t:'b set. (mem(f,
+  infix_gtplgtgt(s, t)) -> mem(f, infix_gtplgt(s, t))))
+
+axiom mem_partial_bijection298 :
+  (forall f:('a, 'b) tuple2 set. forall s:'a set. forall t:'b set. (mem(f,
+  infix_gtplgtgt(s, t)) -> mem(f, infix_plmngtgt(s, t))))
+
+axiom mem_partial_bijection299 :
+  (forall f:('a, 'b) tuple2 set. forall s:'a set. forall t:'b set. ((mem(f,
+  infix_gtplgt(s, t)) and mem(f, infix_plmngtgt(s, t))) -> mem(f,
+  infix_gtplgtgt(s, t))))
+
+logic infix_gtmngtgt : 'a set, 'b set -> ('a, 'b) tuple2 set set
+
+axiom mem_total_bijection297 :
+  (forall f:('a, 'b) tuple2 set. forall s:'a set. forall t:'b set. (mem(f,
+  infix_gtmngtgt(s, t)) -> mem(f, infix_gtmngt(s, t))))
+
+axiom mem_total_bijection298 :
+  (forall f:('a, 'b) tuple2 set. forall s:'a set. forall t:'b set. (mem(f,
+  infix_gtmngtgt(s, t)) -> mem(f, infix_mnmngtgt(s, t))))
+
+axiom mem_total_bijection299 :
+  (forall f:('a, 'b) tuple2 set. forall s:'a set. forall t:'b set. ((mem(f,
+  infix_gtmngt(s, t)) and mem(f, infix_mnmngtgt(s, t))) -> mem(f,
+  infix_gtmngtgt(s, t))))
+
+logic id : 'a set -> ('a, 'a) tuple2 set
+
+axiom id_def297 :
+  (forall x:'a. forall y:'a. forall s:'a set. (mem({ Tuple2_proj_1 = x;
+  Tuple2_proj_2 = y }, id(s)) -> mem(x, s)))
+
+axiom id_def298 :
+  (forall x:'a. forall y:'a. forall s:'a set. (mem({ Tuple2_proj_1 = x;
+  Tuple2_proj_2 = y }, id(s)) -> (x = y)))
+
+axiom id_def299 :
+  (forall x:'a. forall y:'a. forall s:'a set. ((mem(x, s) and (x = y)) ->
+  mem({ Tuple2_proj_1 = x; Tuple2_proj_2 = y }, id(s))))
+
+axiom id_dom : (forall s:'a set. (dom(id(s)) = s))
+
+axiom id_ran : (forall s:'a set. (ran(id(s)) = s))
+
+axiom id_fun : (forall s:'a set. mem(id(s), infix_plmngt(s, s)))
+
+axiom id_total_fun : (forall s:'a set. mem(id(s), infix_mnmngt(s, s)))
+
+function seq_length(n: int, s: 'a set) : (int, 'a) tuple2 set set =
+  infix_mnmngt(mk(1, n), s)
+
+axiom length_uniq :
+  (forall n1:int. forall n2:int. forall s1:'a set. forall s2:'a set.
+  forall r:(int, 'a) tuple2 set. (((0 <= n1) and mem(r, seq_length(n1,
+  s1))) -> (((0 <= n2) and mem(r, seq_length(n2, s2))) -> (n1 = n2))))
+
+logic size : (int, 'a) tuple2 set -> int
+
+axiom size_def :
+  (forall n:int. forall s:'a set. forall r:(int, 'a) tuple2 set.
+  (((0 <= n) and mem(r, seq_length(n, s))) -> (size(r) = n)))
+
+logic seq : 'a set -> (int, 'a) tuple2 set set
+
+axiom seq_def297 :
+  (forall s:'a set. forall r:(int, 'a) tuple2 set. (mem(r, seq(s)) ->
+  (0 <= size(r))))
+
+axiom seq_def298 :
+  (forall s:'a set. forall r:(int, 'a) tuple2 set. (mem(r, seq(s)) -> mem(r,
+  seq_length(size(r), s))))
+
+axiom seq_def299 :
+  (forall s:'a set. forall r:(int, 'a) tuple2 set. (((0 <= size(r)) and
+  mem(r, seq_length(size(r), s))) -> mem(r, seq(s))))
+
+axiom seq_as_total_function :
+  (forall s:'a set. forall r:(int, 'a) tuple2 set. (mem(r, seq(s)) -> mem(r,
+  infix_mnmngt(mk(1, size(r)), s))))
+
+logic seq1 : 'a set -> (int, 'a) tuple2 set set
+
+logic iseq : 'a set -> (int, 'a) tuple2 set set
+
+logic iseq1 : 'a set -> (int, 'a) tuple2 set set
+
+logic perm : 'a set -> (int, 'a) tuple2 set set
+
+logic is_finite_subset : 'a set, 'a set, int -> prop
+
+axiom Empty : (forall s:'a set. is_finite_subset((empty : 'a set), s, 0))
+
+axiom Add_mem :
+  (forall x:'a. forall s1:'a set. forall s2:'a set. forall c:int.
+  (is_finite_subset(s1, s2, c) -> (mem(x, s2) -> (mem(x, s1) ->
+  is_finite_subset(add(x, s1), s2, c)))))
+
+axiom Add_notmem :
+  (forall x:'a. forall s1:'a set. forall s2:'a set. forall c:int.
+  (is_finite_subset(s1, s2, c) -> (mem(x, s2) -> ((not mem(x, s1)) ->
+  is_finite_subset(add(x, s1), s2, (c + 1))))))
+
+axiom is_finite_subset_inversion :
+  (forall z:'a set. forall z1:'a set. forall z2:int. (is_finite_subset(z, z1,
+  z2) ->
+  (((exists s:'a set. (((z = (empty : 'a set)) and (z1 = s)) and (z2 = 0))) or
+  (exists x:'a. exists s1:'a set. exists s2:'a set. exists c:int.
+  (is_finite_subset(s1, s2, c) and (mem(x, s2) and (mem(x, s1) and
+  (((z = add(x, s1)) and (z1 = s2)) and (z2 = c))))))) or
+  (exists x:'a. exists s1:'a set. exists s2:'a set. exists c:int.
+  (is_finite_subset(s1, s2, c) and (mem(x, s2) and ((not mem(x, s1)) and
+  (((z = add(x, s1)) and (z1 = s2)) and (z2 = (c + 1))))))))))
+
+axiom finite_interval :
+  (forall a:int. forall b:int. ((a <= b) -> is_finite_subset(mk(a, b),
+  integer, ((b - a) + 1))))
+
+axiom finite_interval_empty :
+  (forall a:int. forall b:int. ((b <  a) -> is_finite_subset(mk(a, b),
+  integer, 0)))
+
+logic finite_subsets : 'a set -> 'a set set
+
+axiom finite_subsets_def198 :
+  (forall s:'a set. forall x:'a set. (mem(x, finite_subsets(s)) ->
+  (exists c:int. is_finite_subset(x, s, c))))
+
+axiom finite_subsets_def199 :
+  (forall s:'a set. forall x:'a set.
+  ((exists c:int. is_finite_subset(x, s, c)) -> mem(x, finite_subsets(s))))
+
+axiom finite_Empty :
+  (forall s:'a set. mem((empty : 'a set), finite_subsets(s)))
+
+axiom finite_Add :
+  (forall x:'a. forall s1:'a set. forall s2:'a set. (mem(s1,
+  finite_subsets(s2)) -> (mem(x, s2) -> mem(add(x, s1),
+  finite_subsets(s2)))))
+
+axiom finite_Union :
+  (forall s1:'a set. forall s2:'a set. forall s3:'a set. (mem(s1,
+  finite_subsets(s3)) -> (mem(s2, finite_subsets(s3)) -> mem(union(s1, s2),
+  finite_subsets(s3)))))
+
+axiom finite_inversion :
+  (forall s1:'a set. forall s2:'a set. (mem(s1, finite_subsets(s2)) ->
+  ((s1 = (empty : 'a set)) or
+  (exists x:'a. exists s3:'a set. ((s1 = add(x, s3)) and mem(s3,
+  finite_subsets(s2)))))))
+
+logic non_empty_finite_subsets : 'a set -> 'a set set
+
+axiom non_empty_finite_subsets_def198 :
+  (forall s:'a set. forall x:'a set. (mem(x, non_empty_finite_subsets(s)) ->
+  (exists c:int. (is_finite_subset(x, s, c) and
+  (not (x = (empty : 'a set)))))))
+
+axiom non_empty_finite_subsets_def199 :
+  (forall s:'a set. forall x:'a set.
+  ((exists c:int. (is_finite_subset(x, s, c) and
+   (not (x = (empty : 'a set))))) ->
+  mem(x, non_empty_finite_subsets(s))))
+
+axiom card_non_neg :
+  (forall s:'a set. forall x:'a set. forall c:int. (is_finite_subset(x, s,
+  c) -> (0 <= c)))
+
+axiom card_unique :
+  (forall s:'a set. forall x:'a set. forall c1:int. forall c2:int.
+  (is_finite_subset(x, s, c1) -> (is_finite_subset(x, s, c2) -> (c1 = c2))))
+
+logic card : 'a set -> int
+
+axiom card_def :
+  (forall s:'a set. forall x:'a set. forall c:int. (is_finite_subset(x, s,
+  c) -> (card(x) = c)))
+
+axiom card_Empty : (card((empty : 'a set)) = 0)
+
+axiom card_Add_not_mem :
+  (forall x:'a. forall s1:'a set. forall s2:'a set [mem(s1,
+  finite_subsets(s2)), card(add(x, s1))]. (mem(s1, finite_subsets(s2)) ->
+  ((not mem(x, s1)) -> (card(add(x, s1)) = (card(s1) + 1)))))
+
+axiom card_Add_mem :
+  (forall x:'a. forall s1:'a set. forall s2:'a set [mem(s1,
+  finite_subsets(s2)), card(add(x, s1))]. (mem(s1, finite_subsets(s2)) ->
+  (mem(x, s1) -> (card(add(x, s1)) = card(s1)))))
+
+axiom card_Union :
+  (forall s1:'a set. forall s2:'a set. forall s3:'a set [mem(s1,
+  finite_subsets(s3)), mem(s2, finite_subsets(s3)), card(union(s1, s2))].
+  (mem(s1, finite_subsets(s3)) -> (mem(s2, finite_subsets(s3)) ->
+  (is_empty(inter(s1, s2)) -> (card(union(s1,
+  s2)) = (card(s1) + card(s2)))))))
+
+logic times : 'a set, 'b set -> ('a, 'b) tuple2 set
+
+axiom times_def297 :
+  (forall a:'a1 set. forall b:'b1 set. forall x:'a1. forall y:'b1 [mem({
+  Tuple2_proj_1 = x; Tuple2_proj_2 = y }, times(a, b))]. (mem({
+  Tuple2_proj_1 = x; Tuple2_proj_2 = y }, times(a, b)) -> mem(x, a)))
+
+axiom times_def298 :
+  (forall a:'a1 set. forall b:'b1 set. forall x:'a1. forall y:'b1 [mem({
+  Tuple2_proj_1 = x; Tuple2_proj_2 = y }, times(a, b))]. (mem({
+  Tuple2_proj_1 = x; Tuple2_proj_2 = y }, times(a, b)) -> mem(y, b)))
+
+axiom times_def299 :
+  (forall a:'a1 set. forall b:'b1 set. forall x:'a1. forall y:'b1 [mem({
+  Tuple2_proj_1 = x; Tuple2_proj_2 = y }, times(a, b))]. ((mem(x, a) and
+  mem(y, b)) -> mem({ Tuple2_proj_1 = x; Tuple2_proj_2 = y }, times(a, b))))
+
+function relations(u: 'a set, v: 'b set) : ('a, 'b) tuple2 set set =
+  power(times(u, v))
+
+axiom break_mem_in_add198 :
+  (forall c:('a, 'b) tuple2. forall s:('a, 'b) tuple2 set. forall x:'a.
+  forall y:'b. (mem(c, add({ Tuple2_proj_1 = x; Tuple2_proj_2 = y }, s)) ->
+  ((c = { Tuple2_proj_1 = x; Tuple2_proj_2 = y }) or mem(c, s))))
+
+axiom break_mem_in_add199 :
+  (forall c:('a, 'b) tuple2. forall s:('a, 'b) tuple2 set. forall x:'a.
+  forall y:'b. (((c = { Tuple2_proj_1 = x; Tuple2_proj_2 = y }) or mem(c,
+  s)) -> mem(c, add({ Tuple2_proj_1 = x; Tuple2_proj_2 = y }, s))))
+
+axiom break_power_times198 :
+  (forall r:('a, 'b) tuple2 set. forall u:'a set. forall v:'b set. (mem(r,
+  power(times(u, v))) -> subset(r, times(u, v))))
+
+axiom break_power_times199 :
+  (forall r:('a, 'b) tuple2 set. forall u:'a set. forall v:'b set. (subset(r,
+  times(u, v)) -> mem(r, power(times(u, v)))))
+
+axiom subset_of_times297 :
+  (forall r:('a, 'b) tuple2 set. forall u:'a set. forall v:'b set. (subset(r,
+  times(u, v)) ->
+  (forall x:'a. forall y:'b. (mem({ Tuple2_proj_1 = x; Tuple2_proj_2 = y },
+  r) -> mem(x, u)))))
+
+axiom subset_of_times298 :
+  (forall r:('a, 'b) tuple2 set. forall u:'a set. forall v:'b set. (subset(r,
+  times(u, v)) ->
+  (forall x:'a. forall y:'b. (mem({ Tuple2_proj_1 = x; Tuple2_proj_2 = y },
+  r) -> mem(y, v)))))
+
+axiom subset_of_times299 :
+  (forall r:('a, 'b) tuple2 set. forall u:'a set. forall v:'b set.
+  ((forall x:'a. forall y:'b. (mem({ Tuple2_proj_1 = x; Tuple2_proj_2 = y },
+   r) -> (mem(x, u) and mem(y, v)))) ->
+  subset(r, times(u, v))))
+
+axiom apply_times :
+  (forall s:'a set. forall x:'a. forall y:'b [apply(times(s, add(y,
+  (empty : 'b set))), x)]. (mem(x, s) -> (apply(times(s, add(y,
+  (empty : 'b set))), x) = y)))
+
+logic infix_lspl : ('a, 'b) tuple2 set, ('a, 'b) tuple2 set -> ('a,
+  'b) tuple2 set
+
+axiom overriding_def297 :
+  (forall x:'a. forall y:'b. forall q:('a, 'b) tuple2 set. forall r:('a,
+  'b) tuple2 set. (mem({ Tuple2_proj_1 = x; Tuple2_proj_2 = y },
+  infix_lspl(q, r)) -> (mem(x, dom(r)) -> mem({ Tuple2_proj_1 = x;
+  Tuple2_proj_2 = y }, r))))
+
+axiom overriding_def298 :
+  (forall x:'a. forall y:'b. forall q:('a, 'b) tuple2 set. forall r:('a,
+  'b) tuple2 set. (mem({ Tuple2_proj_1 = x; Tuple2_proj_2 = y },
+  infix_lspl(q, r)) -> ((not mem(x, dom(r))) -> mem({ Tuple2_proj_1 = x;
+  Tuple2_proj_2 = y }, q))))
+
+axiom overriding_def299 :
+  (forall x:'a. forall y:'b. forall q:('a, 'b) tuple2 set. forall r:('a,
+  'b) tuple2 set. (((mem(x, dom(r)) and mem({ Tuple2_proj_1 = x;
+  Tuple2_proj_2 = y }, r)) or ((not mem(x, dom(r))) and mem({ Tuple2_proj_1 =
+  x; Tuple2_proj_2 = y }, q))) -> mem({ Tuple2_proj_1 = x; Tuple2_proj_2 = y
+  }, infix_lspl(q, r))))
+
+axiom function_overriding :
+  (forall s:'a set. forall t:'b set. forall f:('a, 'b) tuple2 set.
+  forall g:('a, 'b) tuple2 set. ((mem(f, infix_plmngt(s, t)) and mem(g,
+  infix_plmngt(s, t))) -> mem(infix_lspl(f, g), infix_plmngt(s, t))))
+
+axiom dom_overriding :
+  (forall f:('a, 'b) tuple2 set. forall g:('a, 'b) tuple2 set
+  [dom(infix_lspl(f, g))]. (dom(infix_lspl(f, g)) = union(dom(f), dom(g))))
+
+axiom apply_overriding_1 :
+  (forall s:'a set. forall t:'b set. forall f:('a, 'b) tuple2 set.
+  forall g:('a, 'b) tuple2 set. forall x:'a [mem(f, infix_plmngt(s, t)),
+  mem(g, infix_plmngt(s, t)), apply(infix_lspl(f, g), x)]. ((mem(f,
+  infix_plmngt(s, t)) and mem(g, infix_plmngt(s, t))) -> (mem(x, dom(g)) ->
+  (apply(infix_lspl(f, g), x) = apply(g, x)))))
+
+axiom apply_overriding_2 :
+  (forall s:'a set. forall t:'b set. forall f:('a, 'b) tuple2 set.
+  forall g:('a, 'b) tuple2 set. forall x:'a [mem(f, infix_plmngt(s, t)),
+  apply(infix_lspl(f, g), x)| mem(g, infix_plmngt(s, t)), apply(infix_lspl(f,
+  g), x)]. ((mem(f, infix_plmngt(s, t)) and mem(g, infix_plmngt(s, t))) ->
+  ((not mem(x, dom(g))) -> (mem(x, dom(f)) -> (apply(infix_lspl(f, g),
+  x) = apply(f, x))))))
+
+type uninterpreted_type
+
+type enum_aa = E_bb | E_cc | E_dd | E_ee | E_ff | E_gg | E_hh | E_ii
+
+logic match_enum_aa : enum_aa, 'a, 'a, 'a, 'a, 'a, 'a, 'a, 'a -> 'a
+
+axiom match_enum_aa_E_bb :
+  (forall z:'a. forall z1:'a. forall z2:'a. forall z3:'a. forall z4:'a.
+  forall z5:'a. forall z6:'a. forall z7:'a. (match_enum_aa(E_bb, z, z1, z2,
+  z3, z4, z5, z6, z7) = z))
+
+axiom match_enum_aa_E_cc :
+  (forall z:'a. forall z1:'a. forall z2:'a. forall z3:'a. forall z4:'a.
+  forall z5:'a. forall z6:'a. forall z7:'a. (match_enum_aa(E_cc, z, z1, z2,
+  z3, z4, z5, z6, z7) = z1))
+
+axiom match_enum_aa_E_dd :
+  (forall z:'a. forall z1:'a. forall z2:'a. forall z3:'a. forall z4:'a.
+  forall z5:'a. forall z6:'a. forall z7:'a. (match_enum_aa(E_dd, z, z1, z2,
+  z3, z4, z5, z6, z7) = z2))
+
+axiom match_enum_aa_E_ee :
+  (forall z:'a. forall z1:'a. forall z2:'a. forall z3:'a. forall z4:'a.
+  forall z5:'a. forall z6:'a. forall z7:'a. (match_enum_aa(E_ee, z, z1, z2,
+  z3, z4, z5, z6, z7) = z3))
+
+axiom match_enum_aa_E_ff :
+  (forall z:'a. forall z1:'a. forall z2:'a. forall z3:'a. forall z4:'a.
+  forall z5:'a. forall z6:'a. forall z7:'a. (match_enum_aa(E_ff, z, z1, z2,
+  z3, z4, z5, z6, z7) = z4))
+
+axiom match_enum_aa_E_gg :
+  (forall z:'a. forall z1:'a. forall z2:'a. forall z3:'a. forall z4:'a.
+  forall z5:'a. forall z6:'a. forall z7:'a. (match_enum_aa(E_gg, z, z1, z2,
+  z3, z4, z5, z6, z7) = z5))
+
+axiom match_enum_aa_E_hh :
+  (forall z:'a. forall z1:'a. forall z2:'a. forall z3:'a. forall z4:'a.
+  forall z5:'a. forall z6:'a. forall z7:'a. (match_enum_aa(E_hh, z, z1, z2,
+  z3, z4, z5, z6, z7) = z6))
+
+axiom match_enum_aa_E_ii :
+  (forall z:'a. forall z1:'a. forall z2:'a. forall z3:'a. forall z4:'a.
+  forall z5:'a. forall z6:'a. forall z7:'a. (match_enum_aa(E_ii, z, z1, z2,
+  z3, z4, z5, z6, z7) = z7))
+
+logic set_enum_aa : enum_aa set
+
+axiom set_enum_aa_axiom : (forall x:enum_aa. mem(x, set_enum_aa))
+
+predicate f1(v_zz: int, v_yy: int, v_xx: int, v_ww: int, v_vv: int,
+  v_uu: int, v_tt: int, v_ss: int, v_rr: int, v_qq: int, v_pp: bool,
+  v_oo: bool, v_nn: bool, v_mm: bool, v_ll: int, v_kk: int, v_jj: enum_aa,
+  v_bbss: int, v_bbrr: int, v_bbqq: int, v_bbpp: int, v_bboo: int,
+  v_bbnn: bool, v_bbmm: bool, v_bbll: bool, v_bbkk: bool, v_bbjj: int,
+  v_bbii: int, v_bbhh: enum_aa, v_bbgg: int, v_bbff: bool, v_bbee: bool,
+  v_bbdd: bool, v_bbcc: bool, v_bbbb: int, v_bbaa: int) =
+  ((((((((((((((((((((((((((((((((((((((((((v_bboo = 0) and (v_bbpp = 1)) and
+  mem(v_bbqq, integer)) and (0 <= v_bbqq)) and (v_bbqq <= 2147483647)) and
+  mem(v_bbrr, integer)) and (0 <= v_bbrr)) and (v_bbrr <= 2147483647)) and
+  mem(v_bbss, integer)) and (0 <= v_bbss)) and (v_bbss <= 2147483647)) and
+  mem(v_zz, integer)) and (0 <= v_zz)) and (v_zz <= 2147483647)) and
+  (1 <= v_zz)) and (v_zz <= 254)) and (v_zz = v_bbrr)) and mem(v_xx,
+  integer)) and (0 <= v_xx)) and (v_xx <= 2147483647)) and (1 <= v_xx)) and
+  (v_xx <= 254)) and (v_xx = v_bbrr)) and mem(v_tt, integer)) and
+  (0 <= v_tt)) and (v_tt <= 2147483647)) and (1 <= v_tt)) and
+  ((v_tt + 1) <= 2147483647)) and (v_tt = v_bbss)) and mem(v_ss,
+  integer)) and (0 <= v_ss)) and (v_ss <= 2147483647)) and (2 <= v_ss)) and
+  (v_ss = v_bbqq)) and ((v_ss + v_xx) <= 253)) and
+  (((v_ss + v_zz) + v_xx) <= 251)) and mem(v_uu, integer)) and
+  (0 <= v_uu)) and (v_uu <= 2147483647)) and (1 <= v_uu)) and
+  ((v_uu + 1) <= 254)) and (v_uu = v_bbqq))
+
+predicate f10(v_zz: int, v_yy: int, v_xx: int, v_ww: int, v_vv: int,
+  v_uu: int, v_tt: int, v_ss: int, v_rr: int, v_qq: int, v_pp: bool,
+  v_oo: bool, v_nn: bool, v_mm: bool, v_ll: int, v_kk: int, v_jj: enum_aa,
+  v_bbss: int, v_bbrr: int, v_bbqq: int, v_bbpp: int, v_bboo: int,
+  v_bbnn: bool, v_bbmm: bool, v_bbll: bool, v_bbkk: bool, v_bbjj: int,
+  v_bbii: int, v_bbhh: enum_aa, v_bbgg: int, v_bbff: bool, v_bbee: bool,
+  v_bbdd: bool, v_bbcc: bool, v_bbbb: int, v_bbaa: int) =
+  ((((((((((((((((((((((((((((((((((mem(v_kk, integer) and (0 <= v_kk)) and
+  mem(v_ll, integer)) and (0 <= v_ll)) and mem(v_qq, integer)) and
+  (0 <= v_qq)) and mem(v_yy, integer)) and (0 <= v_yy)) and mem(v_rr,
+  integer)) and (0 <= v_rr)) and (mem(v_jj, union(add(E_cc,
+  (empty : enum_aa set)), add(E_dd, (empty : enum_aa set)))) ->
+  (v_ll = 0))) and ((v_jj = E_ee) -> (v_ll <= v_zz))) and ((v_jj = E_ff) ->
+  (v_yy = v_qq))) and ((v_jj = E_cc) -> (v_kk <= 254))) and mem(v_ww,
+  integer)) and (0 <= v_ww)) and mem(v_vv, integer)) and (0 <= v_vv)) and
+  (mem(v_jj, union(union(union(add(E_cc, (empty : enum_aa set)), add(E_dd,
+  (empty : enum_aa set))), add(E_ee, (empty : enum_aa set))), add(E_ff,
+  (empty : enum_aa set)))) -> (v_ww = 0))) and (mem(v_jj,
+  union(union(union(add(E_cc, (empty : enum_aa set)), add(E_dd,
+  (empty : enum_aa set))), add(E_ee, (empty : enum_aa set))), add(E_ff,
+  (empty : enum_aa set)))) -> (v_vv = 0))) and ((v_jj = E_gg) ->
+  (v_vv <= 1))) and ((v_jj = E_gg) -> ((v_qq - v_rr) = v_vv))) and
+  ((v_jj = E_hh) -> (((v_qq - 1) - v_rr) = v_vv))) and (mem(v_jj,
+  union(add(E_gg, (empty : enum_aa set)), add(E_hh,
+  (empty : enum_aa set)))) -> ((((v_qq - 1) - v_yy) = v_ww) and
+  (v_ww <= ((v_ss + v_xx) + 1))))) and ((v_jj = E_hh) ->
+  ((v_ww <= (v_vv + v_xx)) and (v_vv <= v_ss)))) and (v_bbaa = v_kk)) and
+  (v_bbbb = v_ll)) and (v_bbcc = v_mm)) and (v_bbdd = v_nn)) and
+  (v_bbee = v_oo)) and (v_bbff = v_pp)) and (v_bbgg = v_qq)) and
+  (v_bbhh = v_jj)) and (v_bbii = v_yy)) and (v_bbjj = v_rr))
+
+predicate f41(v_zz: int, v_yy: int, v_xx: int, v_ww: int, v_vv: int,
+  v_uu: int, v_tt: int, v_ss: int, v_rr: int, v_qq: int, v_pp: bool,
+  v_oo: bool, v_nn: bool, v_mm: bool, v_ll: int, v_kk: int, v_jj: enum_aa,
+  v_bbss: int, v_bbrr: int, v_bbqq: int, v_bbpp: int, v_bboo: int,
+  v_bbnn: bool, v_bbmm: bool, v_bbll: bool, v_bbkk: bool, v_bbjj: int,
+  v_bbii: int, v_bbhh: enum_aa, v_bbgg: int, v_bbff: bool, v_bbee: bool,
+  v_bbdd: bool, v_bbcc: bool, v_bbbb: int, v_bbaa: int) =
+  (((v_qq + 1) - v_rr) = v_vv)
+
+predicate f43(v_zz: int, v_yy: int, v_xx: int, v_ww: int, v_vv: int,
+  v_uu: int, v_tt: int, v_ss: int, v_rr: int, v_qq: int, v_pp: bool,
+  v_oo: bool, v_nn: bool, v_mm: bool, v_ll: int, v_kk: int, v_jj: enum_aa,
+  v_bbss: int, v_bbrr: int, v_bbqq: int, v_bbpp: int, v_bboo: int,
+  v_bbnn: bool, v_bbmm: bool, v_bbll: bool, v_bbkk: bool, v_bbjj: int,
+  v_bbii: int, v_bbhh: enum_aa, v_bbgg: int, v_bbff: bool, v_bbee: bool,
+  v_bbdd: bool, v_bbcc: bool, v_bbbb: int, v_bbaa: int) =
+  ((((v_qq + 1) - 1) - v_rr) = v_vv)
+
+predicate f45(v_zz: int, v_yy: int, v_xx: int, v_ww: int, v_vv: int,
+  v_uu: int, v_tt: int, v_ss: int, v_rr: int, v_qq: int, v_pp: bool,
+  v_oo: bool, v_nn: bool, v_mm: bool, v_ll: int, v_kk: int, v_jj: enum_aa,
+  v_bbss: int, v_bbrr: int, v_bbqq: int, v_bbpp: int, v_bboo: int,
+  v_bbnn: bool, v_bbmm: bool, v_bbll: bool, v_bbkk: bool, v_bbjj: int,
+  v_bbii: int, v_bbhh: enum_aa, v_bbgg: int, v_bbff: bool, v_bbee: bool,
+  v_bbdd: bool, v_bbcc: bool, v_bbbb: int, v_bbaa: int) =
+  ((((v_qq + 1) - 1) - v_yy) = v_ww)
+
+predicate f46(v_zz: int, v_yy: int, v_xx: int, v_ww: int, v_vv: int,
+  v_uu: int, v_tt: int, v_ss: int, v_rr: int, v_qq: int, v_pp: bool,
+  v_oo: bool, v_nn: bool, v_mm: bool, v_ll: int, v_kk: int, v_jj: enum_aa,
+  v_bbss: int, v_bbrr: int, v_bbqq: int, v_bbpp: int, v_bboo: int,
+  v_bbnn: bool, v_bbmm: bool, v_bbll: bool, v_bbkk: bool, v_bbjj: int,
+  v_bbii: int, v_bbhh: enum_aa, v_bbgg: int, v_bbff: bool, v_bbee: bool,
+  v_bbdd: bool, v_bbcc: bool, v_bbbb: int, v_bbaa: int) =
+  (v_ww <= ((v_ss + v_xx) + 1))
+
+predicate f47(v_zz: int, v_yy: int, v_xx: int, v_ww: int, v_vv: int,
+  v_uu: int, v_tt: int, v_ss: int, v_rr: int, v_qq: int, v_pp: bool,
+  v_oo: bool, v_nn: bool, v_mm: bool, v_ll: int, v_kk: int, v_jj: enum_aa,
+  v_bbss: int, v_bbrr: int, v_bbqq: int, v_bbpp: int, v_bboo: int,
+  v_bbnn: bool, v_bbmm: bool, v_bbll: bool, v_bbkk: bool, v_bbjj: int,
+  v_bbii: int, v_bbhh: enum_aa, v_bbgg: int, v_bbff: bool, v_bbee: bool,
+  v_bbdd: bool, v_bbcc: bool, v_bbbb: int, v_bbaa: int) =
+  (v_ww <= (v_vv + v_xx))
+
+predicate f92(v_zz: int, v_yy: int, v_xx: int, v_ww: int, v_vv: int,
+  v_uu: int, v_tt: int, v_ss: int, v_rr: int, v_qq: int, v_pp: bool,
+  v_oo: bool, v_nn: bool, v_mm: bool, v_ll: int, v_kk: int, v_jj: enum_aa,
+  v_bbss: int, v_bbrr: int, v_bbqq: int, v_bbpp: int, v_bboo: int,
+  v_bbnn: bool, v_bbmm: bool, v_bbll: bool, v_bbkk: bool, v_bbjj: int,
+  v_bbii: int, v_bbhh: enum_aa, v_bbgg: int, v_bbff: bool, v_bbee: bool,
+  v_bbdd: bool, v_bbcc: bool, v_bbbb: int, v_bbaa: int) = mem((v_qq + 1),
+  integer)
+
+predicate f93(v_zz: int, v_yy: int, v_xx: int, v_ww: int, v_vv: int,
+  v_uu: int, v_tt: int, v_ss: int, v_rr: int, v_qq: int, v_pp: bool,
+  v_oo: bool, v_nn: bool, v_mm: bool, v_ll: int, v_kk: int, v_jj: enum_aa,
+  v_bbss: int, v_bbrr: int, v_bbqq: int, v_bbpp: int, v_bboo: int,
+  v_bbnn: bool, v_bbmm: bool, v_bbll: bool, v_bbkk: bool, v_bbjj: int,
+  v_bbii: int, v_bbhh: enum_aa, v_bbgg: int, v_bbff: bool, v_bbee: bool,
+  v_bbdd: bool, v_bbcc: bool, v_bbbb: int, v_bbaa: int) = (0 <= (v_qq + 1))
+
+predicate f115(v_zz: int, v_yy: int, v_xx: int, v_ww: int, v_vv: int,
+  v_uu: int, v_tt: int, v_ss: int, v_rr: int, v_qq: int, v_pp: bool,
+  v_oo: bool, v_nn: bool, v_mm: bool, v_ll: int, v_kk: int, v_jj: enum_aa,
+  v_bbss: int, v_bbrr: int, v_bbqq: int, v_bbpp: int, v_bboo: int,
+  v_bbnn: bool, v_bbmm: bool, v_bbll: bool, v_bbkk: bool, v_bbjj: int,
+  v_bbii: int, v_bbhh: enum_aa, v_bbgg: int, v_bbff: bool, v_bbee: bool,
+  v_bbdd: bool, v_bbcc: bool, v_bbbb: int, v_bbaa: int) = mem((v_ll + 1),
+  integer)
+
+predicate f116(v_zz: int, v_yy: int, v_xx: int, v_ww: int, v_vv: int,
+  v_uu: int, v_tt: int, v_ss: int, v_rr: int, v_qq: int, v_pp: bool,
+  v_oo: bool, v_nn: bool, v_mm: bool, v_ll: int, v_kk: int, v_jj: enum_aa,
+  v_bbss: int, v_bbrr: int, v_bbqq: int, v_bbpp: int, v_bboo: int,
+  v_bbnn: bool, v_bbmm: bool, v_bbll: bool, v_bbkk: bool, v_bbjj: int,
+  v_bbii: int, v_bbhh: enum_aa, v_bbgg: int, v_bbff: bool, v_bbee: bool,
+  v_bbdd: bool, v_bbcc: bool, v_bbbb: int, v_bbaa: int) = (0 <= (v_ll + 1))
+
+predicate f184(v_zz: int, v_yy: int, v_xx: int, v_ww: int, v_vv: int,
+  v_uu: int, v_tt: int, v_ss: int, v_rr: int, v_qq: int, v_pp: bool,
+  v_oo: bool, v_nn: bool, v_mm: bool, v_ll: int, v_kk: int, v_jj: enum_aa,
+  v_bbss: int, v_bbrr: int, v_bbqq: int, v_bbpp: int, v_bboo: int,
+  v_bbnn: bool, v_bbmm: bool, v_bbll: bool, v_bbkk: bool, v_bbjj: int,
+  v_bbii: int, v_bbhh: enum_aa, v_bbgg: int, v_bbff: bool, v_bbee: bool,
+  v_bbdd: bool, v_bbcc: bool, v_bbbb: int, v_bbaa: int) = mem((v_ww + 1),
+  integer)
+
+predicate f185(v_zz: int, v_yy: int, v_xx: int, v_ww: int, v_vv: int,
+  v_uu: int, v_tt: int, v_ss: int, v_rr: int, v_qq: int, v_pp: bool,
+  v_oo: bool, v_nn: bool, v_mm: bool, v_ll: int, v_kk: int, v_jj: enum_aa,
+  v_bbss: int, v_bbrr: int, v_bbqq: int, v_bbpp: int, v_bboo: int,
+  v_bbnn: bool, v_bbmm: bool, v_bbll: bool, v_bbkk: bool, v_bbjj: int,
+  v_bbii: int, v_bbhh: enum_aa, v_bbgg: int, v_bbff: bool, v_bbee: bool,
+  v_bbdd: bool, v_bbcc: bool, v_bbbb: int, v_bbaa: int) = (0 <= (v_ww + 1))
+
+predicate f187(v_zz: int, v_yy: int, v_xx: int, v_ww: int, v_vv: int,
+  v_uu: int, v_tt: int, v_ss: int, v_rr: int, v_qq: int, v_pp: bool,
+  v_oo: bool, v_nn: bool, v_mm: bool, v_ll: int, v_kk: int, v_jj: enum_aa,
+  v_bbss: int, v_bbrr: int, v_bbqq: int, v_bbpp: int, v_bboo: int,
+  v_bbnn: bool, v_bbmm: bool, v_bbll: bool, v_bbkk: bool, v_bbjj: int,
+  v_bbii: int, v_bbhh: enum_aa, v_bbgg: int, v_bbff: bool, v_bbee: bool,
+  v_bbdd: bool, v_bbcc: bool, v_bbbb: int, v_bbaa: int) = ((v_ww + 1) = 0)
+
+predicate f191(v_zz: int, v_yy: int, v_xx: int, v_ww: int, v_vv: int,
+  v_uu: int, v_tt: int, v_ss: int, v_rr: int, v_qq: int, v_pp: bool,
+  v_oo: bool, v_nn: bool, v_mm: bool, v_ll: int, v_kk: int, v_jj: enum_aa,
+  v_bbss: int, v_bbrr: int, v_bbqq: int, v_bbpp: int, v_bboo: int,
+  v_bbnn: bool, v_bbmm: bool, v_bbll: bool, v_bbkk: bool, v_bbjj: int,
+  v_bbii: int, v_bbhh: enum_aa, v_bbgg: int, v_bbff: bool, v_bbee: bool,
+  v_bbdd: bool, v_bbcc: bool, v_bbbb: int, v_bbaa: int) =
+  ((((v_qq + 1) - 1) - v_yy) = (v_ww + 1))
+
+predicate f192(v_zz: int, v_yy: int, v_xx: int, v_ww: int, v_vv: int,
+  v_uu: int, v_tt: int, v_ss: int, v_rr: int, v_qq: int, v_pp: bool,
+  v_oo: bool, v_nn: bool, v_mm: bool, v_ll: int, v_kk: int, v_jj: enum_aa,
+  v_bbss: int, v_bbrr: int, v_bbqq: int, v_bbpp: int, v_bboo: int,
+  v_bbnn: bool, v_bbmm: bool, v_bbll: bool, v_bbkk: bool, v_bbjj: int,
+  v_bbii: int, v_bbhh: enum_aa, v_bbgg: int, v_bbff: bool, v_bbee: bool,
+  v_bbdd: bool, v_bbcc: bool, v_bbbb: int, v_bbaa: int) =
+  (v_ww <= (v_ss + v_xx))
+
+predicate f193(v_zz: int, v_yy: int, v_xx: int, v_ww: int, v_vv: int,
+  v_uu: int, v_tt: int, v_ss: int, v_rr: int, v_qq: int, v_pp: bool,
+  v_oo: bool, v_nn: bool, v_mm: bool, v_ll: int, v_kk: int, v_jj: enum_aa,
+  v_bbss: int, v_bbrr: int, v_bbqq: int, v_bbpp: int, v_bboo: int,
+  v_bbnn: bool, v_bbmm: bool, v_bbll: bool, v_bbkk: bool, v_bbjj: int,
+  v_bbii: int, v_bbhh: enum_aa, v_bbgg: int, v_bbff: bool, v_bbee: bool,
+  v_bbdd: bool, v_bbcc: bool, v_bbbb: int, v_bbaa: int) =
+  ((v_ww + 1) <= (v_vv + v_xx))
+
+predicate f207(v_zz: int, v_yy: int, v_xx: int, v_ww: int, v_vv: int,
+  v_uu: int, v_tt: int, v_ss: int, v_rr: int, v_qq: int, v_pp: bool,
+  v_oo: bool, v_nn: bool, v_mm: bool, v_ll: int, v_kk: int, v_jj: enum_aa,
+  v_bbss: int, v_bbrr: int, v_bbqq: int, v_bbpp: int, v_bboo: int,
+  v_bbnn: bool, v_bbmm: bool, v_bbll: bool, v_bbkk: bool, v_bbjj: int,
+  v_bbii: int, v_bbhh: enum_aa, v_bbgg: int, v_bbff: bool, v_bbee: bool,
+  v_bbdd: bool, v_bbcc: bool, v_bbbb: int, v_bbaa: int) =
+  ((((((((((((not (v_jj = E_ii)) and (not (v_jj = E_hh))) and
+  (not (v_jj = E_gg))) and (not (v_jj = E_ff))) and (not (v_jj = E_ee))) and
+  (not (v_jj = E_dd))) and (not (v_jj = E_cc))) and (v_jj = E_bb)) and
+  (((v_kk = 0) and ((v_ll + 1) = 0)) and ((((((v_mm = true) and
+  (v_nn = true)) and (v_oo = false)) and (v_pp = false)) and
+  (E_gg = E_cc)) or (((((v_mm = true) and (v_nn = true)) and
+  (v_oo = false)) -> (not (v_pp = false))) and (E_gg = v_jj))))) or
+  ((((((((((not (v_jj = E_bb)) and (not (v_jj = E_ii))) and
+  (not (v_jj = E_hh))) and (not (v_jj = E_gg))) and (not (v_jj = E_ff))) and
+  (not (v_jj = E_ee))) and (not (v_jj = E_dd))) and (v_jj = E_cc)) and
+  ((v_kk = (v_kk + 1)) and ((((((v_mm = false) or (v_nn = false)) or
+  (v_oo = true)) or (v_pp = true)) and (E_gg = E_bb)) or
+  (((((not (v_mm = false)) and (not (v_nn = false))) and
+  (not (v_oo = true))) and (not (v_pp = true))) and
+  (((((((v_uu <= (v_kk + 1)) and (v_mm = true)) and (v_nn = true)) and
+  (v_oo = false)) and (v_pp = false)) and (E_gg = E_dd)) or
+  ((((((v_uu <= (v_kk + 1)) and (v_mm = true)) and (v_nn = true)) and
+  (v_oo = false)) -> (not (v_pp = false))) and (E_gg = v_jj))))))) and
+  ((v_ll + 1) = v_ll))) and ((v_qq + 1) = v_rr)) or
+  (((((not (v_jj = E_bb)) and (not (v_jj = E_cc))) and
+  (not (v_jj = E_ii))) and (not (v_jj = E_hh))) and (((E_gg = E_bb) and
+  ((v_qq + 1) = v_rr)) or ((((((((((v_mm = false) and (v_nn = true)) and
+  (v_oo = true)) and (v_pp = false)) and
+  ((((((v_qq + 1) - v_yy) - 1) <= v_xx) and (E_gg = E_hh)) or
+  ((not ((((v_qq + 1) - v_yy) - 1) <= v_xx)) and (E_gg = E_bb)))) and
+  ((v_qq + 1) = v_rr)) or (((((v_mm = true) and (v_nn = true)) and
+  (v_oo = false)) and (v_pp = false)) and
+  (((((v_qq + 1) - v_yy) - 1) <= v_xx) or
+  (((not ((((v_qq + 1) - v_yy) - 1) <= v_xx)) and (E_gg = E_bb)) and
+  ((v_qq + 1) = v_rr))))) or (((((v_mm = true) and (v_nn = true)) and
+  (v_oo = true)) and (v_pp = false)) and
+  (((((v_qq + 1) - v_yy) - 1) <= v_xx) or
+  (((not ((((v_qq + 1) - v_yy) - 1) <= v_xx)) and (E_gg = E_bb)) and
+  ((v_qq + 1) = v_rr))))) or (((((v_mm = false) and (v_nn = true)) and
+  (v_oo = false)) and (v_pp = false)) and
+  (((((v_qq + 1) - v_yy) - 1) <= v_xx) or
+  (((not ((((v_qq + 1) - v_yy) - 1) <= v_xx)) and (E_gg = E_bb)) and
+  ((v_qq + 1) = v_rr))))) or (((((((((v_mm = false) and (v_nn = true)) and
+  (v_oo = true)) -> (not (v_pp = false))) and ((((v_mm = true) and
+  (v_nn = true)) and (v_oo = false)) -> (not (v_pp = false)))) and
+  ((((v_mm = true) and (v_nn = true)) and (v_oo = true)) ->
+  (not (v_pp = false)))) and ((((v_mm = false) and (v_nn = true)) and
+  (v_oo = false)) -> (not (v_pp = false)))) and (E_gg = E_bb)) and
+  ((v_qq + 1) = v_rr))))))
+
+predicate f209(v_zz: int, v_yy: int, v_xx: int, v_ww: int, v_vv: int,
+  v_uu: int, v_tt: int, v_ss: int, v_rr: int, v_qq: int, v_pp: bool,
+  v_oo: bool, v_nn: bool, v_mm: bool, v_ll: int, v_kk: int, v_jj: enum_aa,
+  v_bbss: int, v_bbrr: int, v_bbqq: int, v_bbpp: int, v_bboo: int,
+  v_bbnn: bool, v_bbmm: bool, v_bbll: bool, v_bbkk: bool, v_bbjj: int,
+  v_bbii: int, v_bbhh: enum_aa, v_bbgg: int, v_bbff: bool, v_bbee: bool,
+  v_bbdd: bool, v_bbcc: bool, v_bbbb: int, v_bbaa: int) =
+  (((v_qq + 1) - (v_qq + 1)) = 0)
+
+predicate f211(v_zz: int, v_yy: int, v_xx: int, v_ww: int, v_vv: int,
+  v_uu: int, v_tt: int, v_ss: int, v_rr: int, v_qq: int, v_pp: bool,
+  v_oo: bool, v_nn: bool, v_mm: bool, v_ll: int, v_kk: int, v_jj: enum_aa,
+  v_bbss: int, v_bbrr: int, v_bbqq: int, v_bbpp: int, v_bboo: int,
+  v_bbnn: bool, v_bbmm: bool, v_bbll: bool, v_bbkk: bool, v_bbjj: int,
+  v_bbii: int, v_bbhh: enum_aa, v_bbgg: int, v_bbff: bool, v_bbee: bool,
+  v_bbdd: bool, v_bbcc: bool, v_bbbb: int, v_bbaa: int) =
+  ((((v_qq + 1) - 1) - (v_qq + 1)) = 0)
+
+predicate f213(v_zz: int, v_yy: int, v_xx: int, v_ww: int, v_vv: int,
+  v_uu: int, v_tt: int, v_ss: int, v_rr: int, v_qq: int, v_pp: bool,
+  v_oo: bool, v_nn: bool, v_mm: bool, v_ll: int, v_kk: int, v_jj: enum_aa,
+  v_bbss: int, v_bbrr: int, v_bbqq: int, v_bbpp: int, v_bboo: int,
+  v_bbnn: bool, v_bbmm: bool, v_bbll: bool, v_bbkk: bool, v_bbjj: int,
+  v_bbii: int, v_bbhh: enum_aa, v_bbgg: int, v_bbff: bool, v_bbee: bool,
+  v_bbdd: bool, v_bbcc: bool, v_bbbb: int, v_bbaa: int) =
+  ((v_ww + 1) <= (0 + v_xx))
+
+predicate f219(v_zz: int, v_yy: int, v_xx: int, v_ww: int, v_vv: int,
+  v_uu: int, v_tt: int, v_ss: int, v_rr: int, v_qq: int, v_pp: bool,
+  v_oo: bool, v_nn: bool, v_mm: bool, v_ll: int, v_kk: int, v_jj: enum_aa,
+  v_bbss: int, v_bbrr: int, v_bbqq: int, v_bbpp: int, v_bboo: int,
+  v_bbnn: bool, v_bbmm: bool, v_bbll: bool, v_bbkk: bool, v_bbjj: int,
+  v_bbii: int, v_bbhh: enum_aa, v_bbgg: int, v_bbff: bool, v_bbee: bool,
+  v_bbdd: bool, v_bbcc: bool, v_bbbb: int, v_bbaa: int) =
+  (((((((((((((not (v_jj = E_bb)) and (not (v_jj = E_cc))) and
+  (not (v_jj = E_dd))) and (not (v_jj = E_ee))) and (not (v_jj = E_ff))) and
+  (not (v_jj = E_ii))) and (not (v_jj = E_hh))) and ((v_ww + 1) <= v_xx)) and
+  (v_jj = E_gg)) and (v_mm = true)) and (v_nn = true)) and (v_oo = true)) and
+  (v_pp = false))
+
+predicate f220(v_zz: int, v_yy: int, v_xx: int, v_ww: int, v_vv: int,
+  v_uu: int, v_tt: int, v_ss: int, v_rr: int, v_qq: int, v_pp: bool,
+  v_oo: bool, v_nn: bool, v_mm: bool, v_ll: int, v_kk: int, v_jj: enum_aa,
+  v_bbss: int, v_bbrr: int, v_bbqq: int, v_bbpp: int, v_bboo: int,
+  v_bbnn: bool, v_bbmm: bool, v_bbll: bool, v_bbkk: bool, v_bbjj: int,
+  v_bbii: int, v_bbhh: enum_aa, v_bbgg: int, v_bbff: bool, v_bbee: bool,
+  v_bbdd: bool, v_bbcc: bool, v_bbbb: int, v_bbaa: int) =
+  ((((((((((((((not (v_jj = E_bb)) and (not (v_jj = E_cc))) and
+  (not (v_jj = E_dd))) and (not (v_jj = E_ee))) and (not (v_jj = E_ff))) and
+  (not (v_jj = E_ii))) and (not (v_jj = E_hh))) and ((v_ww + 1) <= v_xx)) and
+  (v_jj = E_gg)) and (v_mm = true)) and (v_nn = true)) and (v_oo = true)) and
+  (v_pp = false)) and mem(E_gg, union(union(union(add(E_cc,
+  (empty : enum_aa set)), add(E_dd, (empty : enum_aa set))), add(E_ee,
+  (empty : enum_aa set))), add(E_ff, (empty : enum_aa set)))))
+
+predicate f221(v_zz: int, v_yy: int, v_xx: int, v_ww: int, v_vv: int,
+  v_uu: int, v_tt: int, v_ss: int, v_rr: int, v_qq: int, v_pp: bool,
+  v_oo: bool, v_nn: bool, v_mm: bool, v_ll: int, v_kk: int, v_jj: enum_aa,
+  v_bbss: int, v_bbrr: int, v_bbqq: int, v_bbpp: int, v_bboo: int,
+  v_bbnn: bool, v_bbmm: bool, v_bbll: bool, v_bbkk: bool, v_bbjj: int,
+  v_bbii: int, v_bbhh: enum_aa, v_bbgg: int, v_bbff: bool, v_bbee: bool,
+  v_bbdd: bool, v_bbcc: bool, v_bbbb: int, v_bbaa: int) =
+  ((((((((((((((not (v_jj = E_bb)) and (not (v_jj = E_cc))) and
+  (not (v_jj = E_dd))) and (not (v_jj = E_ee))) and (not (v_jj = E_ff))) and
+  (not (v_jj = E_ii))) and (not (v_jj = E_hh))) and ((v_ww + 1) <= v_xx)) and
+  (v_jj = E_gg)) and (v_mm = true)) and (v_nn = true)) and (v_oo = true)) and
+  (v_pp = false)) and (E_gg = E_hh))
+
+predicate f222(v_zz: int, v_yy: int, v_xx: int, v_ww: int, v_vv: int,
+  v_uu: int, v_tt: int, v_ss: int, v_rr: int, v_qq: int, v_pp: bool,
+  v_oo: bool, v_nn: bool, v_mm: bool, v_ll: int, v_kk: int, v_jj: enum_aa,
+  v_bbss: int, v_bbrr: int, v_bbqq: int, v_bbpp: int, v_bboo: int,
+  v_bbnn: bool, v_bbmm: bool, v_bbll: bool, v_bbkk: bool, v_bbjj: int,
+  v_bbii: int, v_bbhh: enum_aa, v_bbgg: int, v_bbff: bool, v_bbee: bool,
+  v_bbdd: bool, v_bbcc: bool, v_bbbb: int, v_bbaa: int) =
+  ((((((((((((((not (v_jj = E_bb)) and (not (v_jj = E_cc))) and
+  (not (v_jj = E_dd))) and (not (v_jj = E_ee))) and (not (v_jj = E_ff))) and
+  (not (v_jj = E_ii))) and (not (v_jj = E_hh))) and ((v_ww + 1) <= v_xx)) and
+  (v_jj = E_gg)) and (v_mm = true)) and (v_nn = true)) and (v_oo = true)) and
+  (v_pp = false)) and mem(E_gg, union(add(E_gg, (empty : enum_aa set)),
+  add(E_hh, (empty : enum_aa set)))))
+
+predicate f223(v_zz: int, v_yy: int, v_xx: int, v_ww: int, v_vv: int,
+  v_uu: int, v_tt: int, v_ss: int, v_rr: int, v_qq: int, v_pp: bool,
+  v_oo: bool, v_nn: bool, v_mm: bool, v_ll: int, v_kk: int, v_jj: enum_aa,
+  v_bbss: int, v_bbrr: int, v_bbqq: int, v_bbpp: int, v_bboo: int,
+  v_bbnn: bool, v_bbmm: bool, v_bbll: bool, v_bbkk: bool, v_bbjj: int,
+  v_bbii: int, v_bbhh: enum_aa, v_bbgg: int, v_bbff: bool, v_bbee: bool,
+  v_bbdd: bool, v_bbcc: bool, v_bbbb: int, v_bbaa: int) =
+  (((((((((((((not (v_jj = E_bb)) and (not (v_jj = E_cc))) and
+  (not (v_jj = E_dd))) and (not (v_jj = E_ee))) and (not (v_jj = E_ff))) and
+  (not (v_jj = E_ii))) and (not (v_jj = E_hh))) and
+  (not ((v_ww + 1) <= v_xx))) and (v_jj = E_gg)) and (v_mm = true)) and
+  (v_nn = true)) and (v_oo = true)) and (v_pp = false))
+
+predicate f224(v_zz: int, v_yy: int, v_xx: int, v_ww: int, v_vv: int,
+  v_uu: int, v_tt: int, v_ss: int, v_rr: int, v_qq: int, v_pp: bool,
+  v_oo: bool, v_nn: bool, v_mm: bool, v_ll: int, v_kk: int, v_jj: enum_aa,
+  v_bbss: int, v_bbrr: int, v_bbqq: int, v_bbpp: int, v_bboo: int,
+  v_bbnn: bool, v_bbmm: bool, v_bbll: bool, v_bbkk: bool, v_bbjj: int,
+  v_bbii: int, v_bbhh: enum_aa, v_bbgg: int, v_bbff: bool, v_bbee: bool,
+  v_bbdd: bool, v_bbcc: bool, v_bbbb: int, v_bbaa: int) =
+  ((((((((((((((not (v_jj = E_bb)) and (not (v_jj = E_cc))) and
+  (not (v_jj = E_dd))) and (not (v_jj = E_ee))) and (not (v_jj = E_ff))) and
+  (not (v_jj = E_ii))) and (not (v_jj = E_hh))) and
+  (not ((v_ww + 1) <= v_xx))) and (v_jj = E_gg)) and (v_mm = true)) and
+  (v_nn = true)) and (v_oo = true)) and (v_pp = false)) and mem(E_bb,
+  union(union(union(add(E_cc, (empty : enum_aa set)), add(E_dd,
+  (empty : enum_aa set))), add(E_ee, (empty : enum_aa set))), add(E_ff,
+  (empty : enum_aa set)))))
+
+predicate f225(v_zz: int, v_yy: int, v_xx: int, v_ww: int, v_vv: int,
+  v_uu: int, v_tt: int, v_ss: int, v_rr: int, v_qq: int, v_pp: bool,
+  v_oo: bool, v_nn: bool, v_mm: bool, v_ll: int, v_kk: int, v_jj: enum_aa,
+  v_bbss: int, v_bbrr: int, v_bbqq: int, v_bbpp: int, v_bboo: int,
+  v_bbnn: bool, v_bbmm: bool, v_bbll: bool, v_bbkk: bool, v_bbjj: int,
+  v_bbii: int, v_bbhh: enum_aa, v_bbgg: int, v_bbff: bool, v_bbee: bool,
+  v_bbdd: bool, v_bbcc: bool, v_bbbb: int, v_bbaa: int) =
+  ((((((((((((((not (v_jj = E_bb)) and (not (v_jj = E_cc))) and
+  (not (v_jj = E_dd))) and (not (v_jj = E_ee))) and (not (v_jj = E_ff))) and
+  (not (v_jj = E_ii))) and (not (v_jj = E_hh))) and
+  (not ((v_ww + 1) <= v_xx))) and (v_jj = E_gg)) and (v_mm = true)) and
+  (v_nn = true)) and (v_oo = true)) and (v_pp = false)) and (E_bb = E_gg))
+
+predicate f226(v_zz: int, v_yy: int, v_xx: int, v_ww: int, v_vv: int,
+  v_uu: int, v_tt: int, v_ss: int, v_rr: int, v_qq: int, v_pp: bool,
+  v_oo: bool, v_nn: bool, v_mm: bool, v_ll: int, v_kk: int, v_jj: enum_aa,
+  v_bbss: int, v_bbrr: int, v_bbqq: int, v_bbpp: int, v_bboo: int,
+  v_bbnn: bool, v_bbmm: bool, v_bbll: bool, v_bbkk: bool, v_bbjj: int,
+  v_bbii: int, v_bbhh: enum_aa, v_bbgg: int, v_bbff: bool, v_bbee: bool,
+  v_bbdd: bool, v_bbcc: bool, v_bbbb: int, v_bbaa: int) =
+  ((((((((((((((not (v_jj = E_bb)) and (not (v_jj = E_cc))) and
+  (not (v_jj = E_dd))) and (not (v_jj = E_ee))) and (not (v_jj = E_ff))) and
+  (not (v_jj = E_ii))) and (not (v_jj = E_hh))) and
+  (not ((v_ww + 1) <= v_xx))) and (v_jj = E_gg)) and (v_mm = true)) and
+  (v_nn = true)) and (v_oo = true)) and (v_pp = false)) and (E_bb = E_hh))
+
+predicate f227(v_zz: int, v_yy: int, v_xx: int, v_ww: int, v_vv: int,
+  v_uu: int, v_tt: int, v_ss: int, v_rr: int, v_qq: int, v_pp: bool,
+  v_oo: bool, v_nn: bool, v_mm: bool, v_ll: int, v_kk: int, v_jj: enum_aa,
+  v_bbss: int, v_bbrr: int, v_bbqq: int, v_bbpp: int, v_bboo: int,
+  v_bbnn: bool, v_bbmm: bool, v_bbll: bool, v_bbkk: bool, v_bbjj: int,
+  v_bbii: int, v_bbhh: enum_aa, v_bbgg: int, v_bbff: bool, v_bbee: bool,
+  v_bbdd: bool, v_bbcc: bool, v_bbbb: int, v_bbaa: int) =
+  ((((((((((((((not (v_jj = E_bb)) and (not (v_jj = E_cc))) and
+  (not (v_jj = E_dd))) and (not (v_jj = E_ee))) and (not (v_jj = E_ff))) and
+  (not (v_jj = E_ii))) and (not (v_jj = E_hh))) and
+  (not ((v_ww + 1) <= v_xx))) and (v_jj = E_gg)) and (v_mm = true)) and
+  (v_nn = true)) and (v_oo = true)) and (v_pp = false)) and mem(E_bb,
+  union(add(E_gg, (empty : enum_aa set)), add(E_hh, (empty : enum_aa set)))))
+
+predicate f228(v_zz: int, v_yy: int, v_xx: int, v_ww: int, v_vv: int,
+  v_uu: int, v_tt: int, v_ss: int, v_rr: int, v_qq: int, v_pp: bool,
+  v_oo: bool, v_nn: bool, v_mm: bool, v_ll: int, v_kk: int, v_jj: enum_aa,
+  v_bbss: int, v_bbrr: int, v_bbqq: int, v_bbpp: int, v_bboo: int,
+  v_bbnn: bool, v_bbmm: bool, v_bbll: bool, v_bbkk: bool, v_bbjj: int,
+  v_bbii: int, v_bbhh: enum_aa, v_bbgg: int, v_bbff: bool, v_bbee: bool,
+  v_bbdd: bool, v_bbcc: bool, v_bbbb: int, v_bbaa: int) =
+  (((((((((((((not (v_jj = E_bb)) and (not (v_jj = E_cc))) and
+  (not (v_jj = E_dd))) and (not (v_jj = E_ee))) and (not (v_jj = E_ff))) and
+  (not (v_jj = E_ii))) and (not (v_jj = E_hh))) and ((v_ww + 1) <= v_xx)) and
+  (v_jj = E_gg)) and (v_mm = false)) and (v_nn = true)) and
+  (v_oo = false)) and (v_pp = false))
+
+predicate f229(v_zz: int, v_yy: int, v_xx: int, v_ww: int, v_vv: int,
+  v_uu: int, v_tt: int, v_ss: int, v_rr: int, v_qq: int, v_pp: bool,
+  v_oo: bool, v_nn: bool, v_mm: bool, v_ll: int, v_kk: int, v_jj: enum_aa,
+  v_bbss: int, v_bbrr: int, v_bbqq: int, v_bbpp: int, v_bboo: int,
+  v_bbnn: bool, v_bbmm: bool, v_bbll: bool, v_bbkk: bool, v_bbjj: int,
+  v_bbii: int, v_bbhh: enum_aa, v_bbgg: int, v_bbff: bool, v_bbee: bool,
+  v_bbdd: bool, v_bbcc: bool, v_bbbb: int, v_bbaa: int) =
+  ((((((((((((((not (v_jj = E_bb)) and (not (v_jj = E_cc))) and
+  (not (v_jj = E_dd))) and (not (v_jj = E_ee))) and (not (v_jj = E_ff))) and
+  (not (v_jj = E_ii))) and (not (v_jj = E_hh))) and ((v_ww + 1) <= v_xx)) and
+  (v_jj = E_gg)) and (v_mm = false)) and (v_nn = true)) and
+  (v_oo = false)) and (v_pp = false)) and mem(E_gg,
+  union(union(union(add(E_cc, (empty : enum_aa set)), add(E_dd,
+  (empty : enum_aa set))), add(E_ee, (empty : enum_aa set))), add(E_ff,
+  (empty : enum_aa set)))))
+
+predicate f230(v_zz: int, v_yy: int, v_xx: int, v_ww: int, v_vv: int,
+  v_uu: int, v_tt: int, v_ss: int, v_rr: int, v_qq: int, v_pp: bool,
+  v_oo: bool, v_nn: bool, v_mm: bool, v_ll: int, v_kk: int, v_jj: enum_aa,
+  v_bbss: int, v_bbrr: int, v_bbqq: int, v_bbpp: int, v_bboo: int,
+  v_bbnn: bool, v_bbmm: bool, v_bbll: bool, v_bbkk: bool, v_bbjj: int,
+  v_bbii: int, v_bbhh: enum_aa, v_bbgg: int, v_bbff: bool, v_bbee: bool,
+  v_bbdd: bool, v_bbcc: bool, v_bbbb: int, v_bbaa: int) =
+  ((((((((((((((not (v_jj = E_bb)) and (not (v_jj = E_cc))) and
+  (not (v_jj = E_dd))) and (not (v_jj = E_ee))) and (not (v_jj = E_ff))) and
+  (not (v_jj = E_ii))) and (not (v_jj = E_hh))) and ((v_ww + 1) <= v_xx)) and
+  (v_jj = E_gg)) and (v_mm = false)) and (v_nn = true)) and
+  (v_oo = false)) and (v_pp = false)) and (E_gg = E_hh))
+
+predicate f231(v_zz: int, v_yy: int, v_xx: int, v_ww: int, v_vv: int,
+  v_uu: int, v_tt: int, v_ss: int, v_rr: int, v_qq: int, v_pp: bool,
+  v_oo: bool, v_nn: bool, v_mm: bool, v_ll: int, v_kk: int, v_jj: enum_aa,
+  v_bbss: int, v_bbrr: int, v_bbqq: int, v_bbpp: int, v_bboo: int,
+  v_bbnn: bool, v_bbmm: bool, v_bbll: bool, v_bbkk: bool, v_bbjj: int,
+  v_bbii: int, v_bbhh: enum_aa, v_bbgg: int, v_bbff: bool, v_bbee: bool,
+  v_bbdd: bool, v_bbcc: bool, v_bbbb: int, v_bbaa: int) =
+  ((((((((((((((not (v_jj = E_bb)) and (not (v_jj = E_cc))) and
+  (not (v_jj = E_dd))) and (not (v_jj = E_ee))) and (not (v_jj = E_ff))) and
+  (not (v_jj = E_ii))) and (not (v_jj = E_hh))) and ((v_ww + 1) <= v_xx)) and
+  (v_jj = E_gg)) and (v_mm = false)) and (v_nn = true)) and
+  (v_oo = false)) and (v_pp = false)) and mem(E_gg, union(add(E_gg,
+  (empty : enum_aa set)), add(E_hh, (empty : enum_aa set)))))
+
+predicate f232(v_zz: int, v_yy: int, v_xx: int, v_ww: int, v_vv: int,
+  v_uu: int, v_tt: int, v_ss: int, v_rr: int, v_qq: int, v_pp: bool,
+  v_oo: bool, v_nn: bool, v_mm: bool, v_ll: int, v_kk: int, v_jj: enum_aa,
+  v_bbss: int, v_bbrr: int, v_bbqq: int, v_bbpp: int, v_bboo: int,
+  v_bbnn: bool, v_bbmm: bool, v_bbll: bool, v_bbkk: bool, v_bbjj: int,
+  v_bbii: int, v_bbhh: enum_aa, v_bbgg: int, v_bbff: bool, v_bbee: bool,
+  v_bbdd: bool, v_bbcc: bool, v_bbbb: int, v_bbaa: int) =
+  (((((((((((((not (v_jj = E_bb)) and (not (v_jj = E_cc))) and
+  (not (v_jj = E_dd))) and (not (v_jj = E_ee))) and (not (v_jj = E_ff))) and
+  (not (v_jj = E_ii))) and (not (v_jj = E_hh))) and
+  (not ((v_ww + 1) <= v_xx))) and (v_jj = E_gg)) and (v_mm = false)) and
+  (v_nn = true)) and (v_oo = false)) and (v_pp = false))
+
+predicate f233(v_zz: int, v_yy: int, v_xx: int, v_ww: int, v_vv: int,
+  v_uu: int, v_tt: int, v_ss: int, v_rr: int, v_qq: int, v_pp: bool,
+  v_oo: bool, v_nn: bool, v_mm: bool, v_ll: int, v_kk: int, v_jj: enum_aa,
+  v_bbss: int, v_bbrr: int, v_bbqq: int, v_bbpp: int, v_bboo: int,
+  v_bbnn: bool, v_bbmm: bool, v_bbll: bool, v_bbkk: bool, v_bbjj: int,
+  v_bbii: int, v_bbhh: enum_aa, v_bbgg: int, v_bbff: bool, v_bbee: bool,
+  v_bbdd: bool, v_bbcc: bool, v_bbbb: int, v_bbaa: int) =
+  ((((((((((((((not (v_jj = E_bb)) and (not (v_jj = E_cc))) and
+  (not (v_jj = E_dd))) and (not (v_jj = E_ee))) and (not (v_jj = E_ff))) and
+  (not (v_jj = E_ii))) and (not (v_jj = E_hh))) and
+  (not ((v_ww + 1) <= v_xx))) and (v_jj = E_gg)) and (v_mm = false)) and
+  (v_nn = true)) and (v_oo = false)) and (v_pp = false)) and mem(E_bb,
+  union(union(union(add(E_cc, (empty : enum_aa set)), add(E_dd,
+  (empty : enum_aa set))), add(E_ee, (empty : enum_aa set))), add(E_ff,
+  (empty : enum_aa set)))))
+
+predicate f234(v_zz: int, v_yy: int, v_xx: int, v_ww: int, v_vv: int,
+  v_uu: int, v_tt: int, v_ss: int, v_rr: int, v_qq: int, v_pp: bool,
+  v_oo: bool, v_nn: bool, v_mm: bool, v_ll: int, v_kk: int, v_jj: enum_aa,
+  v_bbss: int, v_bbrr: int, v_bbqq: int, v_bbpp: int, v_bboo: int,
+  v_bbnn: bool, v_bbmm: bool, v_bbll: bool, v_bbkk: bool, v_bbjj: int,
+  v_bbii: int, v_bbhh: enum_aa, v_bbgg: int, v_bbff: bool, v_bbee: bool,
+  v_bbdd: bool, v_bbcc: bool, v_bbbb: int, v_bbaa: int) =
+  ((((((((((((((not (v_jj = E_bb)) and (not (v_jj = E_cc))) and
+  (not (v_jj = E_dd))) and (not (v_jj = E_ee))) and (not (v_jj = E_ff))) and
+  (not (v_jj = E_ii))) and (not (v_jj = E_hh))) and
+  (not ((v_ww + 1) <= v_xx))) and (v_jj = E_gg)) and (v_mm = false)) and
+  (v_nn = true)) and (v_oo = false)) and (v_pp = false)) and (E_bb = E_gg))
+
+predicate f235(v_zz: int, v_yy: int, v_xx: int, v_ww: int, v_vv: int,
+  v_uu: int, v_tt: int, v_ss: int, v_rr: int, v_qq: int, v_pp: bool,
+  v_oo: bool, v_nn: bool, v_mm: bool, v_ll: int, v_kk: int, v_jj: enum_aa,
+  v_bbss: int, v_bbrr: int, v_bbqq: int, v_bbpp: int, v_bboo: int,
+  v_bbnn: bool, v_bbmm: bool, v_bbll: bool, v_bbkk: bool, v_bbjj: int,
+  v_bbii: int, v_bbhh: enum_aa, v_bbgg: int, v_bbff: bool, v_bbee: bool,
+  v_bbdd: bool, v_bbcc: bool, v_bbbb: int, v_bbaa: int) =
+  ((((((((((((((not (v_jj = E_bb)) and (not (v_jj = E_cc))) and
+  (not (v_jj = E_dd))) and (not (v_jj = E_ee))) and (not (v_jj = E_ff))) and
+  (not (v_jj = E_ii))) and (not (v_jj = E_hh))) and
+  (not ((v_ww + 1) <= v_xx))) and (v_jj = E_gg)) and (v_mm = false)) and
+  (v_nn = true)) and (v_oo = false)) and (v_pp = false)) and (E_bb = E_hh))
+
+predicate f236(v_zz: int, v_yy: int, v_xx: int, v_ww: int, v_vv: int,
+  v_uu: int, v_tt: int, v_ss: int, v_rr: int, v_qq: int, v_pp: bool,
+  v_oo: bool, v_nn: bool, v_mm: bool, v_ll: int, v_kk: int, v_jj: enum_aa,
+  v_bbss: int, v_bbrr: int, v_bbqq: int, v_bbpp: int, v_bboo: int,
+  v_bbnn: bool, v_bbmm: bool, v_bbll: bool, v_bbkk: bool, v_bbjj: int,
+  v_bbii: int, v_bbhh: enum_aa, v_bbgg: int, v_bbff: bool, v_bbee: bool,
+  v_bbdd: bool, v_bbcc: bool, v_bbbb: int, v_bbaa: int) =
+  ((((((((((((((not (v_jj = E_bb)) and (not (v_jj = E_cc))) and
+  (not (v_jj = E_dd))) and (not (v_jj = E_ee))) and (not (v_jj = E_ff))) and
+  (not (v_jj = E_ii))) and (not (v_jj = E_hh))) and
+  (not ((v_ww + 1) <= v_xx))) and (v_jj = E_gg)) and (v_mm = false)) and
+  (v_nn = true)) and (v_oo = false)) and (v_pp = false)) and mem(E_bb,
+  union(add(E_gg, (empty : enum_aa set)), add(E_hh, (empty : enum_aa set)))))
+
+predicate f237(v_zz: int, v_yy: int, v_xx: int, v_ww: int, v_vv: int,
+  v_uu: int, v_tt: int, v_ss: int, v_rr: int, v_qq: int, v_pp: bool,
+  v_oo: bool, v_nn: bool, v_mm: bool, v_ll: int, v_kk: int, v_jj: enum_aa,
+  v_bbss: int, v_bbrr: int, v_bbqq: int, v_bbpp: int, v_bboo: int,
+  v_bbnn: bool, v_bbmm: bool, v_bbll: bool, v_bbkk: bool, v_bbjj: int,
+  v_bbii: int, v_bbhh: enum_aa, v_bbgg: int, v_bbff: bool, v_bbee: bool,
+  v_bbdd: bool, v_bbcc: bool, v_bbbb: int, v_bbaa: int) =
+  ((((((((((((not (v_jj = E_bb)) and (not (v_jj = E_cc))) and
+  (not (v_jj = E_dd))) and (not (v_jj = E_ee))) and (not (v_jj = E_ff))) and
+  (not (v_jj = E_ii))) and (not (v_jj = E_hh))) and
+  (not ((((v_mm = false) and (v_nn = true)) and (v_oo = true)) and
+  (v_pp = false)))) and (not ((((v_mm = true) and (v_nn = true)) and
+  (v_oo = false)) and (v_pp = false)))) and (not ((((v_mm = true) and
+  (v_nn = true)) and (v_oo = true)) and (v_pp = false)))) and
+  (not ((((v_mm = false) and (v_nn = true)) and (v_oo = false)) and
+  (v_pp = false)))) and (v_jj = E_gg))
+
+predicate f238(v_zz: int, v_yy: int, v_xx: int, v_ww: int, v_vv: int,
+  v_uu: int, v_tt: int, v_ss: int, v_rr: int, v_qq: int, v_pp: bool,
+  v_oo: bool, v_nn: bool, v_mm: bool, v_ll: int, v_kk: int, v_jj: enum_aa,
+  v_bbss: int, v_bbrr: int, v_bbqq: int, v_bbpp: int, v_bboo: int,
+  v_bbnn: bool, v_bbmm: bool, v_bbll: bool, v_bbkk: bool, v_bbjj: int,
+  v_bbii: int, v_bbhh: enum_aa, v_bbgg: int, v_bbff: bool, v_bbee: bool,
+  v_bbdd: bool, v_bbcc: bool, v_bbbb: int, v_bbaa: int) =
+  (((((((((((((not (v_jj = E_bb)) and (not (v_jj = E_cc))) and
+  (not (v_jj = E_dd))) and (not (v_jj = E_ee))) and (not (v_jj = E_ff))) and
+  (not (v_jj = E_ii))) and (not (v_jj = E_hh))) and
+  (not ((((v_mm = false) and (v_nn = true)) and (v_oo = true)) and
+  (v_pp = false)))) and (not ((((v_mm = true) and (v_nn = true)) and
+  (v_oo = false)) and (v_pp = false)))) and (not ((((v_mm = true) and
+  (v_nn = true)) and (v_oo = true)) and (v_pp = false)))) and
+  (not ((((v_mm = false) and (v_nn = true)) and (v_oo = false)) and
+  (v_pp = false)))) and (v_jj = E_gg)) and mem(E_bb,
+  union(union(union(add(E_cc, (empty : enum_aa set)), add(E_dd,
+  (empty : enum_aa set))), add(E_ee, (empty : enum_aa set))), add(E_ff,
+  (empty : enum_aa set)))))
+
+predicate f239(v_zz: int, v_yy: int, v_xx: int, v_ww: int, v_vv: int,
+  v_uu: int, v_tt: int, v_ss: int, v_rr: int, v_qq: int, v_pp: bool,
+  v_oo: bool, v_nn: bool, v_mm: bool, v_ll: int, v_kk: int, v_jj: enum_aa,
+  v_bbss: int, v_bbrr: int, v_bbqq: int, v_bbpp: int, v_bboo: int,
+  v_bbnn: bool, v_bbmm: bool, v_bbll: bool, v_bbkk: bool, v_bbjj: int,
+  v_bbii: int, v_bbhh: enum_aa, v_bbgg: int, v_bbff: bool, v_bbee: bool,
+  v_bbdd: bool, v_bbcc: bool, v_bbbb: int, v_bbaa: int) =
+  (((((((((((((not (v_jj = E_bb)) and (not (v_jj = E_cc))) and
+  (not (v_jj = E_dd))) and (not (v_jj = E_ee))) and (not (v_jj = E_ff))) and
+  (not (v_jj = E_ii))) and (not (v_jj = E_hh))) and
+  (not ((((v_mm = false) and (v_nn = true)) and (v_oo = true)) and
+  (v_pp = false)))) and (not ((((v_mm = true) and (v_nn = true)) and
+  (v_oo = false)) and (v_pp = false)))) and (not ((((v_mm = true) and
+  (v_nn = true)) and (v_oo = true)) and (v_pp = false)))) and
+  (not ((((v_mm = false) and (v_nn = true)) and (v_oo = false)) and
+  (v_pp = false)))) and (v_jj = E_gg)) and (E_bb = E_gg))
+
+predicate f240(v_zz: int, v_yy: int, v_xx: int, v_ww: int, v_vv: int,
+  v_uu: int, v_tt: int, v_ss: int, v_rr: int, v_qq: int, v_pp: bool,
+  v_oo: bool, v_nn: bool, v_mm: bool, v_ll: int, v_kk: int, v_jj: enum_aa,
+  v_bbss: int, v_bbrr: int, v_bbqq: int, v_bbpp: int, v_bboo: int,
+  v_bbnn: bool, v_bbmm: bool, v_bbll: bool, v_bbkk: bool, v_bbjj: int,
+  v_bbii: int, v_bbhh: enum_aa, v_bbgg: int, v_bbff: bool, v_bbee: bool,
+  v_bbdd: bool, v_bbcc: bool, v_bbbb: int, v_bbaa: int) =
+  (((((((((((((not (v_jj = E_bb)) and (not (v_jj = E_cc))) and
+  (not (v_jj = E_dd))) and (not (v_jj = E_ee))) and (not (v_jj = E_ff))) and
+  (not (v_jj = E_ii))) and (not (v_jj = E_hh))) and
+  (not ((((v_mm = false) and (v_nn = true)) and (v_oo = true)) and
+  (v_pp = false)))) and (not ((((v_mm = true) and (v_nn = true)) and
+  (v_oo = false)) and (v_pp = false)))) and (not ((((v_mm = true) and
+  (v_nn = true)) and (v_oo = true)) and (v_pp = false)))) and
+  (not ((((v_mm = false) and (v_nn = true)) and (v_oo = false)) and
+  (v_pp = false)))) and (v_jj = E_gg)) and (E_bb = E_hh))
+
+predicate f241(v_zz: int, v_yy: int, v_xx: int, v_ww: int, v_vv: int,
+  v_uu: int, v_tt: int, v_ss: int, v_rr: int, v_qq: int, v_pp: bool,
+  v_oo: bool, v_nn: bool, v_mm: bool, v_ll: int, v_kk: int, v_jj: enum_aa,
+  v_bbss: int, v_bbrr: int, v_bbqq: int, v_bbpp: int, v_bboo: int,
+  v_bbnn: bool, v_bbmm: bool, v_bbll: bool, v_bbkk: bool, v_bbjj: int,
+  v_bbii: int, v_bbhh: enum_aa, v_bbgg: int, v_bbff: bool, v_bbee: bool,
+  v_bbdd: bool, v_bbcc: bool, v_bbbb: int, v_bbaa: int) =
+  (((((((((((((not (v_jj = E_bb)) and (not (v_jj = E_cc))) and
+  (not (v_jj = E_dd))) and (not (v_jj = E_ee))) and (not (v_jj = E_ff))) and
+  (not (v_jj = E_ii))) and (not (v_jj = E_hh))) and
+  (not ((((v_mm = false) and (v_nn = true)) and (v_oo = true)) and
+  (v_pp = false)))) and (not ((((v_mm = true) and (v_nn = true)) and
+  (v_oo = false)) and (v_pp = false)))) and (not ((((v_mm = true) and
+  (v_nn = true)) and (v_oo = true)) and (v_pp = false)))) and
+  (not ((((v_mm = false) and (v_nn = true)) and (v_oo = false)) and
+  (v_pp = false)))) and (v_jj = E_gg)) and mem(E_bb, union(add(E_gg,
+  (empty : enum_aa set)), add(E_hh, (empty : enum_aa set)))))
+
+predicate f242(v_zz: int, v_yy: int, v_xx: int, v_ww: int, v_vv: int,
+  v_uu: int, v_tt: int, v_ss: int, v_rr: int, v_qq: int, v_pp: bool,
+  v_oo: bool, v_nn: bool, v_mm: bool, v_ll: int, v_kk: int, v_jj: enum_aa,
+  v_bbss: int, v_bbrr: int, v_bbqq: int, v_bbpp: int, v_bboo: int,
+  v_bbnn: bool, v_bbmm: bool, v_bbll: bool, v_bbkk: bool, v_bbjj: int,
+  v_bbii: int, v_bbhh: enum_aa, v_bbgg: int, v_bbff: bool, v_bbee: bool,
+  v_bbdd: bool, v_bbcc: bool, v_bbbb: int, v_bbaa: int) =
+  (((((((((((((not (v_jj = E_bb)) and (not (v_jj = E_cc))) and
+  (not (v_jj = E_dd))) and (not (v_jj = E_ee))) and (not (v_jj = E_ff))) and
+  (not (v_jj = E_gg))) and (not (v_jj = E_ii))) and
+  (((v_vv + 1) + 1) <= v_ss)) and (v_jj = E_hh)) and (v_mm = false)) and
+  (v_nn = true)) and (v_oo = true)) and (v_pp = false))
+
+predicate f243(v_zz: int, v_yy: int, v_xx: int, v_ww: int, v_vv: int,
+  v_uu: int, v_tt: int, v_ss: int, v_rr: int, v_qq: int, v_pp: bool,
+  v_oo: bool, v_nn: bool, v_mm: bool, v_ll: int, v_kk: int, v_jj: enum_aa,
+  v_bbss: int, v_bbrr: int, v_bbqq: int, v_bbpp: int, v_bboo: int,
+  v_bbnn: bool, v_bbmm: bool, v_bbll: bool, v_bbkk: bool, v_bbjj: int,
+  v_bbii: int, v_bbhh: enum_aa, v_bbgg: int, v_bbff: bool, v_bbee: bool,
+  v_bbdd: bool, v_bbcc: bool, v_bbbb: int, v_bbaa: int) =
+  (((((((((v_mm = false) and (v_nn = true)) and (v_oo = true)) and
+  (v_pp = false)) and ((((((v_qq + 1) - v_rr) - 1) + 1) <= v_ss) or
+  ((not (((((v_qq + 1) - v_rr) - 1) + 1) <= v_ss)) and (v_jj = E_ii)))) or
+  (((((v_mm = true) and (v_nn = true)) and (v_oo = false)) and
+  (v_pp = false)) and ((v_jj = E_gg) and (v_rr = (v_qq + 1))))) or
+  (((((v_mm = true) and (v_nn = true)) and (v_oo = true)) and
+  (v_pp = false)) and ((v_jj = E_gg) and (v_rr = (v_qq + 1))))) or
+  (((((v_mm = false) and (v_nn = true)) and (v_oo = false)) and
+  (v_pp = false)) and ((v_jj = E_gg) and (v_rr = (v_qq + 1))))) or
+  ((((((((v_mm = false) and (v_nn = true)) and (v_oo = true)) ->
+  (not (v_pp = false))) and ((((v_mm = true) and (v_nn = true)) and
+  (v_oo = false)) -> (not (v_pp = false)))) and ((((v_mm = true) and
+  (v_nn = true)) and (v_oo = true)) -> (not (v_pp = false)))) and
+  ((((v_mm = false) and (v_nn = true)) and (v_oo = false)) ->
+  (not (v_pp = false)))) and (v_jj = E_bb)))
+
+predicate f245(v_zz: int, v_yy: int, v_xx: int, v_ww: int, v_vv: int,
+  v_uu: int, v_tt: int, v_ss: int, v_rr: int, v_qq: int, v_pp: bool,
+  v_oo: bool, v_nn: bool, v_mm: bool, v_ll: int, v_kk: int, v_jj: enum_aa,
+  v_bbss: int, v_bbrr: int, v_bbqq: int, v_bbpp: int, v_bboo: int,
+  v_bbnn: bool, v_bbmm: bool, v_bbll: bool, v_bbkk: bool, v_bbjj: int,
+  v_bbii: int, v_bbhh: enum_aa, v_bbgg: int, v_bbff: bool, v_bbee: bool,
+  v_bbdd: bool, v_bbcc: bool, v_bbbb: int, v_bbaa: int) = mem((v_vv + 1),
+  integer)
+
+predicate f246(v_zz: int, v_yy: int, v_xx: int, v_ww: int, v_vv: int,
+  v_uu: int, v_tt: int, v_ss: int, v_rr: int, v_qq: int, v_pp: bool,
+  v_oo: bool, v_nn: bool, v_mm: bool, v_ll: int, v_kk: int, v_jj: enum_aa,
+  v_bbss: int, v_bbrr: int, v_bbqq: int, v_bbpp: int, v_bboo: int,
+  v_bbnn: bool, v_bbmm: bool, v_bbll: bool, v_bbkk: bool, v_bbjj: int,
+  v_bbii: int, v_bbhh: enum_aa, v_bbgg: int, v_bbff: bool, v_bbee: bool,
+  v_bbdd: bool, v_bbcc: bool, v_bbbb: int, v_bbaa: int) = (0 <= (v_vv + 1))
+
+predicate f247(v_zz: int, v_yy: int, v_xx: int, v_ww: int, v_vv: int,
+  v_uu: int, v_tt: int, v_ss: int, v_rr: int, v_qq: int, v_pp: bool,
+  v_oo: bool, v_nn: bool, v_mm: bool, v_ll: int, v_kk: int, v_jj: enum_aa,
+  v_bbss: int, v_bbrr: int, v_bbqq: int, v_bbpp: int, v_bboo: int,
+  v_bbnn: bool, v_bbmm: bool, v_bbll: bool, v_bbkk: bool, v_bbjj: int,
+  v_bbii: int, v_bbhh: enum_aa, v_bbgg: int, v_bbff: bool, v_bbee: bool,
+  v_bbdd: bool, v_bbcc: bool, v_bbbb: int, v_bbaa: int) =
+  ((((((((((((((not (v_jj = E_bb)) and (not (v_jj = E_cc))) and
+  (not (v_jj = E_dd))) and (not (v_jj = E_ee))) and (not (v_jj = E_ff))) and
+  (not (v_jj = E_gg))) and (not (v_jj = E_ii))) and
+  (((v_vv + 1) + 1) <= v_ss)) and (v_jj = E_hh)) and (v_mm = false)) and
+  (v_nn = true)) and (v_oo = true)) and (v_pp = false)) and mem(v_jj,
+  union(union(union(add(E_cc, (empty : enum_aa set)), add(E_dd,
+  (empty : enum_aa set))), add(E_ee, (empty : enum_aa set))), add(E_ff,
+  (empty : enum_aa set)))))
+
+predicate f248(v_zz: int, v_yy: int, v_xx: int, v_ww: int, v_vv: int,
+  v_uu: int, v_tt: int, v_ss: int, v_rr: int, v_qq: int, v_pp: bool,
+  v_oo: bool, v_nn: bool, v_mm: bool, v_ll: int, v_kk: int, v_jj: enum_aa,
+  v_bbss: int, v_bbrr: int, v_bbqq: int, v_bbpp: int, v_bboo: int,
+  v_bbnn: bool, v_bbmm: bool, v_bbll: bool, v_bbkk: bool, v_bbjj: int,
+  v_bbii: int, v_bbhh: enum_aa, v_bbgg: int, v_bbff: bool, v_bbee: bool,
+  v_bbdd: bool, v_bbcc: bool, v_bbbb: int, v_bbaa: int) = ((v_vv + 1) = 0)
+
+predicate f249(v_zz: int, v_yy: int, v_xx: int, v_ww: int, v_vv: int,
+  v_uu: int, v_tt: int, v_ss: int, v_rr: int, v_qq: int, v_pp: bool,
+  v_oo: bool, v_nn: bool, v_mm: bool, v_ll: int, v_kk: int, v_jj: enum_aa,
+  v_bbss: int, v_bbrr: int, v_bbqq: int, v_bbpp: int, v_bboo: int,
+  v_bbnn: bool, v_bbmm: bool, v_bbll: bool, v_bbkk: bool, v_bbjj: int,
+  v_bbii: int, v_bbhh: enum_aa, v_bbgg: int, v_bbff: bool, v_bbee: bool,
+  v_bbdd: bool, v_bbcc: bool, v_bbbb: int, v_bbaa: int) =
+  ((((v_qq + 1) - 1) - v_rr) = (v_vv + 1))
+
+predicate f250(v_zz: int, v_yy: int, v_xx: int, v_ww: int, v_vv: int,
+  v_uu: int, v_tt: int, v_ss: int, v_rr: int, v_qq: int, v_pp: bool,
+  v_oo: bool, v_nn: bool, v_mm: bool, v_ll: int, v_kk: int, v_jj: enum_aa,
+  v_bbss: int, v_bbrr: int, v_bbqq: int, v_bbpp: int, v_bboo: int,
+  v_bbnn: bool, v_bbmm: bool, v_bbll: bool, v_bbkk: bool, v_bbjj: int,
+  v_bbii: int, v_bbhh: enum_aa, v_bbgg: int, v_bbff: bool, v_bbee: bool,
+  v_bbdd: bool, v_bbcc: bool, v_bbbb: int, v_bbaa: int) =
+  ((((((((((((((not (v_jj = E_bb)) and (not (v_jj = E_cc))) and
+  (not (v_jj = E_dd))) and (not (v_jj = E_ee))) and (not (v_jj = E_ff))) and
+  (not (v_jj = E_gg))) and (not (v_jj = E_ii))) and
+  (((v_vv + 1) + 1) <= v_ss)) and (v_jj = E_hh)) and (v_mm = false)) and
+  (v_nn = true)) and (v_oo = true)) and (v_pp = false)) and mem(v_jj,
+  union(add(E_gg, (empty : enum_aa set)), add(E_hh, (empty : enum_aa set)))))
+
+predicate f251(v_zz: int, v_yy: int, v_xx: int, v_ww: int, v_vv: int,
+  v_uu: int, v_tt: int, v_ss: int, v_rr: int, v_qq: int, v_pp: bool,
+  v_oo: bool, v_nn: bool, v_mm: bool, v_ll: int, v_kk: int, v_jj: enum_aa,
+  v_bbss: int, v_bbrr: int, v_bbqq: int, v_bbpp: int, v_bboo: int,
+  v_bbnn: bool, v_bbmm: bool, v_bbll: bool, v_bbkk: bool, v_bbjj: int,
+  v_bbii: int, v_bbhh: enum_aa, v_bbgg: int, v_bbff: bool, v_bbee: bool,
+  v_bbdd: bool, v_bbcc: bool, v_bbbb: int, v_bbaa: int) =
+  ((v_ww + 1) <= ((v_vv + 1) + v_xx))
+
+predicate f252(v_zz: int, v_yy: int, v_xx: int, v_ww: int, v_vv: int,
+  v_uu: int, v_tt: int, v_ss: int, v_rr: int, v_qq: int, v_pp: bool,
+  v_oo: bool, v_nn: bool, v_mm: bool, v_ll: int, v_kk: int, v_jj: enum_aa,
+  v_bbss: int, v_bbrr: int, v_bbqq: int, v_bbpp: int, v_bboo: int,
+  v_bbnn: bool, v_bbmm: bool, v_bbll: bool, v_bbkk: bool, v_bbjj: int,
+  v_bbii: int, v_bbhh: enum_aa, v_bbgg: int, v_bbff: bool, v_bbee: bool,
+  v_bbdd: bool, v_bbcc: bool, v_bbbb: int, v_bbaa: int) =
+  ((v_vv + 1) <= v_ss)
+
+predicate f253(v_zz: int, v_yy: int, v_xx: int, v_ww: int, v_vv: int,
+  v_uu: int, v_tt: int, v_ss: int, v_rr: int, v_qq: int, v_pp: bool,
+  v_oo: bool, v_nn: bool, v_mm: bool, v_ll: int, v_kk: int, v_jj: enum_aa,
+  v_bbss: int, v_bbrr: int, v_bbqq: int, v_bbpp: int, v_bboo: int,
+  v_bbnn: bool, v_bbmm: bool, v_bbll: bool, v_bbkk: bool, v_bbjj: int,
+  v_bbii: int, v_bbhh: enum_aa, v_bbgg: int, v_bbff: bool, v_bbee: bool,
+  v_bbdd: bool, v_bbcc: bool, v_bbbb: int, v_bbaa: int) =
+  (((((((((((((not (v_jj = E_bb)) and (not (v_jj = E_cc))) and
+  (not (v_jj = E_dd))) and (not (v_jj = E_ee))) and (not (v_jj = E_ff))) and
+  (not (v_jj = E_gg))) and (not (v_jj = E_ii))) and
+  (not (((v_vv + 1) + 1) <= v_ss))) and (v_jj = E_hh)) and
+  (v_mm = false)) and (v_nn = true)) and (v_oo = true)) and (v_pp = false))
+
+predicate f254(v_zz: int, v_yy: int, v_xx: int, v_ww: int, v_vv: int,
+  v_uu: int, v_tt: int, v_ss: int, v_rr: int, v_qq: int, v_pp: bool,
+  v_oo: bool, v_nn: bool, v_mm: bool, v_ll: int, v_kk: int, v_jj: enum_aa,
+  v_bbss: int, v_bbrr: int, v_bbqq: int, v_bbpp: int, v_bboo: int,
+  v_bbnn: bool, v_bbmm: bool, v_bbll: bool, v_bbkk: bool, v_bbjj: int,
+  v_bbii: int, v_bbhh: enum_aa, v_bbgg: int, v_bbff: bool, v_bbee: bool,
+  v_bbdd: bool, v_bbcc: bool, v_bbbb: int, v_bbaa: int) =
+  (((((((((v_mm = false) and (v_nn = true)) and (v_oo = true)) and
+  (v_pp = false)) and (((((((v_qq + 1) - v_rr) - 1) + 1) <= v_ss) and
+  (E_ii = v_jj)) or (not (((((v_qq + 1) - v_rr) - 1) + 1) <= v_ss)))) or
+  (((((v_mm = true) and (v_nn = true)) and (v_oo = false)) and
+  (v_pp = false)) and ((E_ii = E_gg) and (v_rr = (v_qq + 1))))) or
+  (((((v_mm = true) and (v_nn = true)) and (v_oo = true)) and
+  (v_pp = false)) and ((E_ii = E_gg) and (v_rr = (v_qq + 1))))) or
+  (((((v_mm = false) and (v_nn = true)) and (v_oo = false)) and
+  (v_pp = false)) and ((E_ii = E_gg) and (v_rr = (v_qq + 1))))) or
+  ((((((((v_mm = false) and (v_nn = true)) and (v_oo = true)) ->
+  (not (v_pp = false))) and ((((v_mm = true) and (v_nn = true)) and
+  (v_oo = false)) -> (not (v_pp = false)))) and ((((v_mm = true) and
+  (v_nn = true)) and (v_oo = true)) -> (not (v_pp = false)))) and
+  ((((v_mm = false) and (v_nn = true)) and (v_oo = false)) ->
+  (not (v_pp = false)))) and (E_ii = E_bb)))
+
+predicate f255(v_zz: int, v_yy: int, v_xx: int, v_ww: int, v_vv: int,
+  v_uu: int, v_tt: int, v_ss: int, v_rr: int, v_qq: int, v_pp: bool,
+  v_oo: bool, v_nn: bool, v_mm: bool, v_ll: int, v_kk: int, v_jj: enum_aa,
+  v_bbss: int, v_bbrr: int, v_bbqq: int, v_bbpp: int, v_bboo: int,
+  v_bbnn: bool, v_bbmm: bool, v_bbll: bool, v_bbkk: bool, v_bbjj: int,
+  v_bbii: int, v_bbhh: enum_aa, v_bbgg: int, v_bbff: bool, v_bbee: bool,
+  v_bbdd: bool, v_bbcc: bool, v_bbbb: int, v_bbaa: int) =
+  ((((((((((((((not (v_jj = E_bb)) and (not (v_jj = E_cc))) and
+  (not (v_jj = E_dd))) and (not (v_jj = E_ee))) and (not (v_jj = E_ff))) and
+  (not (v_jj = E_gg))) and (not (v_jj = E_ii))) and
+  (not (((v_vv + 1) + 1) <= v_ss))) and (v_jj = E_hh)) and
+  (v_mm = false)) and (v_nn = true)) and (v_oo = true)) and
+  (v_pp = false)) and mem(E_ii, union(union(union(add(E_cc,
+  (empty : enum_aa set)), add(E_dd, (empty : enum_aa set))), add(E_ee,
+  (empty : enum_aa set))), add(E_ff, (empty : enum_aa set)))))
+
+predicate f256(v_zz: int, v_yy: int, v_xx: int, v_ww: int, v_vv: int,
+  v_uu: int, v_tt: int, v_ss: int, v_rr: int, v_qq: int, v_pp: bool,
+  v_oo: bool, v_nn: bool, v_mm: bool, v_ll: int, v_kk: int, v_jj: enum_aa,
+  v_bbss: int, v_bbrr: int, v_bbqq: int, v_bbpp: int, v_bboo: int,
+  v_bbnn: bool, v_bbmm: bool, v_bbll: bool, v_bbkk: bool, v_bbjj: int,
+  v_bbii: int, v_bbhh: enum_aa, v_bbgg: int, v_bbff: bool, v_bbee: bool,
+  v_bbdd: bool, v_bbcc: bool, v_bbbb: int, v_bbaa: int) =
+  ((((((((((((((not (v_jj = E_bb)) and (not (v_jj = E_cc))) and
+  (not (v_jj = E_dd))) and (not (v_jj = E_ee))) and (not (v_jj = E_ff))) and
+  (not (v_jj = E_gg))) and (not (v_jj = E_ii))) and
+  (not (((v_vv + 1) + 1) <= v_ss))) and (v_jj = E_hh)) and
+  (v_mm = false)) and (v_nn = true)) and (v_oo = true)) and
+  (v_pp = false)) and (E_ii = E_gg))
+
+predicate f257(v_zz: int, v_yy: int, v_xx: int, v_ww: int, v_vv: int,
+  v_uu: int, v_tt: int, v_ss: int, v_rr: int, v_qq: int, v_pp: bool,
+  v_oo: bool, v_nn: bool, v_mm: bool, v_ll: int, v_kk: int, v_jj: enum_aa,
+  v_bbss: int, v_bbrr: int, v_bbqq: int, v_bbpp: int, v_bboo: int,
+  v_bbnn: bool, v_bbmm: bool, v_bbll: bool, v_bbkk: bool, v_bbjj: int,
+  v_bbii: int, v_bbhh: enum_aa, v_bbgg: int, v_bbff: bool, v_bbee: bool,
+  v_bbdd: bool, v_bbcc: bool, v_bbbb: int, v_bbaa: int) = ((v_vv + 1) <= 1)
+
+predicate f258(v_zz: int, v_yy: int, v_xx: int, v_ww: int, v_vv: int,
+  v_uu: int, v_tt: int, v_ss: int, v_rr: int, v_qq: int, v_pp: bool,
+  v_oo: bool, v_nn: bool, v_mm: bool, v_ll: int, v_kk: int, v_jj: enum_aa,
+  v_bbss: int, v_bbrr: int, v_bbqq: int, v_bbpp: int, v_bboo: int,
+  v_bbnn: bool, v_bbmm: bool, v_bbll: bool, v_bbkk: bool, v_bbjj: int,
+  v_bbii: int, v_bbhh: enum_aa, v_bbgg: int, v_bbff: bool, v_bbee: bool,
+  v_bbdd: bool, v_bbcc: bool, v_bbbb: int, v_bbaa: int) =
+  (((v_qq + 1) - v_rr) = (v_vv + 1))
+
+predicate f259(v_zz: int, v_yy: int, v_xx: int, v_ww: int, v_vv: int,
+  v_uu: int, v_tt: int, v_ss: int, v_rr: int, v_qq: int, v_pp: bool,
+  v_oo: bool, v_nn: bool, v_mm: bool, v_ll: int, v_kk: int, v_jj: enum_aa,
+  v_bbss: int, v_bbrr: int, v_bbqq: int, v_bbpp: int, v_bboo: int,
+  v_bbnn: bool, v_bbmm: bool, v_bbll: bool, v_bbkk: bool, v_bbjj: int,
+  v_bbii: int, v_bbhh: enum_aa, v_bbgg: int, v_bbff: bool, v_bbee: bool,
+  v_bbdd: bool, v_bbcc: bool, v_bbbb: int, v_bbaa: int) =
+  ((((((((((((((not (v_jj = E_bb)) and (not (v_jj = E_cc))) and
+  (not (v_jj = E_dd))) and (not (v_jj = E_ee))) and (not (v_jj = E_ff))) and
+  (not (v_jj = E_gg))) and (not (v_jj = E_ii))) and
+  (not (((v_vv + 1) + 1) <= v_ss))) and (v_jj = E_hh)) and
+  (v_mm = false)) and (v_nn = true)) and (v_oo = true)) and
+  (v_pp = false)) and (E_ii = E_hh))
+
+predicate f260(v_zz: int, v_yy: int, v_xx: int, v_ww: int, v_vv: int,
+  v_uu: int, v_tt: int, v_ss: int, v_rr: int, v_qq: int, v_pp: bool,
+  v_oo: bool, v_nn: bool, v_mm: bool, v_ll: int, v_kk: int, v_jj: enum_aa,
+  v_bbss: int, v_bbrr: int, v_bbqq: int, v_bbpp: int, v_bboo: int,
+  v_bbnn: bool, v_bbmm: bool, v_bbll: bool, v_bbkk: bool, v_bbjj: int,
+  v_bbii: int, v_bbhh: enum_aa, v_bbgg: int, v_bbff: bool, v_bbee: bool,
+  v_bbdd: bool, v_bbcc: bool, v_bbbb: int, v_bbaa: int) =
+  ((((((((((((((not (v_jj = E_bb)) and (not (v_jj = E_cc))) and
+  (not (v_jj = E_dd))) and (not (v_jj = E_ee))) and (not (v_jj = E_ff))) and
+  (not (v_jj = E_gg))) and (not (v_jj = E_ii))) and
+  (not (((v_vv + 1) + 1) <= v_ss))) and (v_jj = E_hh)) and
+  (v_mm = false)) and (v_nn = true)) and (v_oo = true)) and
+  (v_pp = false)) and mem(E_ii, union(add(E_gg, (empty : enum_aa set)),
+  add(E_hh, (empty : enum_aa set)))))
+
+predicate f261(v_zz: int, v_yy: int, v_xx: int, v_ww: int, v_vv: int,
+  v_uu: int, v_tt: int, v_ss: int, v_rr: int, v_qq: int, v_pp: bool,
+  v_oo: bool, v_nn: bool, v_mm: bool, v_ll: int, v_kk: int, v_jj: enum_aa,
+  v_bbss: int, v_bbrr: int, v_bbqq: int, v_bbpp: int, v_bboo: int,
+  v_bbnn: bool, v_bbmm: bool, v_bbll: bool, v_bbkk: bool, v_bbjj: int,
+  v_bbii: int, v_bbhh: enum_aa, v_bbgg: int, v_bbff: bool, v_bbee: bool,
+  v_bbdd: bool, v_bbcc: bool, v_bbbb: int, v_bbaa: int) =
+  ((((((((((((not (v_jj = E_bb)) and (not (v_jj = E_cc))) and
+  (not (v_jj = E_dd))) and (not (v_jj = E_ee))) and (not (v_jj = E_ff))) and
+  (not (v_jj = E_gg))) and (not (v_jj = E_ii))) and (v_jj = E_hh)) and
+  (v_mm = true)) and (v_nn = true)) and (v_oo = false)) and (v_pp = false))
+
+predicate f262(v_zz: int, v_yy: int, v_xx: int, v_ww: int, v_vv: int,
+  v_uu: int, v_tt: int, v_ss: int, v_rr: int, v_qq: int, v_pp: bool,
+  v_oo: bool, v_nn: bool, v_mm: bool, v_ll: int, v_kk: int, v_jj: enum_aa,
+  v_bbss: int, v_bbrr: int, v_bbqq: int, v_bbpp: int, v_bboo: int,
+  v_bbnn: bool, v_bbmm: bool, v_bbll: bool, v_bbkk: bool, v_bbjj: int,
+  v_bbii: int, v_bbhh: enum_aa, v_bbgg: int, v_bbff: bool, v_bbee: bool,
+  v_bbdd: bool, v_bbcc: bool, v_bbbb: int, v_bbaa: int) =
+  ((((((((((((not (v_jj = E_ii)) and (not (v_jj = E_hh))) and
+  (not (v_jj = E_gg))) and (not (v_jj = E_ff))) and (not (v_jj = E_ee))) and
+  (not (v_jj = E_dd))) and (not (v_jj = E_cc))) and (v_jj = E_bb)) and
+  (((v_kk = 0) and ((v_ll + 1) = 0)) and ((((((v_mm = true) and
+  (v_nn = true)) and (v_oo = false)) and (v_pp = false)) and
+  (E_gg = E_cc)) or (((((v_mm = true) and (v_nn = true)) and
+  (v_oo = false)) -> (not (v_pp = false))) and (E_gg = v_jj))))) or
+  ((((((((((not (v_jj = E_bb)) and (not (v_jj = E_ii))) and
+  (not (v_jj = E_hh))) and (not (v_jj = E_gg))) and (not (v_jj = E_ff))) and
+  (not (v_jj = E_ee))) and (not (v_jj = E_dd))) and (v_jj = E_cc)) and
+  ((v_kk = (v_kk + 1)) and ((((((v_mm = false) or (v_nn = false)) or
+  (v_oo = true)) or (v_pp = true)) and (E_gg = E_bb)) or
+  (((((not (v_mm = false)) and (not (v_nn = false))) and
+  (not (v_oo = true))) and (not (v_pp = true))) and
+  (((((((v_uu <= (v_kk + 1)) and (v_mm = true)) and (v_nn = true)) and
+  (v_oo = false)) and (v_pp = false)) and (E_gg = E_dd)) or
+  ((((((v_uu <= (v_kk + 1)) and (v_mm = true)) and (v_nn = true)) and
+  (v_oo = false)) -> (not (v_pp = false))) and (E_gg = v_jj))))))) and
+  ((v_ll + 1) = v_ll))) and ((v_qq + 1) = v_rr)) or
+  ((((not (v_jj = E_bb)) and (not (v_jj = E_cc))) and
+  (not (v_jj = E_ii))) and ((((((((((v_mm = false) and (v_nn = true)) and
+  (v_oo = true)) and (v_pp = false)) and
+  (((((((v_qq + 1) - v_rr) - 1) + 1) <= v_ss) and (E_gg = v_jj)) or
+  ((not (((((v_qq + 1) - v_rr) - 1) + 1) <= v_ss)) and (E_gg = E_ii)))) and
+  ((v_qq + 1) = v_rr)) or ((((v_mm = true) and (v_nn = true)) and
+  (v_oo = false)) and (v_pp = false))) or ((((v_mm = true) and
+  (v_nn = true)) and (v_oo = true)) and (v_pp = false))) or
+  ((((v_mm = false) and (v_nn = true)) and (v_oo = false)) and
+  (v_pp = false))) or (((((((((v_mm = false) and (v_nn = true)) and
+  (v_oo = true)) -> (not (v_pp = false))) and ((((v_mm = true) and
+  (v_nn = true)) and (v_oo = false)) -> (not (v_pp = false)))) and
+  ((((v_mm = true) and (v_nn = true)) and (v_oo = true)) ->
+  (not (v_pp = false)))) and ((((v_mm = false) and (v_nn = true)) and
+  (v_oo = false)) -> (not (v_pp = false)))) and (E_gg = E_bb)) and
+  ((v_qq + 1) = v_rr)))))
+
+predicate f263(v_zz: int, v_yy: int, v_xx: int, v_ww: int, v_vv: int,
+  v_uu: int, v_tt: int, v_ss: int, v_rr: int, v_qq: int, v_pp: bool,
+  v_oo: bool, v_nn: bool, v_mm: bool, v_ll: int, v_kk: int, v_jj: enum_aa,
+  v_bbss: int, v_bbrr: int, v_bbqq: int, v_bbpp: int, v_bboo: int,
+  v_bbnn: bool, v_bbmm: bool, v_bbll: bool, v_bbkk: bool, v_bbjj: int,
+  v_bbii: int, v_bbhh: enum_aa, v_bbgg: int, v_bbff: bool, v_bbee: bool,
+  v_bbdd: bool, v_bbcc: bool, v_bbbb: int, v_bbaa: int) =
+  (((((((((((((not (v_jj = E_bb)) and (not (v_jj = E_cc))) and
+  (not (v_jj = E_dd))) and (not (v_jj = E_ee))) and (not (v_jj = E_ff))) and
+  (not (v_jj = E_gg))) and (not (v_jj = E_ii))) and (v_jj = E_hh)) and
+  (v_mm = true)) and (v_nn = true)) and (v_oo = false)) and
+  (v_pp = false)) and mem(E_gg, union(union(union(add(E_cc,
+  (empty : enum_aa set)), add(E_dd, (empty : enum_aa set))), add(E_ee,
+  (empty : enum_aa set))), add(E_ff, (empty : enum_aa set)))))
+
+predicate f264(v_zz: int, v_yy: int, v_xx: int, v_ww: int, v_vv: int,
+  v_uu: int, v_tt: int, v_ss: int, v_rr: int, v_qq: int, v_pp: bool,
+  v_oo: bool, v_nn: bool, v_mm: bool, v_ll: int, v_kk: int, v_jj: enum_aa,
+  v_bbss: int, v_bbrr: int, v_bbqq: int, v_bbpp: int, v_bboo: int,
+  v_bbnn: bool, v_bbmm: bool, v_bbll: bool, v_bbkk: bool, v_bbjj: int,
+  v_bbii: int, v_bbhh: enum_aa, v_bbgg: int, v_bbff: bool, v_bbee: bool,
+  v_bbdd: bool, v_bbcc: bool, v_bbbb: int, v_bbaa: int) =
+  (((((((((((((not (v_jj = E_bb)) and (not (v_jj = E_cc))) and
+  (not (v_jj = E_dd))) and (not (v_jj = E_ee))) and (not (v_jj = E_ff))) and
+  (not (v_jj = E_gg))) and (not (v_jj = E_ii))) and (v_jj = E_hh)) and
+  (v_mm = true)) and (v_nn = true)) and (v_oo = false)) and
+  (v_pp = false)) and (E_gg = E_hh))
+
+predicate f265(v_zz: int, v_yy: int, v_xx: int, v_ww: int, v_vv: int,
+  v_uu: int, v_tt: int, v_ss: int, v_rr: int, v_qq: int, v_pp: bool,
+  v_oo: bool, v_nn: bool, v_mm: bool, v_ll: int, v_kk: int, v_jj: enum_aa,
+  v_bbss: int, v_bbrr: int, v_bbqq: int, v_bbpp: int, v_bboo: int,
+  v_bbnn: bool, v_bbmm: bool, v_bbll: bool, v_bbkk: bool, v_bbjj: int,
+  v_bbii: int, v_bbhh: enum_aa, v_bbgg: int, v_bbff: bool, v_bbee: bool,
+  v_bbdd: bool, v_bbcc: bool, v_bbbb: int, v_bbaa: int) =
+  (((((((((((((not (v_jj = E_bb)) and (not (v_jj = E_cc))) and
+  (not (v_jj = E_dd))) and (not (v_jj = E_ee))) and (not (v_jj = E_ff))) and
+  (not (v_jj = E_gg))) and (not (v_jj = E_ii))) and (v_jj = E_hh)) and
+  (v_mm = true)) and (v_nn = true)) and (v_oo = false)) and
+  (v_pp = false)) and mem(E_gg, union(add(E_gg, (empty : enum_aa set)),
+  add(E_hh, (empty : enum_aa set)))))
+
+predicate f266(v_zz: int, v_yy: int, v_xx: int, v_ww: int, v_vv: int,
+  v_uu: int, v_tt: int, v_ss: int, v_rr: int, v_qq: int, v_pp: bool,
+  v_oo: bool, v_nn: bool, v_mm: bool, v_ll: int, v_kk: int, v_jj: enum_aa,
+  v_bbss: int, v_bbrr: int, v_bbqq: int, v_bbpp: int, v_bboo: int,
+  v_bbnn: bool, v_bbmm: bool, v_bbll: bool, v_bbkk: bool, v_bbjj: int,
+  v_bbii: int, v_bbhh: enum_aa, v_bbgg: int, v_bbff: bool, v_bbee: bool,
+  v_bbdd: bool, v_bbcc: bool, v_bbbb: int, v_bbaa: int) =
+  ((((((((((((not (v_jj = E_bb)) and (not (v_jj = E_cc))) and
+  (not (v_jj = E_dd))) and (not (v_jj = E_ee))) and (not (v_jj = E_ff))) and
+  (not (v_jj = E_gg))) and (not (v_jj = E_ii))) and (v_jj = E_hh)) and
+  (v_mm = true)) and (v_nn = true)) and (v_oo = true)) and (v_pp = false))
+
+predicate f267(v_zz: int, v_yy: int, v_xx: int, v_ww: int, v_vv: int,
+  v_uu: int, v_tt: int, v_ss: int, v_rr: int, v_qq: int, v_pp: bool,
+  v_oo: bool, v_nn: bool, v_mm: bool, v_ll: int, v_kk: int, v_jj: enum_aa,
+  v_bbss: int, v_bbrr: int, v_bbqq: int, v_bbpp: int, v_bboo: int,
+  v_bbnn: bool, v_bbmm: bool, v_bbll: bool, v_bbkk: bool, v_bbjj: int,
+  v_bbii: int, v_bbhh: enum_aa, v_bbgg: int, v_bbff: bool, v_bbee: bool,
+  v_bbdd: bool, v_bbcc: bool, v_bbbb: int, v_bbaa: int) =
+  (((((((((((((not (v_jj = E_bb)) and (not (v_jj = E_cc))) and
+  (not (v_jj = E_dd))) and (not (v_jj = E_ee))) and (not (v_jj = E_ff))) and
+  (not (v_jj = E_gg))) and (not (v_jj = E_ii))) and (v_jj = E_hh)) and
+  (v_mm = true)) and (v_nn = true)) and (v_oo = true)) and
+  (v_pp = false)) and mem(E_gg, union(union(union(add(E_cc,
+  (empty : enum_aa set)), add(E_dd, (empty : enum_aa set))), add(E_ee,
+  (empty : enum_aa set))), add(E_ff, (empty : enum_aa set)))))
+
+predicate f268(v_zz: int, v_yy: int, v_xx: int, v_ww: int, v_vv: int,
+  v_uu: int, v_tt: int, v_ss: int, v_rr: int, v_qq: int, v_pp: bool,
+  v_oo: bool, v_nn: bool, v_mm: bool, v_ll: int, v_kk: int, v_jj: enum_aa,
+  v_bbss: int, v_bbrr: int, v_bbqq: int, v_bbpp: int, v_bboo: int,
+  v_bbnn: bool, v_bbmm: bool, v_bbll: bool, v_bbkk: bool, v_bbjj: int,
+  v_bbii: int, v_bbhh: enum_aa, v_bbgg: int, v_bbff: bool, v_bbee: bool,
+  v_bbdd: bool, v_bbcc: bool, v_bbbb: int, v_bbaa: int) =
+  (((((((((((((not (v_jj = E_bb)) and (not (v_jj = E_cc))) and
+  (not (v_jj = E_dd))) and (not (v_jj = E_ee))) and (not (v_jj = E_ff))) and
+  (not (v_jj = E_gg))) and (not (v_jj = E_ii))) and (v_jj = E_hh)) and
+  (v_mm = true)) and (v_nn = true)) and (v_oo = true)) and
+  (v_pp = false)) and (E_gg = E_hh))
+
+predicate f269(v_zz: int, v_yy: int, v_xx: int, v_ww: int, v_vv: int,
+  v_uu: int, v_tt: int, v_ss: int, v_rr: int, v_qq: int, v_pp: bool,
+  v_oo: bool, v_nn: bool, v_mm: bool, v_ll: int, v_kk: int, v_jj: enum_aa,
+  v_bbss: int, v_bbrr: int, v_bbqq: int, v_bbpp: int, v_bboo: int,
+  v_bbnn: bool, v_bbmm: bool, v_bbll: bool, v_bbkk: bool, v_bbjj: int,
+  v_bbii: int, v_bbhh: enum_aa, v_bbgg: int, v_bbff: bool, v_bbee: bool,
+  v_bbdd: bool, v_bbcc: bool, v_bbbb: int, v_bbaa: int) =
+  (((((((((((((not (v_jj = E_bb)) and (not (v_jj = E_cc))) and
+  (not (v_jj = E_dd))) and (not (v_jj = E_ee))) and (not (v_jj = E_ff))) and
+  (not (v_jj = E_gg))) and (not (v_jj = E_ii))) and (v_jj = E_hh)) and
+  (v_mm = true)) and (v_nn = true)) and (v_oo = true)) and
+  (v_pp = false)) and mem(E_gg, union(add(E_gg, (empty : enum_aa set)),
+  add(E_hh, (empty : enum_aa set)))))
+
+predicate f270(v_zz: int, v_yy: int, v_xx: int, v_ww: int, v_vv: int,
+  v_uu: int, v_tt: int, v_ss: int, v_rr: int, v_qq: int, v_pp: bool,
+  v_oo: bool, v_nn: bool, v_mm: bool, v_ll: int, v_kk: int, v_jj: enum_aa,
+  v_bbss: int, v_bbrr: int, v_bbqq: int, v_bbpp: int, v_bboo: int,
+  v_bbnn: bool, v_bbmm: bool, v_bbll: bool, v_bbkk: bool, v_bbjj: int,
+  v_bbii: int, v_bbhh: enum_aa, v_bbgg: int, v_bbff: bool, v_bbee: bool,
+  v_bbdd: bool, v_bbcc: bool, v_bbbb: int, v_bbaa: int) =
+  ((((((((((((not (v_jj = E_bb)) and (not (v_jj = E_cc))) and
+  (not (v_jj = E_dd))) and (not (v_jj = E_ee))) and (not (v_jj = E_ff))) and
+  (not (v_jj = E_gg))) and (not (v_jj = E_ii))) and (v_jj = E_hh)) and
+  (v_mm = false)) and (v_nn = true)) and (v_oo = false)) and (v_pp = false))
+
+predicate f271(v_zz: int, v_yy: int, v_xx: int, v_ww: int, v_vv: int,
+  v_uu: int, v_tt: int, v_ss: int, v_rr: int, v_qq: int, v_pp: bool,
+  v_oo: bool, v_nn: bool, v_mm: bool, v_ll: int, v_kk: int, v_jj: enum_aa,
+  v_bbss: int, v_bbrr: int, v_bbqq: int, v_bbpp: int, v_bboo: int,
+  v_bbnn: bool, v_bbmm: bool, v_bbll: bool, v_bbkk: bool, v_bbjj: int,
+  v_bbii: int, v_bbhh: enum_aa, v_bbgg: int, v_bbff: bool, v_bbee: bool,
+  v_bbdd: bool, v_bbcc: bool, v_bbbb: int, v_bbaa: int) =
+  (((((((((((((not (v_jj = E_bb)) and (not (v_jj = E_cc))) and
+  (not (v_jj = E_dd))) and (not (v_jj = E_ee))) and (not (v_jj = E_ff))) and
+  (not (v_jj = E_gg))) and (not (v_jj = E_ii))) and (v_jj = E_hh)) and
+  (v_mm = false)) and (v_nn = true)) and (v_oo = false)) and
+  (v_pp = false)) and mem(E_gg, union(union(union(add(E_cc,
+  (empty : enum_aa set)), add(E_dd, (empty : enum_aa set))), add(E_ee,
+  (empty : enum_aa set))), add(E_ff, (empty : enum_aa set)))))
+
+predicate f272(v_zz: int, v_yy: int, v_xx: int, v_ww: int, v_vv: int,
+  v_uu: int, v_tt: int, v_ss: int, v_rr: int, v_qq: int, v_pp: bool,
+  v_oo: bool, v_nn: bool, v_mm: bool, v_ll: int, v_kk: int, v_jj: enum_aa,
+  v_bbss: int, v_bbrr: int, v_bbqq: int, v_bbpp: int, v_bboo: int,
+  v_bbnn: bool, v_bbmm: bool, v_bbll: bool, v_bbkk: bool, v_bbjj: int,
+  v_bbii: int, v_bbhh: enum_aa, v_bbgg: int, v_bbff: bool, v_bbee: bool,
+  v_bbdd: bool, v_bbcc: bool, v_bbbb: int, v_bbaa: int) =
+  (((((((((((((not (v_jj = E_bb)) and (not (v_jj = E_cc))) and
+  (not (v_jj = E_dd))) and (not (v_jj = E_ee))) and (not (v_jj = E_ff))) and
+  (not (v_jj = E_gg))) and (not (v_jj = E_ii))) and (v_jj = E_hh)) and
+  (v_mm = false)) and (v_nn = true)) and (v_oo = false)) and
+  (v_pp = false)) and (E_gg = E_hh))
+
+predicate f273(v_zz: int, v_yy: int, v_xx: int, v_ww: int, v_vv: int,
+  v_uu: int, v_tt: int, v_ss: int, v_rr: int, v_qq: int, v_pp: bool,
+  v_oo: bool, v_nn: bool, v_mm: bool, v_ll: int, v_kk: int, v_jj: enum_aa,
+  v_bbss: int, v_bbrr: int, v_bbqq: int, v_bbpp: int, v_bboo: int,
+  v_bbnn: bool, v_bbmm: bool, v_bbll: bool, v_bbkk: bool, v_bbjj: int,
+  v_bbii: int, v_bbhh: enum_aa, v_bbgg: int, v_bbff: bool, v_bbee: bool,
+  v_bbdd: bool, v_bbcc: bool, v_bbbb: int, v_bbaa: int) =
+  (((((((((((((not (v_jj = E_bb)) and (not (v_jj = E_cc))) and
+  (not (v_jj = E_dd))) and (not (v_jj = E_ee))) and (not (v_jj = E_ff))) and
+  (not (v_jj = E_gg))) and (not (v_jj = E_ii))) and (v_jj = E_hh)) and
+  (v_mm = false)) and (v_nn = true)) and (v_oo = false)) and
+  (v_pp = false)) and mem(E_gg, union(add(E_gg, (empty : enum_aa set)),
+  add(E_hh, (empty : enum_aa set)))))
+
+predicate f274(v_zz: int, v_yy: int, v_xx: int, v_ww: int, v_vv: int,
+  v_uu: int, v_tt: int, v_ss: int, v_rr: int, v_qq: int, v_pp: bool,
+  v_oo: bool, v_nn: bool, v_mm: bool, v_ll: int, v_kk: int, v_jj: enum_aa,
+  v_bbss: int, v_bbrr: int, v_bbqq: int, v_bbpp: int, v_bboo: int,
+  v_bbnn: bool, v_bbmm: bool, v_bbll: bool, v_bbkk: bool, v_bbjj: int,
+  v_bbii: int, v_bbhh: enum_aa, v_bbgg: int, v_bbff: bool, v_bbee: bool,
+  v_bbdd: bool, v_bbcc: bool, v_bbbb: int, v_bbaa: int) =
+  ((((((((((((not (v_jj = E_bb)) and (not (v_jj = E_cc))) and
+  (not (v_jj = E_dd))) and (not (v_jj = E_ee))) and (not (v_jj = E_ff))) and
+  (not (v_jj = E_gg))) and (not (v_jj = E_ii))) and
+  (not ((((v_mm = false) and (v_nn = true)) and (v_oo = true)) and
+  (v_pp = false)))) and (not ((((v_mm = true) and (v_nn = true)) and
+  (v_oo = false)) and (v_pp = false)))) and (not ((((v_mm = true) and
+  (v_nn = true)) and (v_oo = true)) and (v_pp = false)))) and
+  (not ((((v_mm = false) and (v_nn = true)) and (v_oo = false)) and
+  (v_pp = false)))) and (v_jj = E_hh))
+
+predicate f276(v_zz: int, v_yy: int, v_xx: int, v_ww: int, v_vv: int,
+  v_uu: int, v_tt: int, v_ss: int, v_rr: int, v_qq: int, v_pp: bool,
+  v_oo: bool, v_nn: bool, v_mm: bool, v_ll: int, v_kk: int, v_jj: enum_aa,
+  v_bbss: int, v_bbrr: int, v_bbqq: int, v_bbpp: int, v_bboo: int,
+  v_bbnn: bool, v_bbmm: bool, v_bbll: bool, v_bbkk: bool, v_bbjj: int,
+  v_bbii: int, v_bbhh: enum_aa, v_bbgg: int, v_bbff: bool, v_bbee: bool,
+  v_bbdd: bool, v_bbcc: bool, v_bbbb: int, v_bbaa: int) =
+  (((((((((v_mm = false) and (v_nn = true)) and (v_oo = true)) and
+  (v_pp = false)) and (((((((v_qq + 1) - v_rr) - 1) + 1) <= v_ss) and
+  (E_bb = v_jj)) or ((not (((((v_qq + 1) - v_rr) - 1) + 1) <= v_ss)) and
+  (E_bb = E_ii)))) or (((((v_mm = true) and (v_nn = true)) and
+  (v_oo = false)) and (v_pp = false)) and ((E_bb = E_gg) and
+  (v_rr = (v_qq + 1))))) or (((((v_mm = true) and (v_nn = true)) and
+  (v_oo = true)) and (v_pp = false)) and ((E_bb = E_gg) and
+  (v_rr = (v_qq + 1))))) or (((((v_mm = false) and (v_nn = true)) and
+  (v_oo = false)) and (v_pp = false)) and ((E_bb = E_gg) and
+  (v_rr = (v_qq + 1))))) or (((((((v_mm = false) and (v_nn = true)) and
+  (v_oo = true)) -> (not (v_pp = false))) and ((((v_mm = true) and
+  (v_nn = true)) and (v_oo = false)) -> (not (v_pp = false)))) and
+  ((((v_mm = true) and (v_nn = true)) and (v_oo = true)) ->
+  (not (v_pp = false)))) and ((((v_mm = false) and (v_nn = true)) and
+  (v_oo = false)) -> (not (v_pp = false)))))
+
+predicate f277(v_zz: int, v_yy: int, v_xx: int, v_ww: int, v_vv: int,
+  v_uu: int, v_tt: int, v_ss: int, v_rr: int, v_qq: int, v_pp: bool,
+  v_oo: bool, v_nn: bool, v_mm: bool, v_ll: int, v_kk: int, v_jj: enum_aa,
+  v_bbss: int, v_bbrr: int, v_bbqq: int, v_bbpp: int, v_bboo: int,
+  v_bbnn: bool, v_bbmm: bool, v_bbll: bool, v_bbkk: bool, v_bbjj: int,
+  v_bbii: int, v_bbhh: enum_aa, v_bbgg: int, v_bbff: bool, v_bbee: bool,
+  v_bbdd: bool, v_bbcc: bool, v_bbbb: int, v_bbaa: int) =
+  (((((((((((((not (v_jj = E_bb)) and (not (v_jj = E_cc))) and
+  (not (v_jj = E_dd))) and (not (v_jj = E_ee))) and (not (v_jj = E_ff))) and
+  (not (v_jj = E_gg))) and (not (v_jj = E_ii))) and
+  (not ((((v_mm = false) and (v_nn = true)) and (v_oo = true)) and
+  (v_pp = false)))) and (not ((((v_mm = true) and (v_nn = true)) and
+  (v_oo = false)) and (v_pp = false)))) and (not ((((v_mm = true) and
+  (v_nn = true)) and (v_oo = true)) and (v_pp = false)))) and
+  (not ((((v_mm = false) and (v_nn = true)) and (v_oo = false)) and
+  (v_pp = false)))) and (v_jj = E_hh)) and mem(E_bb,
+  union(union(union(add(E_cc, (empty : enum_aa set)), add(E_dd,
+  (empty : enum_aa set))), add(E_ee, (empty : enum_aa set))), add(E_ff,
+  (empty : enum_aa set)))))
+
+predicate f278(v_zz: int, v_yy: int, v_xx: int, v_ww: int, v_vv: int,
+  v_uu: int, v_tt: int, v_ss: int, v_rr: int, v_qq: int, v_pp: bool,
+  v_oo: bool, v_nn: bool, v_mm: bool, v_ll: int, v_kk: int, v_jj: enum_aa,
+  v_bbss: int, v_bbrr: int, v_bbqq: int, v_bbpp: int, v_bboo: int,
+  v_bbnn: bool, v_bbmm: bool, v_bbll: bool, v_bbkk: bool, v_bbjj: int,
+  v_bbii: int, v_bbhh: enum_aa, v_bbgg: int, v_bbff: bool, v_bbee: bool,
+  v_bbdd: bool, v_bbcc: bool, v_bbbb: int, v_bbaa: int) =
+  (((((((((((((not (v_jj = E_bb)) and (not (v_jj = E_cc))) and
+  (not (v_jj = E_dd))) and (not (v_jj = E_ee))) and (not (v_jj = E_ff))) and
+  (not (v_jj = E_gg))) and (not (v_jj = E_ii))) and
+  (not ((((v_mm = false) and (v_nn = true)) and (v_oo = true)) and
+  (v_pp = false)))) and (not ((((v_mm = true) and (v_nn = true)) and
+  (v_oo = false)) and (v_pp = false)))) and (not ((((v_mm = true) and
+  (v_nn = true)) and (v_oo = true)) and (v_pp = false)))) and
+  (not ((((v_mm = false) and (v_nn = true)) and (v_oo = false)) and
+  (v_pp = false)))) and (v_jj = E_hh)) and (E_bb = E_gg))
+
+predicate f279(v_zz: int, v_yy: int, v_xx: int, v_ww: int, v_vv: int,
+  v_uu: int, v_tt: int, v_ss: int, v_rr: int, v_qq: int, v_pp: bool,
+  v_oo: bool, v_nn: bool, v_mm: bool, v_ll: int, v_kk: int, v_jj: enum_aa,
+  v_bbss: int, v_bbrr: int, v_bbqq: int, v_bbpp: int, v_bboo: int,
+  v_bbnn: bool, v_bbmm: bool, v_bbll: bool, v_bbkk: bool, v_bbjj: int,
+  v_bbii: int, v_bbhh: enum_aa, v_bbgg: int, v_bbff: bool, v_bbee: bool,
+  v_bbdd: bool, v_bbcc: bool, v_bbbb: int, v_bbaa: int) =
+  (((((((((((((not (v_jj = E_bb)) and (not (v_jj = E_cc))) and
+  (not (v_jj = E_dd))) and (not (v_jj = E_ee))) and (not (v_jj = E_ff))) and
+  (not (v_jj = E_gg))) and (not (v_jj = E_ii))) and
+  (not ((((v_mm = false) and (v_nn = true)) and (v_oo = true)) and
+  (v_pp = false)))) and (not ((((v_mm = true) and (v_nn = true)) and
+  (v_oo = false)) and (v_pp = false)))) and (not ((((v_mm = true) and
+  (v_nn = true)) and (v_oo = true)) and (v_pp = false)))) and
+  (not ((((v_mm = false) and (v_nn = true)) and (v_oo = false)) and
+  (v_pp = false)))) and (v_jj = E_hh)) and (E_bb = E_hh))
+
+predicate f280(v_zz: int, v_yy: int, v_xx: int, v_ww: int, v_vv: int,
+  v_uu: int, v_tt: int, v_ss: int, v_rr: int, v_qq: int, v_pp: bool,
+  v_oo: bool, v_nn: bool, v_mm: bool, v_ll: int, v_kk: int, v_jj: enum_aa,
+  v_bbss: int, v_bbrr: int, v_bbqq: int, v_bbpp: int, v_bboo: int,
+  v_bbnn: bool, v_bbmm: bool, v_bbll: bool, v_bbkk: bool, v_bbjj: int,
+  v_bbii: int, v_bbhh: enum_aa, v_bbgg: int, v_bbff: bool, v_bbee: bool,
+  v_bbdd: bool, v_bbcc: bool, v_bbbb: int, v_bbaa: int) =
+  (((((((((((((not (v_jj = E_bb)) and (not (v_jj = E_cc))) and
+  (not (v_jj = E_dd))) and (not (v_jj = E_ee))) and (not (v_jj = E_ff))) and
+  (not (v_jj = E_gg))) and (not (v_jj = E_ii))) and
+  (not ((((v_mm = false) and (v_nn = true)) and (v_oo = true)) and
+  (v_pp = false)))) and (not ((((v_mm = true) and (v_nn = true)) and
+  (v_oo = false)) and (v_pp = false)))) and (not ((((v_mm = true) and
+  (v_nn = true)) and (v_oo = true)) and (v_pp = false)))) and
+  (not ((((v_mm = false) and (v_nn = true)) and (v_oo = false)) and
+  (v_pp = false)))) and (v_jj = E_hh)) and mem(E_bb, union(add(E_gg,
+  (empty : enum_aa set)), add(E_hh, (empty : enum_aa set)))))
+
+predicate f281(v_zz: int, v_yy: int, v_xx: int, v_ww: int, v_vv: int,
+  v_uu: int, v_tt: int, v_ss: int, v_rr: int, v_qq: int, v_pp: bool,
+  v_oo: bool, v_nn: bool, v_mm: bool, v_ll: int, v_kk: int, v_jj: enum_aa,
+  v_bbss: int, v_bbrr: int, v_bbqq: int, v_bbpp: int, v_bboo: int,
+  v_bbnn: bool, v_bbmm: bool, v_bbll: bool, v_bbkk: bool, v_bbjj: int,
+  v_bbii: int, v_bbhh: enum_aa, v_bbgg: int, v_bbff: bool, v_bbee: bool,
+  v_bbdd: bool, v_bbcc: bool, v_bbbb: int, v_bbaa: int) =
+  (((((((((((((not (v_jj = E_bb)) and (not (v_jj = E_cc))) and
+  (not (v_jj = E_dd))) and (not (v_jj = E_ee))) and (not (v_jj = E_ff))) and
+  (not (v_jj = E_gg))) and (not (v_jj = E_hh))) and
+  (((v_qq - v_rr) + 1) <= (v_ss + v_tt))) and (v_jj = E_ii)) and
+  (v_mm = false)) and (v_nn = true)) and (v_oo = true)) and (v_pp = false))
+
+predicate f283(v_zz: int, v_yy: int, v_xx: int, v_ww: int, v_vv: int,
+  v_uu: int, v_tt: int, v_ss: int, v_rr: int, v_qq: int, v_pp: bool,
+  v_oo: bool, v_nn: bool, v_mm: bool, v_ll: int, v_kk: int, v_jj: enum_aa,
+  v_bbss: int, v_bbrr: int, v_bbqq: int, v_bbpp: int, v_bboo: int,
+  v_bbnn: bool, v_bbmm: bool, v_bbll: bool, v_bbkk: bool, v_bbjj: int,
+  v_bbii: int, v_bbhh: enum_aa, v_bbgg: int, v_bbff: bool, v_bbee: bool,
+  v_bbdd: bool, v_bbcc: bool, v_bbbb: int, v_bbaa: int) =
+  (((((((((v_mm = false) and (v_nn = true)) and (v_oo = true)) and
+  (v_pp = false)) and ((((v_qq - v_rr) + 1) <= (v_ss + v_tt)) or
+  ((not (((v_qq - v_rr) + 1) <= (v_ss + v_tt))) and (v_jj = E_bb)))) or
+  (((((v_mm = true) and (v_nn = true)) and (v_oo = false)) and
+  (v_pp = false)) and (v_jj = E_bb))) or (((((v_mm = true) and
+  (v_nn = true)) and (v_oo = true)) and (v_pp = false)) and
+  (v_jj = E_bb))) or (((((v_mm = false) and (v_nn = true)) and
+  (v_oo = false)) and (v_pp = false)) and (v_jj = E_bb))) or
+  ((((((((v_mm = false) and (v_nn = true)) and (v_oo = true)) ->
+  (not (v_pp = false))) and ((((v_mm = true) and (v_nn = true)) and
+  (v_oo = false)) -> (not (v_pp = false)))) and ((((v_mm = true) and
+  (v_nn = true)) and (v_oo = true)) -> (not (v_pp = false)))) and
+  ((((v_mm = false) and (v_nn = true)) and (v_oo = false)) ->
+  (not (v_pp = false)))) and (v_jj = E_bb)))
+
+predicate f284(v_zz: int, v_yy: int, v_xx: int, v_ww: int, v_vv: int,
+  v_uu: int, v_tt: int, v_ss: int, v_rr: int, v_qq: int, v_pp: bool,
+  v_oo: bool, v_nn: bool, v_mm: bool, v_ll: int, v_kk: int, v_jj: enum_aa,
+  v_bbss: int, v_bbrr: int, v_bbqq: int, v_bbpp: int, v_bboo: int,
+  v_bbnn: bool, v_bbmm: bool, v_bbll: bool, v_bbkk: bool, v_bbjj: int,
+  v_bbii: int, v_bbhh: enum_aa, v_bbgg: int, v_bbff: bool, v_bbee: bool,
+  v_bbdd: bool, v_bbcc: bool, v_bbbb: int, v_bbaa: int) =
+  ((((((((((((((not (v_jj = E_bb)) and (not (v_jj = E_cc))) and
+  (not (v_jj = E_dd))) and (not (v_jj = E_ee))) and (not (v_jj = E_ff))) and
+  (not (v_jj = E_gg))) and (not (v_jj = E_hh))) and
+  (((v_qq - v_rr) + 1) <= (v_ss + v_tt))) and (v_jj = E_ii)) and
+  (v_mm = false)) and (v_nn = true)) and (v_oo = true)) and
+  (v_pp = false)) and mem(v_jj, union(add(E_gg, (empty : enum_aa set)),
+  add(E_hh, (empty : enum_aa set)))))
+
+predicate f285(v_zz: int, v_yy: int, v_xx: int, v_ww: int, v_vv: int,
+  v_uu: int, v_tt: int, v_ss: int, v_rr: int, v_qq: int, v_pp: bool,
+  v_oo: bool, v_nn: bool, v_mm: bool, v_ll: int, v_kk: int, v_jj: enum_aa,
+  v_bbss: int, v_bbrr: int, v_bbqq: int, v_bbpp: int, v_bboo: int,
+  v_bbnn: bool, v_bbmm: bool, v_bbll: bool, v_bbkk: bool, v_bbjj: int,
+  v_bbii: int, v_bbhh: enum_aa, v_bbgg: int, v_bbff: bool, v_bbee: bool,
+  v_bbdd: bool, v_bbcc: bool, v_bbbb: int, v_bbaa: int) =
+  (((((((((((((not (v_jj = E_bb)) and (not (v_jj = E_cc))) and
+  (not (v_jj = E_dd))) and (not (v_jj = E_ee))) and (not (v_jj = E_ff))) and
+  (not (v_jj = E_gg))) and (not (v_jj = E_hh))) and
+  (not (((v_qq - v_rr) + 1) <= (v_ss + v_tt)))) and (v_jj = E_ii)) and
+  (v_mm = false)) and (v_nn = true)) and (v_oo = true)) and (v_pp = false))
+
+predicate f286(v_zz: int, v_yy: int, v_xx: int, v_ww: int, v_vv: int,
+  v_uu: int, v_tt: int, v_ss: int, v_rr: int, v_qq: int, v_pp: bool,
+  v_oo: bool, v_nn: bool, v_mm: bool, v_ll: int, v_kk: int, v_jj: enum_aa,
+  v_bbss: int, v_bbrr: int, v_bbqq: int, v_bbpp: int, v_bboo: int,
+  v_bbnn: bool, v_bbmm: bool, v_bbll: bool, v_bbkk: bool, v_bbjj: int,
+  v_bbii: int, v_bbhh: enum_aa, v_bbgg: int, v_bbff: bool, v_bbee: bool,
+  v_bbdd: bool, v_bbcc: bool, v_bbbb: int, v_bbaa: int) =
+  (((((((((v_mm = false) and (v_nn = true)) and (v_oo = true)) and
+  (v_pp = false)) and (((((v_qq - v_rr) + 1) <= (v_ss + v_tt)) and
+  (E_bb = v_jj)) or (not (((v_qq - v_rr) + 1) <= (v_ss + v_tt))))) or
+  ((((v_mm = true) and (v_nn = true)) and (v_oo = false)) and
+  (v_pp = false))) or ((((v_mm = true) and (v_nn = true)) and
+  (v_oo = true)) and (v_pp = false))) or ((((v_mm = false) and
+  (v_nn = true)) and (v_oo = false)) and (v_pp = false))) or
+  (((((((v_mm = false) and (v_nn = true)) and (v_oo = true)) ->
+  (not (v_pp = false))) and ((((v_mm = true) and (v_nn = true)) and
+  (v_oo = false)) -> (not (v_pp = false)))) and ((((v_mm = true) and
+  (v_nn = true)) and (v_oo = true)) -> (not (v_pp = false)))) and
+  ((((v_mm = false) and (v_nn = true)) and (v_oo = false)) ->
+  (not (v_pp = false)))))
+
+predicate f287(v_zz: int, v_yy: int, v_xx: int, v_ww: int, v_vv: int,
+  v_uu: int, v_tt: int, v_ss: int, v_rr: int, v_qq: int, v_pp: bool,
+  v_oo: bool, v_nn: bool, v_mm: bool, v_ll: int, v_kk: int, v_jj: enum_aa,
+  v_bbss: int, v_bbrr: int, v_bbqq: int, v_bbpp: int, v_bboo: int,
+  v_bbnn: bool, v_bbmm: bool, v_bbll: bool, v_bbkk: bool, v_bbjj: int,
+  v_bbii: int, v_bbhh: enum_aa, v_bbgg: int, v_bbff: bool, v_bbee: bool,
+  v_bbdd: bool, v_bbcc: bool, v_bbbb: int, v_bbaa: int) =
+  ((((((((((((((not (v_jj = E_bb)) and (not (v_jj = E_cc))) and
+  (not (v_jj = E_dd))) and (not (v_jj = E_ee))) and (not (v_jj = E_ff))) and
+  (not (v_jj = E_gg))) and (not (v_jj = E_hh))) and
+  (not (((v_qq - v_rr) + 1) <= (v_ss + v_tt)))) and (v_jj = E_ii)) and
+  (v_mm = false)) and (v_nn = true)) and (v_oo = true)) and
+  (v_pp = false)) and mem(E_bb, union(union(union(add(E_cc,
+  (empty : enum_aa set)), add(E_dd, (empty : enum_aa set))), add(E_ee,
+  (empty : enum_aa set))), add(E_ff, (empty : enum_aa set)))))
+
+predicate f288(v_zz: int, v_yy: int, v_xx: int, v_ww: int, v_vv: int,
+  v_uu: int, v_tt: int, v_ss: int, v_rr: int, v_qq: int, v_pp: bool,
+  v_oo: bool, v_nn: bool, v_mm: bool, v_ll: int, v_kk: int, v_jj: enum_aa,
+  v_bbss: int, v_bbrr: int, v_bbqq: int, v_bbpp: int, v_bboo: int,
+  v_bbnn: bool, v_bbmm: bool, v_bbll: bool, v_bbkk: bool, v_bbjj: int,
+  v_bbii: int, v_bbhh: enum_aa, v_bbgg: int, v_bbff: bool, v_bbee: bool,
+  v_bbdd: bool, v_bbcc: bool, v_bbbb: int, v_bbaa: int) =
+  ((((((((((((((not (v_jj = E_bb)) and (not (v_jj = E_cc))) and
+  (not (v_jj = E_dd))) and (not (v_jj = E_ee))) and (not (v_jj = E_ff))) and
+  (not (v_jj = E_gg))) and (not (v_jj = E_hh))) and
+  (not (((v_qq - v_rr) + 1) <= (v_ss + v_tt)))) and (v_jj = E_ii)) and
+  (v_mm = false)) and (v_nn = true)) and (v_oo = true)) and
+  (v_pp = false)) and (E_bb = E_gg))
+
+predicate f289(v_zz: int, v_yy: int, v_xx: int, v_ww: int, v_vv: int,
+  v_uu: int, v_tt: int, v_ss: int, v_rr: int, v_qq: int, v_pp: bool,
+  v_oo: bool, v_nn: bool, v_mm: bool, v_ll: int, v_kk: int, v_jj: enum_aa,
+  v_bbss: int, v_bbrr: int, v_bbqq: int, v_bbpp: int, v_bboo: int,
+  v_bbnn: bool, v_bbmm: bool, v_bbll: bool, v_bbkk: bool, v_bbjj: int,
+  v_bbii: int, v_bbhh: enum_aa, v_bbgg: int, v_bbff: bool, v_bbee: bool,
+  v_bbdd: bool, v_bbcc: bool, v_bbbb: int, v_bbaa: int) =
+  ((((((((((((((not (v_jj = E_bb)) and (not (v_jj = E_cc))) and
+  (not (v_jj = E_dd))) and (not (v_jj = E_ee))) and (not (v_jj = E_ff))) and
+  (not (v_jj = E_gg))) and (not (v_jj = E_hh))) and
+  (not (((v_qq - v_rr) + 1) <= (v_ss + v_tt)))) and (v_jj = E_ii)) and
+  (v_mm = false)) and (v_nn = true)) and (v_oo = true)) and
+  (v_pp = false)) and (E_bb = E_hh))
+
+predicate f290(v_zz: int, v_yy: int, v_xx: int, v_ww: int, v_vv: int,
+  v_uu: int, v_tt: int, v_ss: int, v_rr: int, v_qq: int, v_pp: bool,
+  v_oo: bool, v_nn: bool, v_mm: bool, v_ll: int, v_kk: int, v_jj: enum_aa,
+  v_bbss: int, v_bbrr: int, v_bbqq: int, v_bbpp: int, v_bboo: int,
+  v_bbnn: bool, v_bbmm: bool, v_bbll: bool, v_bbkk: bool, v_bbjj: int,
+  v_bbii: int, v_bbhh: enum_aa, v_bbgg: int, v_bbff: bool, v_bbee: bool,
+  v_bbdd: bool, v_bbcc: bool, v_bbbb: int, v_bbaa: int) =
+  ((((((((((((((not (v_jj = E_bb)) and (not (v_jj = E_cc))) and
+  (not (v_jj = E_dd))) and (not (v_jj = E_ee))) and (not (v_jj = E_ff))) and
+  (not (v_jj = E_gg))) and (not (v_jj = E_hh))) and
+  (not (((v_qq - v_rr) + 1) <= (v_ss + v_tt)))) and (v_jj = E_ii)) and
+  (v_mm = false)) and (v_nn = true)) and (v_oo = true)) and
+  (v_pp = false)) and mem(E_bb, union(add(E_gg, (empty : enum_aa set)),
+  add(E_hh, (empty : enum_aa set)))))
+
+predicate f291(v_zz: int, v_yy: int, v_xx: int, v_ww: int, v_vv: int,
+  v_uu: int, v_tt: int, v_ss: int, v_rr: int, v_qq: int, v_pp: bool,
+  v_oo: bool, v_nn: bool, v_mm: bool, v_ll: int, v_kk: int, v_jj: enum_aa,
+  v_bbss: int, v_bbrr: int, v_bbqq: int, v_bbpp: int, v_bboo: int,
+  v_bbnn: bool, v_bbmm: bool, v_bbll: bool, v_bbkk: bool, v_bbjj: int,
+  v_bbii: int, v_bbhh: enum_aa, v_bbgg: int, v_bbff: bool, v_bbee: bool,
+  v_bbdd: bool, v_bbcc: bool, v_bbbb: int, v_bbaa: int) =
+  ((((((((((((not (v_jj = E_bb)) and (not (v_jj = E_cc))) and
+  (not (v_jj = E_dd))) and (not (v_jj = E_ee))) and (not (v_jj = E_ff))) and
+  (not (v_jj = E_gg))) and (not (v_jj = E_hh))) and (v_jj = E_ii)) and
+  (v_mm = true)) and (v_nn = true)) and (v_oo = false)) and (v_pp = false))
+
+predicate f292(v_zz: int, v_yy: int, v_xx: int, v_ww: int, v_vv: int,
+  v_uu: int, v_tt: int, v_ss: int, v_rr: int, v_qq: int, v_pp: bool,
+  v_oo: bool, v_nn: bool, v_mm: bool, v_ll: int, v_kk: int, v_jj: enum_aa,
+  v_bbss: int, v_bbrr: int, v_bbqq: int, v_bbpp: int, v_bboo: int,
+  v_bbnn: bool, v_bbmm: bool, v_bbll: bool, v_bbkk: bool, v_bbjj: int,
+  v_bbii: int, v_bbhh: enum_aa, v_bbgg: int, v_bbff: bool, v_bbee: bool,
+  v_bbdd: bool, v_bbcc: bool, v_bbbb: int, v_bbaa: int) =
+  (((((((((((((not (v_jj = E_bb)) and (not (v_jj = E_cc))) and
+  (not (v_jj = E_dd))) and (not (v_jj = E_ee))) and (not (v_jj = E_ff))) and
+  (not (v_jj = E_gg))) and (not (v_jj = E_hh))) and (v_jj = E_ii)) and
+  (v_mm = true)) and (v_nn = true)) and (v_oo = false)) and
+  (v_pp = false)) and mem(E_bb, union(union(union(add(E_cc,
+  (empty : enum_aa set)), add(E_dd, (empty : enum_aa set))), add(E_ee,
+  (empty : enum_aa set))), add(E_ff, (empty : enum_aa set)))))
+
+predicate f293(v_zz: int, v_yy: int, v_xx: int, v_ww: int, v_vv: int,
+  v_uu: int, v_tt: int, v_ss: int, v_rr: int, v_qq: int, v_pp: bool,
+  v_oo: bool, v_nn: bool, v_mm: bool, v_ll: int, v_kk: int, v_jj: enum_aa,
+  v_bbss: int, v_bbrr: int, v_bbqq: int, v_bbpp: int, v_bboo: int,
+  v_bbnn: bool, v_bbmm: bool, v_bbll: bool, v_bbkk: bool, v_bbjj: int,
+  v_bbii: int, v_bbhh: enum_aa, v_bbgg: int, v_bbff: bool, v_bbee: bool,
+  v_bbdd: bool, v_bbcc: bool, v_bbbb: int, v_bbaa: int) =
+  (((((((((((((not (v_jj = E_bb)) and (not (v_jj = E_cc))) and
+  (not (v_jj = E_dd))) and (not (v_jj = E_ee))) and (not (v_jj = E_ff))) and
+  (not (v_jj = E_gg))) and (not (v_jj = E_hh))) and (v_jj = E_ii)) and
+  (v_mm = true)) and (v_nn = true)) and (v_oo = false)) and
+  (v_pp = false)) and (E_bb = E_gg))
+
+predicate f294(v_zz: int, v_yy: int, v_xx: int, v_ww: int, v_vv: int,
+  v_uu: int, v_tt: int, v_ss: int, v_rr: int, v_qq: int, v_pp: bool,
+  v_oo: bool, v_nn: bool, v_mm: bool, v_ll: int, v_kk: int, v_jj: enum_aa,
+  v_bbss: int, v_bbrr: int, v_bbqq: int, v_bbpp: int, v_bboo: int,
+  v_bbnn: bool, v_bbmm: bool, v_bbll: bool, v_bbkk: bool, v_bbjj: int,
+  v_bbii: int, v_bbhh: enum_aa, v_bbgg: int, v_bbff: bool, v_bbee: bool,
+  v_bbdd: bool, v_bbcc: bool, v_bbbb: int, v_bbaa: int) =
+  (((((((((((((not (v_jj = E_bb)) and (not (v_jj = E_cc))) and
+  (not (v_jj = E_dd))) and (not (v_jj = E_ee))) and (not (v_jj = E_ff))) and
+  (not (v_jj = E_gg))) and (not (v_jj = E_hh))) and (v_jj = E_ii)) and
+  (v_mm = true)) and (v_nn = true)) and (v_oo = false)) and
+  (v_pp = false)) and (E_bb = E_hh))
+
+predicate f295(v_zz: int, v_yy: int, v_xx: int, v_ww: int, v_vv: int,
+  v_uu: int, v_tt: int, v_ss: int, v_rr: int, v_qq: int, v_pp: bool,
+  v_oo: bool, v_nn: bool, v_mm: bool, v_ll: int, v_kk: int, v_jj: enum_aa,
+  v_bbss: int, v_bbrr: int, v_bbqq: int, v_bbpp: int, v_bboo: int,
+  v_bbnn: bool, v_bbmm: bool, v_bbll: bool, v_bbkk: bool, v_bbjj: int,
+  v_bbii: int, v_bbhh: enum_aa, v_bbgg: int, v_bbff: bool, v_bbee: bool,
+  v_bbdd: bool, v_bbcc: bool, v_bbbb: int, v_bbaa: int) =
+  (((((((((((((not (v_jj = E_bb)) and (not (v_jj = E_cc))) and
+  (not (v_jj = E_dd))) and (not (v_jj = E_ee))) and (not (v_jj = E_ff))) and
+  (not (v_jj = E_gg))) and (not (v_jj = E_hh))) and (v_jj = E_ii)) and
+  (v_mm = true)) and (v_nn = true)) and (v_oo = false)) and
+  (v_pp = false)) and mem(E_bb, union(add(E_gg, (empty : enum_aa set)),
+  add(E_hh, (empty : enum_aa set)))))
+
+predicate f296(v_zz: int, v_yy: int, v_xx: int, v_ww: int, v_vv: int,
+  v_uu: int, v_tt: int, v_ss: int, v_rr: int, v_qq: int, v_pp: bool,
+  v_oo: bool, v_nn: bool, v_mm: bool, v_ll: int, v_kk: int, v_jj: enum_aa,
+  v_bbss: int, v_bbrr: int, v_bbqq: int, v_bbpp: int, v_bboo: int,
+  v_bbnn: bool, v_bbmm: bool, v_bbll: bool, v_bbkk: bool, v_bbjj: int,
+  v_bbii: int, v_bbhh: enum_aa, v_bbgg: int, v_bbff: bool, v_bbee: bool,
+  v_bbdd: bool, v_bbcc: bool, v_bbbb: int, v_bbaa: int) =
+  ((((((((((((not (v_jj = E_bb)) and (not (v_jj = E_cc))) and
+  (not (v_jj = E_dd))) and (not (v_jj = E_ee))) and (not (v_jj = E_ff))) and
+  (not (v_jj = E_gg))) and (not (v_jj = E_hh))) and (v_jj = E_ii)) and
+  (v_mm = true)) and (v_nn = true)) and (v_oo = true)) and (v_pp = false))
+
+predicate f297(v_zz: int, v_yy: int, v_xx: int, v_ww: int, v_vv: int,
+  v_uu: int, v_tt: int, v_ss: int, v_rr: int, v_qq: int, v_pp: bool,
+  v_oo: bool, v_nn: bool, v_mm: bool, v_ll: int, v_kk: int, v_jj: enum_aa,
+  v_bbss: int, v_bbrr: int, v_bbqq: int, v_bbpp: int, v_bboo: int,
+  v_bbnn: bool, v_bbmm: bool, v_bbll: bool, v_bbkk: bool, v_bbjj: int,
+  v_bbii: int, v_bbhh: enum_aa, v_bbgg: int, v_bbff: bool, v_bbee: bool,
+  v_bbdd: bool, v_bbcc: bool, v_bbbb: int, v_bbaa: int) =
+  (((((((((((((not (v_jj = E_bb)) and (not (v_jj = E_cc))) and
+  (not (v_jj = E_dd))) and (not (v_jj = E_ee))) and (not (v_jj = E_ff))) and
+  (not (v_jj = E_gg))) and (not (v_jj = E_hh))) and (v_jj = E_ii)) and
+  (v_mm = true)) and (v_nn = true)) and (v_oo = true)) and
+  (v_pp = false)) and mem(E_bb, union(union(union(add(E_cc,
+  (empty : enum_aa set)), add(E_dd, (empty : enum_aa set))), add(E_ee,
+  (empty : enum_aa set))), add(E_ff, (empty : enum_aa set)))))
+
+predicate f298(v_zz: int, v_yy: int, v_xx: int, v_ww: int, v_vv: int,
+  v_uu: int, v_tt: int, v_ss: int, v_rr: int, v_qq: int, v_pp: bool,
+  v_oo: bool, v_nn: bool, v_mm: bool, v_ll: int, v_kk: int, v_jj: enum_aa,
+  v_bbss: int, v_bbrr: int, v_bbqq: int, v_bbpp: int, v_bboo: int,
+  v_bbnn: bool, v_bbmm: bool, v_bbll: bool, v_bbkk: bool, v_bbjj: int,
+  v_bbii: int, v_bbhh: enum_aa, v_bbgg: int, v_bbff: bool, v_bbee: bool,
+  v_bbdd: bool, v_bbcc: bool, v_bbbb: int, v_bbaa: int) =
+  (((((((((((((not (v_jj = E_bb)) and (not (v_jj = E_cc))) and
+  (not (v_jj = E_dd))) and (not (v_jj = E_ee))) and (not (v_jj = E_ff))) and
+  (not (v_jj = E_gg))) and (not (v_jj = E_hh))) and (v_jj = E_ii)) and
+  (v_mm = true)) and (v_nn = true)) and (v_oo = true)) and
+  (v_pp = false)) and (E_bb = E_gg))
+
+predicate f299(v_zz: int, v_yy: int, v_xx: int, v_ww: int, v_vv: int,
+  v_uu: int, v_tt: int, v_ss: int, v_rr: int, v_qq: int, v_pp: bool,
+  v_oo: bool, v_nn: bool, v_mm: bool, v_ll: int, v_kk: int, v_jj: enum_aa,
+  v_bbss: int, v_bbrr: int, v_bbqq: int, v_bbpp: int, v_bboo: int,
+  v_bbnn: bool, v_bbmm: bool, v_bbll: bool, v_bbkk: bool, v_bbjj: int,
+  v_bbii: int, v_bbhh: enum_aa, v_bbgg: int, v_bbff: bool, v_bbee: bool,
+  v_bbdd: bool, v_bbcc: bool, v_bbbb: int, v_bbaa: int) =
+  (((((((((((((not (v_jj = E_bb)) and (not (v_jj = E_cc))) and
+  (not (v_jj = E_dd))) and (not (v_jj = E_ee))) and (not (v_jj = E_ff))) and
+  (not (v_jj = E_gg))) and (not (v_jj = E_hh))) and (v_jj = E_ii)) and
+  (v_mm = true)) and (v_nn = true)) and (v_oo = true)) and
+  (v_pp = false)) and (E_bb = E_hh))
+
+predicate f300(v_zz: int, v_yy: int, v_xx: int, v_ww: int, v_vv: int,
+  v_uu: int, v_tt: int, v_ss: int, v_rr: int, v_qq: int, v_pp: bool,
+  v_oo: bool, v_nn: bool, v_mm: bool, v_ll: int, v_kk: int, v_jj: enum_aa,
+  v_bbss: int, v_bbrr: int, v_bbqq: int, v_bbpp: int, v_bboo: int,
+  v_bbnn: bool, v_bbmm: bool, v_bbll: bool, v_bbkk: bool, v_bbjj: int,
+  v_bbii: int, v_bbhh: enum_aa, v_bbgg: int, v_bbff: bool, v_bbee: bool,
+  v_bbdd: bool, v_bbcc: bool, v_bbbb: int, v_bbaa: int) =
+  (((((((((((((not (v_jj = E_bb)) and (not (v_jj = E_cc))) and
+  (not (v_jj = E_dd))) and (not (v_jj = E_ee))) and (not (v_jj = E_ff))) and
+  (not (v_jj = E_gg))) and (not (v_jj = E_hh))) and (v_jj = E_ii)) and
+  (v_mm = true)) and (v_nn = true)) and (v_oo = true)) and
+  (v_pp = false)) and mem(E_bb, union(add(E_gg, (empty : enum_aa set)),
+  add(E_hh, (empty : enum_aa set)))))
+
+predicate f301(v_zz: int, v_yy: int, v_xx: int, v_ww: int, v_vv: int,
+  v_uu: int, v_tt: int, v_ss: int, v_rr: int, v_qq: int, v_pp: bool,
+  v_oo: bool, v_nn: bool, v_mm: bool, v_ll: int, v_kk: int, v_jj: enum_aa,
+  v_bbss: int, v_bbrr: int, v_bbqq: int, v_bbpp: int, v_bboo: int,
+  v_bbnn: bool, v_bbmm: bool, v_bbll: bool, v_bbkk: bool, v_bbjj: int,
+  v_bbii: int, v_bbhh: enum_aa, v_bbgg: int, v_bbff: bool, v_bbee: bool,
+  v_bbdd: bool, v_bbcc: bool, v_bbbb: int, v_bbaa: int) =
+  ((((((((((((not (v_jj = E_bb)) and (not (v_jj = E_cc))) and
+  (not (v_jj = E_dd))) and (not (v_jj = E_ee))) and (not (v_jj = E_ff))) and
+  (not (v_jj = E_gg))) and (not (v_jj = E_hh))) and (v_jj = E_ii)) and
+  (v_mm = false)) and (v_nn = true)) and (v_oo = false)) and (v_pp = false))
+
+predicate f302(v_zz: int, v_yy: int, v_xx: int, v_ww: int, v_vv: int,
+  v_uu: int, v_tt: int, v_ss: int, v_rr: int, v_qq: int, v_pp: bool,
+  v_oo: bool, v_nn: bool, v_mm: bool, v_ll: int, v_kk: int, v_jj: enum_aa,
+  v_bbss: int, v_bbrr: int, v_bbqq: int, v_bbpp: int, v_bboo: int,
+  v_bbnn: bool, v_bbmm: bool, v_bbll: bool, v_bbkk: bool, v_bbjj: int,
+  v_bbii: int, v_bbhh: enum_aa, v_bbgg: int, v_bbff: bool, v_bbee: bool,
+  v_bbdd: bool, v_bbcc: bool, v_bbbb: int, v_bbaa: int) =
+  (((((((((((((not (v_jj = E_bb)) and (not (v_jj = E_cc))) and
+  (not (v_jj = E_dd))) and (not (v_jj = E_ee))) and (not (v_jj = E_ff))) and
+  (not (v_jj = E_gg))) and (not (v_jj = E_hh))) and (v_jj = E_ii)) and
+  (v_mm = false)) and (v_nn = true)) and (v_oo = false)) and
+  (v_pp = false)) and mem(E_bb, union(union(union(add(E_cc,
+  (empty : enum_aa set)), add(E_dd, (empty : enum_aa set))), add(E_ee,
+  (empty : enum_aa set))), add(E_ff, (empty : enum_aa set)))))
+
+predicate f303(v_zz: int, v_yy: int, v_xx: int, v_ww: int, v_vv: int,
+  v_uu: int, v_tt: int, v_ss: int, v_rr: int, v_qq: int, v_pp: bool,
+  v_oo: bool, v_nn: bool, v_mm: bool, v_ll: int, v_kk: int, v_jj: enum_aa,
+  v_bbss: int, v_bbrr: int, v_bbqq: int, v_bbpp: int, v_bboo: int,
+  v_bbnn: bool, v_bbmm: bool, v_bbll: bool, v_bbkk: bool, v_bbjj: int,
+  v_bbii: int, v_bbhh: enum_aa, v_bbgg: int, v_bbff: bool, v_bbee: bool,
+  v_bbdd: bool, v_bbcc: bool, v_bbbb: int, v_bbaa: int) =
+  (((((((((((((not (v_jj = E_bb)) and (not (v_jj = E_cc))) and
+  (not (v_jj = E_dd))) and (not (v_jj = E_ee))) and (not (v_jj = E_ff))) and
+  (not (v_jj = E_gg))) and (not (v_jj = E_hh))) and (v_jj = E_ii)) and
+  (v_mm = false)) and (v_nn = true)) and (v_oo = false)) and
+  (v_pp = false)) and (E_bb = E_gg))
+
+predicate f304(v_zz: int, v_yy: int, v_xx: int, v_ww: int, v_vv: int,
+  v_uu: int, v_tt: int, v_ss: int, v_rr: int, v_qq: int, v_pp: bool,
+  v_oo: bool, v_nn: bool, v_mm: bool, v_ll: int, v_kk: int, v_jj: enum_aa,
+  v_bbss: int, v_bbrr: int, v_bbqq: int, v_bbpp: int, v_bboo: int,
+  v_bbnn: bool, v_bbmm: bool, v_bbll: bool, v_bbkk: bool, v_bbjj: int,
+  v_bbii: int, v_bbhh: enum_aa, v_bbgg: int, v_bbff: bool, v_bbee: bool,
+  v_bbdd: bool, v_bbcc: bool, v_bbbb: int, v_bbaa: int) =
+  (((((((((((((not (v_jj = E_bb)) and (not (v_jj = E_cc))) and
+  (not (v_jj = E_dd))) and (not (v_jj = E_ee))) and (not (v_jj = E_ff))) and
+  (not (v_jj = E_gg))) and (not (v_jj = E_hh))) and (v_jj = E_ii)) and
+  (v_mm = false)) and (v_nn = true)) and (v_oo = false)) and
+  (v_pp = false)) and (E_bb = E_hh))
+
+predicate f305(v_zz: int, v_yy: int, v_xx: int, v_ww: int, v_vv: int,
+  v_uu: int, v_tt: int, v_ss: int, v_rr: int, v_qq: int, v_pp: bool,
+  v_oo: bool, v_nn: bool, v_mm: bool, v_ll: int, v_kk: int, v_jj: enum_aa,
+  v_bbss: int, v_bbrr: int, v_bbqq: int, v_bbpp: int, v_bboo: int,
+  v_bbnn: bool, v_bbmm: bool, v_bbll: bool, v_bbkk: bool, v_bbjj: int,
+  v_bbii: int, v_bbhh: enum_aa, v_bbgg: int, v_bbff: bool, v_bbee: bool,
+  v_bbdd: bool, v_bbcc: bool, v_bbbb: int, v_bbaa: int) =
+  (((((((((((((not (v_jj = E_bb)) and (not (v_jj = E_cc))) and
+  (not (v_jj = E_dd))) and (not (v_jj = E_ee))) and (not (v_jj = E_ff))) and
+  (not (v_jj = E_gg))) and (not (v_jj = E_hh))) and (v_jj = E_ii)) and
+  (v_mm = false)) and (v_nn = true)) and (v_oo = false)) and
+  (v_pp = false)) and mem(E_bb, union(add(E_gg, (empty : enum_aa set)),
+  add(E_hh, (empty : enum_aa set)))))
+
+predicate f306(v_zz: int, v_yy: int, v_xx: int, v_ww: int, v_vv: int,
+  v_uu: int, v_tt: int, v_ss: int, v_rr: int, v_qq: int, v_pp: bool,
+  v_oo: bool, v_nn: bool, v_mm: bool, v_ll: int, v_kk: int, v_jj: enum_aa,
+  v_bbss: int, v_bbrr: int, v_bbqq: int, v_bbpp: int, v_bboo: int,
+  v_bbnn: bool, v_bbmm: bool, v_bbll: bool, v_bbkk: bool, v_bbjj: int,
+  v_bbii: int, v_bbhh: enum_aa, v_bbgg: int, v_bbff: bool, v_bbee: bool,
+  v_bbdd: bool, v_bbcc: bool, v_bbbb: int, v_bbaa: int) =
+  ((((((((((((not (v_jj = E_bb)) and (not (v_jj = E_cc))) and
+  (not (v_jj = E_dd))) and (not (v_jj = E_ee))) and (not (v_jj = E_ff))) and
+  (not (v_jj = E_gg))) and (not (v_jj = E_hh))) and
+  (not ((((v_mm = false) and (v_nn = true)) and (v_oo = true)) and
+  (v_pp = false)))) and (not ((((v_mm = true) and (v_nn = true)) and
+  (v_oo = false)) and (v_pp = false)))) and (not ((((v_mm = true) and
+  (v_nn = true)) and (v_oo = true)) and (v_pp = false)))) and
+  (not ((((v_mm = false) and (v_nn = true)) and (v_oo = false)) and
+  (v_pp = false)))) and (v_jj = E_ii))
+
+predicate f307(v_zz: int, v_yy: int, v_xx: int, v_ww: int, v_vv: int,
+  v_uu: int, v_tt: int, v_ss: int, v_rr: int, v_qq: int, v_pp: bool,
+  v_oo: bool, v_nn: bool, v_mm: bool, v_ll: int, v_kk: int, v_jj: enum_aa,
+  v_bbss: int, v_bbrr: int, v_bbqq: int, v_bbpp: int, v_bboo: int,
+  v_bbnn: bool, v_bbmm: bool, v_bbll: bool, v_bbkk: bool, v_bbjj: int,
+  v_bbii: int, v_bbhh: enum_aa, v_bbgg: int, v_bbff: bool, v_bbee: bool,
+  v_bbdd: bool, v_bbcc: bool, v_bbbb: int, v_bbaa: int) =
+  (((((((((((((not (v_jj = E_bb)) and (not (v_jj = E_cc))) and
+  (not (v_jj = E_dd))) and (not (v_jj = E_ee))) and (not (v_jj = E_ff))) and
+  (not (v_jj = E_gg))) and (not (v_jj = E_hh))) and
+  (not ((((v_mm = false) and (v_nn = true)) and (v_oo = true)) and
+  (v_pp = false)))) and (not ((((v_mm = true) and (v_nn = true)) and
+  (v_oo = false)) and (v_pp = false)))) and (not ((((v_mm = true) and
+  (v_nn = true)) and (v_oo = true)) and (v_pp = false)))) and
+  (not ((((v_mm = false) and (v_nn = true)) and (v_oo = false)) and
+  (v_pp = false)))) and (v_jj = E_ii)) and mem(E_bb,
+  union(union(union(add(E_cc, (empty : enum_aa set)), add(E_dd,
+  (empty : enum_aa set))), add(E_ee, (empty : enum_aa set))), add(E_ff,
+  (empty : enum_aa set)))))
+
+predicate f308(v_zz: int, v_yy: int, v_xx: int, v_ww: int, v_vv: int,
+  v_uu: int, v_tt: int, v_ss: int, v_rr: int, v_qq: int, v_pp: bool,
+  v_oo: bool, v_nn: bool, v_mm: bool, v_ll: int, v_kk: int, v_jj: enum_aa,
+  v_bbss: int, v_bbrr: int, v_bbqq: int, v_bbpp: int, v_bboo: int,
+  v_bbnn: bool, v_bbmm: bool, v_bbll: bool, v_bbkk: bool, v_bbjj: int,
+  v_bbii: int, v_bbhh: enum_aa, v_bbgg: int, v_bbff: bool, v_bbee: bool,
+  v_bbdd: bool, v_bbcc: bool, v_bbbb: int, v_bbaa: int) =
+  (((((((((((((not (v_jj = E_bb)) and (not (v_jj = E_cc))) and
+  (not (v_jj = E_dd))) and (not (v_jj = E_ee))) and (not (v_jj = E_ff))) and
+  (not (v_jj = E_gg))) and (not (v_jj = E_hh))) and
+  (not ((((v_mm = false) and (v_nn = true)) and (v_oo = true)) and
+  (v_pp = false)))) and (not ((((v_mm = true) and (v_nn = true)) and
+  (v_oo = false)) and (v_pp = false)))) and (not ((((v_mm = true) and
+  (v_nn = true)) and (v_oo = true)) and (v_pp = false)))) and
+  (not ((((v_mm = false) and (v_nn = true)) and (v_oo = false)) and
+  (v_pp = false)))) and (v_jj = E_ii)) and (E_bb = E_gg))
+
+predicate f309(v_zz: int, v_yy: int, v_xx: int, v_ww: int, v_vv: int,
+  v_uu: int, v_tt: int, v_ss: int, v_rr: int, v_qq: int, v_pp: bool,
+  v_oo: bool, v_nn: bool, v_mm: bool, v_ll: int, v_kk: int, v_jj: enum_aa,
+  v_bbss: int, v_bbrr: int, v_bbqq: int, v_bbpp: int, v_bboo: int,
+  v_bbnn: bool, v_bbmm: bool, v_bbll: bool, v_bbkk: bool, v_bbjj: int,
+  v_bbii: int, v_bbhh: enum_aa, v_bbgg: int, v_bbff: bool, v_bbee: bool,
+  v_bbdd: bool, v_bbcc: bool, v_bbbb: int, v_bbaa: int) =
+  (((((((((((((not (v_jj = E_bb)) and (not (v_jj = E_cc))) and
+  (not (v_jj = E_dd))) and (not (v_jj = E_ee))) and (not (v_jj = E_ff))) and
+  (not (v_jj = E_gg))) and (not (v_jj = E_hh))) and
+  (not ((((v_mm = false) and (v_nn = true)) and (v_oo = true)) and
+  (v_pp = false)))) and (not ((((v_mm = true) and (v_nn = true)) and
+  (v_oo = false)) and (v_pp = false)))) and (not ((((v_mm = true) and
+  (v_nn = true)) and (v_oo = true)) and (v_pp = false)))) and
+  (not ((((v_mm = false) and (v_nn = true)) and (v_oo = false)) and
+  (v_pp = false)))) and (v_jj = E_ii)) and (E_bb = E_hh))
+
+predicate f310(v_zz: int, v_yy: int, v_xx: int, v_ww: int, v_vv: int,
+  v_uu: int, v_tt: int, v_ss: int, v_rr: int, v_qq: int, v_pp: bool,
+  v_oo: bool, v_nn: bool, v_mm: bool, v_ll: int, v_kk: int, v_jj: enum_aa,
+  v_bbss: int, v_bbrr: int, v_bbqq: int, v_bbpp: int, v_bboo: int,
+  v_bbnn: bool, v_bbmm: bool, v_bbll: bool, v_bbkk: bool, v_bbjj: int,
+  v_bbii: int, v_bbhh: enum_aa, v_bbgg: int, v_bbff: bool, v_bbee: bool,
+  v_bbdd: bool, v_bbcc: bool, v_bbbb: int, v_bbaa: int) =
+  (((((((((((((not (v_jj = E_bb)) and (not (v_jj = E_cc))) and
+  (not (v_jj = E_dd))) and (not (v_jj = E_ee))) and (not (v_jj = E_ff))) and
+  (not (v_jj = E_gg))) and (not (v_jj = E_hh))) and
+  (not ((((v_mm = false) and (v_nn = true)) and (v_oo = true)) and
+  (v_pp = false)))) and (not ((((v_mm = true) and (v_nn = true)) and
+  (v_oo = false)) and (v_pp = false)))) and (not ((((v_mm = true) and
+  (v_nn = true)) and (v_oo = true)) and (v_pp = false)))) and
+  (not ((((v_mm = false) and (v_nn = true)) and (v_oo = false)) and
+  (v_pp = false)))) and (v_jj = E_ii)) and mem(E_bb, union(add(E_gg,
+  (empty : enum_aa set)), add(E_hh, (empty : enum_aa set)))))
+
+predicate f311(v_zz: int, v_yy: int, v_xx: int, v_ww: int, v_vv: int,
+  v_uu: int, v_tt: int, v_ss: int, v_rr: int, v_qq: int, v_pp: bool,
+  v_oo: bool, v_nn: bool, v_mm: bool, v_ll: int, v_kk: int, v_jj: enum_aa,
+  v_bbss: int, v_bbrr: int, v_bbqq: int, v_bbpp: int, v_bboo: int,
+  v_bbnn: bool, v_bbmm: bool, v_bbll: bool, v_bbkk: bool, v_bbjj: int,
+  v_bbii: int, v_bbhh: enum_aa, v_bbgg: int, v_bbff: bool, v_bbee: bool,
+  v_bbdd: bool, v_bbcc: bool, v_bbbb: int, v_bbaa: int) =
+  ((((((((not (v_jj = E_bb)) and (not (v_jj = E_cc))) and
+  (not (v_jj = E_dd))) and (not (v_jj = E_ee))) and (not (v_jj = E_ff))) and
+  (not (v_jj = E_gg))) and (not (v_jj = E_hh))) and (not (v_jj = E_ii)))
+
+predicate f313(v_zz: int, v_yy: int, v_xx: int, v_ww: int, v_vv: int,
+  v_uu: int, v_tt: int, v_ss: int, v_rr: int, v_qq: int, v_pp: bool,
+  v_oo: bool, v_nn: bool, v_mm: bool, v_ll: int, v_kk: int, v_jj: enum_aa,
+  v_bbss: int, v_bbrr: int, v_bbqq: int, v_bbpp: int, v_bboo: int,
+  v_bbnn: bool, v_bbmm: bool, v_bbll: bool, v_bbkk: bool, v_bbjj: int,
+  v_bbii: int, v_bbhh: enum_aa, v_bbgg: int, v_bbff: bool, v_bbee: bool,
+  v_bbdd: bool, v_bbcc: bool, v_bbbb: int, v_bbaa: int) =
+  ((((((((((not (v_jj = E_ii)) and (not (v_jj = E_hh))) and
+  (not (v_jj = E_gg))) and (not (v_jj = E_ff))) and (not (v_jj = E_ee))) and
+  (not (v_jj = E_dd))) and (not (v_jj = E_cc))) and (v_jj = E_bb)) and
+  (((v_kk = 0) and (v_ll = 0)) and ((((((v_mm = true) and (v_nn = true)) and
+  (v_oo = false)) and (v_pp = false)) and (v_jj = E_cc)) or
+  ((((v_mm = true) and (v_nn = true)) and (v_oo = false)) ->
+  (not (v_pp = false)))))) or (not (v_jj = E_bb)))
+
+predicate f314(v_zz: int, v_yy: int, v_xx: int, v_ww: int, v_vv: int,
+  v_uu: int, v_tt: int, v_ss: int, v_rr: int, v_qq: int, v_pp: bool,
+  v_oo: bool, v_nn: bool, v_mm: bool, v_ll: int, v_kk: int, v_jj: enum_aa,
+  v_bbss: int, v_bbrr: int, v_bbqq: int, v_bbpp: int, v_bboo: int,
+  v_bbnn: bool, v_bbmm: bool, v_bbll: bool, v_bbkk: bool, v_bbjj: int,
+  v_bbii: int, v_bbhh: enum_aa, v_bbgg: int, v_bbff: bool, v_bbee: bool,
+  v_bbdd: bool, v_bbcc: bool, v_bbbb: int, v_bbaa: int) =
+  (((((((((not (v_jj = E_bb)) and (not (v_jj = E_cc))) and
+  (not (v_jj = E_dd))) and (not (v_jj = E_ee))) and (not (v_jj = E_ff))) and
+  (not (v_jj = E_gg))) and (not (v_jj = E_hh))) and (not (v_jj = E_ii))) and
+  mem(v_jj, union(add(E_gg, (empty : enum_aa set)), add(E_hh,
+  (empty : enum_aa set)))))
+
+goal bbuu_409 :
+  (forall v_zz:int. forall v_yy:int. forall v_xx:int. forall v_ww:int.
+  forall v_vv:int. forall v_uu:int. forall v_tt:int. forall v_ss:int.
+  forall v_rr:int. forall v_qq:int. forall v_pp:bool. forall v_oo:bool.
+  forall v_nn:bool. forall v_mm:bool. forall v_ll:int. forall v_kk:int.
+  forall v_jj:enum_aa. forall v_bbss:int. forall v_bbrr:int.
+  forall v_bbqq:int. forall v_bbpp:int. forall v_bboo:int.
+  forall v_bbnn:bool. forall v_bbmm:bool. forall v_bbll:bool.
+  forall v_bbkk:bool. forall v_bbjj:int. forall v_bbii:int.
+  forall v_bbhh:enum_aa. forall v_bbgg:int. forall v_bbff:bool.
+  forall v_bbee:bool. forall v_bbdd:bool. forall v_bbcc:bool.
+  forall v_bbbb:int. forall v_bbaa:int. ((f1(v_zz, v_yy, v_xx, v_ww, v_vv,
+  v_uu, v_tt, v_ss, v_rr, v_qq, v_pp, v_oo, v_nn, v_mm, v_ll, v_kk, v_jj,
+  v_bbss, v_bbrr, v_bbqq, v_bbpp, v_bboo, v_bbnn, v_bbmm, v_bbll, v_bbkk,
+  v_bbjj, v_bbii, v_bbhh, v_bbgg, v_bbff, v_bbee, v_bbdd, v_bbcc, v_bbbb,
+  v_bbaa) and (f10(v_zz, v_yy, v_xx, v_ww, v_vv, v_uu, v_tt, v_ss, v_rr,
+  v_qq, v_pp, v_oo, v_nn, v_mm, v_ll, v_kk, v_jj, v_bbss, v_bbrr, v_bbqq,
+  v_bbpp, v_bboo, v_bbnn, v_bbmm, v_bbll, v_bbkk, v_bbjj, v_bbii, v_bbhh,
+  v_bbgg, v_bbff, v_bbee, v_bbdd, v_bbcc, v_bbbb, v_bbaa) and f261(v_zz,
+  v_yy, v_xx, v_ww, v_vv, v_uu, v_tt, v_ss, v_rr, v_qq, v_pp, v_oo, v_nn,
+  v_mm, v_ll, v_kk, v_jj, v_bbss, v_bbrr, v_bbqq, v_bbpp, v_bboo, v_bbnn,
+  v_bbmm, v_bbll, v_bbkk, v_bbjj, v_bbii, v_bbhh, v_bbgg, v_bbff, v_bbee,
+  v_bbdd, v_bbcc, v_bbbb, v_bbaa))) -> f209(v_zz, v_yy, v_xx, v_ww, v_vv,
+  v_uu, v_tt, v_ss, v_rr, v_qq, v_pp, v_oo, v_nn, v_mm, v_ll, v_kk, v_jj,
+  v_bbss, v_bbrr, v_bbqq, v_bbpp, v_bboo, v_bbnn, v_bbmm, v_bbll, v_bbkk,
+  v_bbjj, v_bbii, v_bbhh, v_bbgg, v_bbff, v_bbee, v_bbdd, v_bbcc, v_bbbb,
+  v_bbaa)))
