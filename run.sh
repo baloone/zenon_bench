@@ -23,9 +23,9 @@ prover_names=(
 	altergo
 	)
 res=""
-filep=$1
-filesmt=${filep%.p}.smt2
-filewhy=${filep%.p}.why
+filep=$1.p
+filesmt=$1.smt2
+filewhy=$1.why
 for ((i=0; i < ${#provers[@]}; i++))
 do
 	prover=${provers[$i]}
