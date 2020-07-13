@@ -37,7 +37,7 @@ do
 	then f=$filewhy
 	fi
 	t1=`date +%s%N`
-	if $prover $f ; then
+	if $prover $f &> /dev/null; then
 		t2=`date +%s%N`
 		dt=`expr $t2 - $t1`
 		dt=`expr $dt / 1000000`
