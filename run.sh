@@ -29,10 +29,10 @@ do
 		t2=`date +%s%N`
 		dt=`expr $t2 - $t1`
 		dt=`expr $dt / 1000000`
-		res="$res,\n \"$prover_name\": "$dt\ms""
-	else res="$res,\n \"$prover_name\": -1"
+		res="$res, \"$prover_name\": $dt"
+	else res="$res, \"$prover_name\": -1"
 	fi
 done
-echo -e "\"$1\": { ${res[@]:1} \n },"
+echo "\"$1\": { ${res[@]:1} },"
 
 
