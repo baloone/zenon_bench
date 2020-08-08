@@ -1,8 +1,8 @@
 #!/bin/bash
 
 provers=(
-~/zp/zenon_modulo\ -modulo\ -modulo-heuri\ -itptp\ -max-time\ 300s
-~/zp/zenon_modulo\ -x\ arith\ -modulo\ -modulo-heuri\ -itptp\ -max-time\ 300s
+"../zenon_modpol/zenon_modulo -brwrt -modulo -modulo-heuri -itptp -max-time 300s"
+"../zenon_modpol/zenon_modulo -brwrt -x arith -modulo -modulo-heuri -itptp -max-time 300s"
 )
 prover_names=(
 	zp
