@@ -2,23 +2,11 @@
 
 provers=(
 ~/zp/zenon_modulo\ -modulo\ -modulo-heuri\ -itptp\ -max-time\ 300s
-~/zp/zenon_modulo\ -modulo\ -disable-skolem\ -disable-miniscoping\ -modulo-heuri\ -itptp\ -max-time\ 300s
-~/zp/zenon_modulo\ -modulo\ -disable-miniscoping\ -modulo-heuri\ -itptp\ -max-time\ 300s
 ~/zp/zenon_modulo\ -x\ arith\ -modulo\ -modulo-heuri\ -itptp\ -max-time\ 300s
-~/zp/zenon_modulo\ -x\ arith\ -modulo\ -disable-skolem\ -disable-miniscoping\ -modulo-heuri\ -itptp\ -max-time\ 300s
-~/zp/zenon_modulo\ -x\ arith\ -modulo\ -disable-miniscoping\ -modulo-heuri\ -itptp\ -max-time\ 300s
-~/zenon_modulo/zenon_modulo\ -modulo\ -modulo-heuri\ -itptp\ -max-time\ 300s
-./z3.sh\ -smt2\ -T:300
-alt-ergo\ -timelimit\ 300
 )
 prover_names=(
 	zp
-	zp-sko
-	zp-mini
 	zp+arith
-	zp+arith-sko
-	zp+arith-mini
-	zm
 	z3
 	altergo
 	)
