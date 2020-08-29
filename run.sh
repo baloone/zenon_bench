@@ -1,14 +1,32 @@
 #!/bin/bash
 
 provers=(
-"../zenon_modpol/zenon_modulo -brwrt -modulo -modulo-heuri -itptp -max-time 300s"
-"../zenon_modpol/zenon_modulo -brwrt -x arith -modulo -modulo-heuri -itptp -max-time 300s"
+"../zenon_modpol/zenon_modulo -modulo -modulo-heuri -itptp -max-time 1h"
+"../zenon_modpol/zenon_modulo -brwrt -modulo -modulo-heuri -itptp -max-time 1h"
+"../zenon_modpol/zenon_modulo -modsko -modulo -modulo-heuri -itptp -max-time 1h"
+"../zenon_modpol/zenon_modulo -modsko -brwrt -modulo -modulo-heuri -itptp -max-time 1h"
+"../zenon_modpol/zenon_modulo -modsko -modminiscope -modulo -modulo-heuri -itptp -max-time 1h"
+"../zenon_modpol/zenon_modulo -modsko -modminiscope -brwrt -modulo -modulo-heuri -itptp -max-time 1h"
+"../zenon_modpol/zenon_modulo -x arith -modulo -modulo-heuri -itptp -max-time 1h"
+"../zenon_modpol/zenon_modulo -x arith -brwrt -modulo -modulo-heuri -itptp -max-time 1h"
+"../zenon_modpol/zenon_modulo -x arith -modsko -modulo -modulo-heuri -itptp -max-time 1h"
+"../zenon_modpol/zenon_modulo -x arith -modsko -brwrt -modulo -modulo-heuri -itptp -max-time 1h"
+"../zenon_modpol/zenon_modulo -x arith -modsko -modminiscope -modulo -modulo-heuri -itptp -max-time 1h"
+"../zenon_modpol/zenon_modulo -x arith -modsko -modminiscope -brwrt -modulo -modulo-heuri -itptp -max-time 1h"
 )
 prover_names=(
 	zp
+	zp+brwrt
+	zp+sko
+	zp+brwrt+sko
+	zp+sko+mini
+	zp+brwrt+sko+mini
 	zp+arith
-	z3
-	altergo
+	zp+brwrt+arith
+	zp+sko+arith
+	zp+brwrt+sko+arith
+	zp+sko+mini+arith
+	zp+brwrt+sko+mini+arith
 	)
 res=""
 filep=$1.p
