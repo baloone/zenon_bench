@@ -1,7 +1,7 @@
 const res = require("./resfinal");
 const _res = require("./_res");
 const keys = Object.keys(res);
-const arr = keys.map(k =>{return {altergo: _res[k]["altergo"], zm: _res[k]["zm"], "zm+arith": _res[k]["zm+arith"], ...res[k]}})
+const arr = keys.map(k =>{return {..._res[k], ...res[k]}})
 const unionarr = function() {return arr.filter(obj => [...arguments].reduce((p,v) => p + obj[v], 0) > -1*arguments.length);}
 const diff = (l, lp) => l.filter(x => lp.indexOf(x) < 0);
 const logunion = function() {
